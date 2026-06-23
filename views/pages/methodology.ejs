@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content methodology-page">
+    <div class="page-header">
+      <h1>预测模型说明</h1>
+      <p class="subtitle">透明 · 可复现 · 纯数学方法</p>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ 以下模型均为足球预测领域的通用数学方法，结果仅作娱乐与数据分析科普参考，不具备任何决策指导效力。
+    </div>
+
+    <div class="methodology-content">
+      <section class="method-section">
+        <h2>1. 核心模型：Dixon-Coles 双变量泊松</h2>
+        <p>这是足球预测的经典模型，基于泊松分布原理，核心逻辑：</p>
+        <ul>
+          <li>基于历史数据计算每支球队的进攻能力（场均进球）与防守能力（场均失球）</li>
+          <li>纳入主客场因素、球队近期状态、历史交锋权重进行修正</li>
+          <li>加入 Dixon-Coles 修正项，弥补泊松分布对低比分（0-0、1-0）的估算偏差</li>
+          <li>推导双方进球数的联合概率分布，进而计算胜平负概率与各比分概率</li>
+        </ul>
+        <div class="math-box">
+          <p><strong>改进的 Elo 预期进球公式：</strong></p>
+          <p><code>λ = 1.35 + (ratingDiff) / 400,  λ ∈ [0.3, 3.5]</code></p>
+          <p>评分差每 400 分，预期进球差约 1 球，与真实足球的爆冷频率吻合。</p>
+        </div>
+      </section>
+
+      <section class="method-section">
+        <h2>2. 辅助模型：Elo 球队评分体系</h2>
+        <ul>
+          <li>基于球队比赛结果动态更新实力评分，赢球加分、输球减分</li>
+          <li>结合对手实力调整积分变化幅度，强队赢弱队加分少，弱队赢强队加分多</li>
+          <li>用于辅助校准球队基础实力，降低单场数据波动对预测的影响</li>
+        </ul>
+        <p>校准数据：基于 913 场国际比赛（2023.10 – 2026.06），回测准确率 62%。</p>
+      </section>
+
+      <section class="method-section">
+        <h2>3. 晋级概率：蒙特卡洛模拟</h2>
+        <ul>
+          <li>基于单场比赛的胜平负概率，模拟上万次剩余赛程走向</li>
+          <li>统计每支球队出线、晋级下一轮、夺冠的出现频次</li>
+          <li>输出最终的概率分布结果，样本量越大结果越稳定</li>
+        </ul>
+      </section>
+
+      <section class="method-section warning-box">
+        <h2>⚠️ 重要说明</h2>
+        <ul>
+          <li>本站所有预测结果均基于公开的数学模型与历史数据，<strong>不涉及任何赔率数据</strong></li>
+          <li>足球比赛存在极强的偶然性与不确定性，任何模型均无法准确预测赛果</li>
+          <li>预测结果<strong>不得用于任何形式的投注或赌博活动</strong></li>
+          <li>根据中国法律法规，境内任何网络体育博彩均属于非法行为</li>
+        </ul>
+      </section>
+
+      <section class="method-section">
+        <h2>4. 模型准确率追踪</h2>
+        <p>截至目前的赛事预测表现：</p>
+        <ul>
+          <li>正确预测赛果：29/44（66%）</li>
+          <li>平均 RPS 评分：0.147（基线 ≈ 0.245）</li>
+          <li>预期校准误差（ECE）：2.3%</li>
+        </ul>
+        <p style="margin-top:12px;font-size:0.9rem;color:#8899aa;">
+          数据来源：<a href="https://cup26matches.com/" target="_blank" rel="noopener">world-cup-2026-prediction-model</a>
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

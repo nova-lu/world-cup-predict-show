@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>完整赛程</h1>
+      <p class="subtitle" id="schedule-summary">2026世界杯 · 104场比赛</p>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="schedule-filters">
+      <div class="filter-row">
+        <span class="filter-label">阶段</span>
+        <div class="filter-btns" id="stage-filter">
+          <button class="filter-btn active" data-value="all">全部</button>
+          <button class="filter-btn" data-value="GROUP_STAGE">小组赛</button>
+          <button class="filter-btn" data-value="LAST_32">32强</button>
+          <button class="filter-btn" data-value="LAST_16">16强</button>
+          <button class="filter-btn" data-value="QUARTER_FINALS">8强</button>
+          <button class="filter-btn" data-value="SEMI_FINALS">4强</button>
+          <button class="filter-btn" data-value="FINAL">决赛</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">分组</span>
+        <div class="filter-btns" id="group-filter">
+          <button class="filter-btn active" data-value="all">全部</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">状态</span>
+        <div class="filter-btns" id="status-filter">
+          <button class="filter-btn active" data-value="all">全部</button>
+          <button class="filter-btn" data-value="FT">已完赛</button>
+          <button class="filter-btn" data-value="TIMED">未开赛</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统计条 -->
+    <div class="schedule-stats" id="schedule-stats"></div>
+
+    <div id="loading-spinner" class="loading">加载赛程数据...</div>
+    <div id="schedule-list" class="schedule-list" style="display:none"></div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+  let allMatches = [];
+  let currentFilters = { stage: 'all', group: 'all', status: 'all' };
+
+  // 加载数据
+  Promise.all([
+    fetch('/api/matches/schedule').then(r => r.json()),
+    fetch('/api/standings/groups').then(r => r.json()),
+  ]).then(([schedule, standings]) => {
+    allMatches = schedule.matches || [];
+    document.getElementById('loading-spinner').style.display = 'none';
+    document.getElementById('schedule-list').style.display = 'block';
+
+    // 赛程统计
+    const ft = allMatches.filter(m => m.status === 'FT').length;
+    const timed = allMatches.filter(m => m.status === 'TIMED').length;
+    document.getElementById('schedule-summary').textContent = 
+      `全部 ${allMatches.length} 场 · 已完赛 ${ft} 场 · 未开赛 ${timed} 场`;
+
+    // 填充组筛选
+    const groups = [...new Set(allMatches.filter(m => m.group).map(m => m.group))].sort();
+    const groupBtns = document.getElementById('group-filter');
+    groups.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.dataset.value = g;
+      btn.textContent = g + '组';
+      groupBtns.appendChild(btn);
+    });
+
+    // 绑定筛选事件
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const parent = this.parentElement;
+        parent.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const filterType = parent.id.replace('-filter', '');
+        currentFilters[filterType] = this.dataset.value;
+        renderSchedule();
+      });
+    });
+
+    renderSchedule();
+  }).catch(err => {
+    document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败: ' + err.message;
+  });
+
+  // 渲染赛程
+  function renderSchedule() {
+    let filtered = allMatches.filter(m => {
+      if (currentFilters.stage !== 'all' && m.stage !== currentFilters.stage) return false;
+      if (currentFilters.group !== 'all' && m.group !== currentFilters.group) return false;
+      if (currentFilters.status === 'FT' && m.status !== 'FT') return false;
+      if (currentFilters.status === 'TIMED' && (m.status !== 'TIMED' && m.status !== 'SCHEDULED')) return false;
+      return true;
+    });
+
+    // 按日期排序
+    filtered.sort((a, b) => (a.date + (a.time || '')) < (b.date + (b.time || '')) ? -1 : 1);
+
+    const container = document.getElementById('schedule-list');
+    container.innerHTML = '';
+
+    // 统计
+    const ftCnt = filtered.filter(m => m.status === 'FT').length;
+    const timedCnt = filtered.filter(m => m.status !== 'FT').length;
+    document.getElementById('schedule-stats').innerHTML = `
+      <span class="stat-item">📊 ${filtered.length} 场比赛</span>
+      <span class="stat-item">✅ ${ftCnt} 已完赛</span>
+      <span class="stat-item">⏳ ${timedCnt} 未开赛</span>
+    `;
+
+    // 按日期分组显示
+    let currentDate = '';
+    filtered.forEach(m => {
+      const isFinished = m.status === 'FT';
+      const isTimed = m.status === 'TIMED' || m.status === 'SCHEDULED';
+
+      // 日期分割线
+      const dateLabel = m.date || '未知日期';
+      if (dateLabel !== currentDate) {
+        currentDate = dateLabel;
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'schedule-day-header';
+        const dayMatches = filtered.filter(x => (x.date || '未知日期') === dateLabel);
+        const dayFT = dayMatches.filter(x => x.status === 'FT').length;
+        dayHeader.innerHTML = `
+          <span class="day-date">${dateLabel}</span>
+          <span class="day-count">${dayMatches.length} 场 · ${dayFT} 场完结</span>
+        `;
+        container.appendChild(dayHeader);
+      }
+
+      // 比赛卡片
+      const card = document.createElement('div');
+      card.className = 'schedule-match-card';
+      card.onclick = () => window.location = `/match/${m.t1}/${m.t2}`;
+
+      const stageLabel = {
+        'GROUP_STAGE': '小组赛', 'LAST_32': '32强', 'LAST_16': '16强',
+        'QUARTER_FINALS': '8强', 'SEMI_FINALS': '4强', 'FINAL': '决赛', 'THIRD_PLACE': '季军赛'
+      }[m.stage] || m.stage || '';
+
+      card.innerHTML = `
+        <div class="smc-top">
+          <span class="smc-stage ${m.stage ? 'stage-' + m.stage.toLowerCase() : ''}">${stageLabel}</span>
+          ${m.group ? `<span class="smc-group">${m.group}组</span>` : ''}
+          ${m.matchday ? `<span class="smc-matchday">第${m.matchday}轮</span>` : ''}
+          <span class="smc-time">${m.time || ''}</span>
+          <span class="smc-status ${isFinished ? 'status-finished' : 'status-upcoming'}">
+            ${isFinished ? '已结束' : '未开赛'}
+          </span>
+        </div>
+        <div class="smc-body">
+          <div class="smc-teams">
+            <span class="smc-team ${isFinished && m.g1 > m.g2 ? 'winner' : ''}">
+              ${m.team1Info?.flag || ''} ${m.team1Info?.name || m.team1}
+            </span>
+            <span class="smc-score">
+              ${isFinished ? `<strong>${m.g1} : ${m.g2}</strong>` : 'vs'}
+            </span>
+            <span class="smc-team ${isFinished && m.g2 > m.g1 ? 'winner' : ''}">
+              ${m.team2Info?.flag || ''} ${m.team2Info?.name || m.team2}
+            </span>
+          </div>
+          ${!isFinished && m.prediction ? `
+          <div class="smc-prob">
+            <div class="prob-bar-sm">
+              <span class="prob-home-sm" style="width:${m.prediction.prob.winHome}%">${m.prediction.prob.winHome}%</span>
+              <span class="prob-draw-sm" style="width:${m.prediction.prob.draw}%">${m.prediction.prob.draw}%</span>
+              <span class="prob-away-sm" style="width:${m.prediction.prob.winAway}%">${m.prediction.prob.winAway}%</span>
+            </div>
+            <span class="smc-xg">xG ${m.prediction.expectedGoals.home} - ${m.prediction.expectedGoals.away}</span>
+          </div>` : ''}
+          ${isFinished ? `
+          <div class="smc-result-detail">
+            ${m.g1 != null && m.g2 != null ? `全场 ${m.g1} - ${m.g2}` : ''}
+            ${m.winner === 'HOME_TEAM' ? '· 主胜' : m.winner === 'AWAY_TEAM' ? '· 客胜' : m.winner === 'DRAW' ? '· 平局' : ''}
+          </div>` : ''}
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+  </script>
+</body>
+</html>

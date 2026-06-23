@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 id="team-title">加载中...</h1>
+    </div>
+    <div id="loading-spinner" class="loading">加载中...</div>
+    <div id="team-detail" style="display:none">
+      <div class="team-hero" id="team-hero"></div>
+      <div class="info-section">
+        <h2>球队实力</h2>
+        <div class="elo-big" id="team-elo"></div>
+      </div>
+      <div class="info-section" id="team-matches-section" style="display:none">
+        <h2>近期赛果</h2>
+        <div id="team-matches"></div>
+      </div>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+  const slug = '<%= teamSlug %>';
+  fetch(`/api/teams/${slug}`)
+    .then(r => r.json())
+    .then(team => {
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('team-detail').style.display = 'block';
+      document.getElementById('team-title').textContent = `${team.flag || ''} ${team.name || team.nameEn || slug}`;
+      document.getElementById('team-hero').innerHTML = `
+        <div class="team-hero-left">
+          <span class="team-hero-flag">${team.flag || '⚽'}</span>
+          <span class="team-hero-name">${team.name || slug}</span>
+          <span class="team-hero-en">${team.nameEn || ''}</span>
+        </div>
+        <div class="team-hero-right">
+          <p>${team.group ? team.group + '组' : '未分组'}</p>
+          <p>${team.confederation || ''}</p>
+        </div>
+      `;
+      document.getElementById('team-elo').innerHTML = `<span class="elo-number">${team.elo || '-'}</span> <span class="elo-label">Elo 评分</span>`;
+
+      fetch('/api/matches/schedule')
+        .then(r => r.json())
+        .then(data => {
+          const teamMatches = data.matches.filter(m => m.t1 === slug || m.t2 === slug);
+          if (teamMatches.length === 0) return;
+          document.getElementById('team-matches-section').style.display = 'block';
+          const container = document.getElementById('team-matches');
+          teamMatches.sort((a, b) => b.date.localeCompare(a.date));
+          teamMatches.slice(0, 10).forEach(m => {
+            const isHome = m.t1 === slug;
+            const opponent = isHome ? m.t2 : m.t1;
+            const oInfo = isHome ? m.team2Info : m.team1Info;
+            const isFinished = m.g1 != null;
+            const div = document.createElement('div');
+            div.className = 'mini-match-row';
+            div.innerHTML = `
+              <span class="mini-date">${m.date}</span>
+              <span class="mini-teams">${isHome ? '<strong>' : ''}${m.team1Info?.flag || ''} ${m.team1Info?.name || m.t1}${isHome ? '</strong>' : ''} vs ${!isHome ? '<strong>' : ''}${m.team2Info?.flag || ''} ${m.team2Info?.name || m.t2}${!isHome ? '</strong>' : ''}</span>
+              <span class="mini-score">${isFinished ? (isHome ? m.g1 + '-' + m.g2 : m.g2 + '-' + m.g1) : '未赛'}</span>
+            `;
+            div.onclick = () => window.location = `/match/${m.t1}/${m.t2}`;
+            container.appendChild(div);
+          });
+        });
+    });
+  </script>
+</body>
+</html>

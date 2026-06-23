@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.log
+.DS_Store
+test_files/
+debug_files/
+check_files/

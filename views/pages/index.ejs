@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>今日赛事</h1>
+      <p class="subtitle" id="today-date"></p>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ 以下预测数据基于数学模型计算，仅供娱乐参考
+    </div>
+
+    <!-- 今日统计卡片 -->
+    <div id="today-stats" class="today-stats" style="display:none"></div>
+
+    <div id="loading-spinner" class="loading">加载中...</div>
+    <div id="matches-list" class="matches-list" style="display:none"></div>
+    <div id="empty-message" class="empty-state" style="display:none">
+      <p>📭 今日无赛事安排</p>
+      <p class="subtitle">请查看 <a href="/schedule">完整赛程</a></p>
+    </div>
+
+    <!-- 快速导航 -->
+    <div class="quick-nav">
+      <a href="/schedule" class="quick-nav-card">
+        <span class="qnc-icon">📅</span>
+        <span class="qnc-text">完整赛程</span>
+        <span class="qnc-sub">查看全部 104 场比赛</span>
+      </a>
+      <a href="/standings" class="quick-nav-card">
+        <span class="qnc-icon">🏆</span>
+        <span class="qnc-text">晋级概率</span>
+        <span class="qnc-sub">小组出线 & 夺冠预测</span>
+      </a>
+      <a href="/teams" class="quick-nav-card">
+        <span class="qnc-icon">🌍</span>
+        <span class="qnc-text">球队信息</span>
+        <span class="qnc-sub">48 支参赛队详情</span>
+      </a>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+  fetch('/api/matches/today')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('today-date').textContent = data.date + ' · ' + data.matches.length + ' 场比赛';
+
+      if (data.matches.length === 0) {
+        document.getElementById('empty-message').style.display = 'block';
+        return;
+      }
+
+      // 统计条
+      const ft = data.matches.filter(m => m.status === 'FT').length;
+      const timed = data.matches.filter(m => m.status !== 'FT').length;
+      document.getElementById('today-stats').style.display = 'flex';
+      document.getElementById('today-stats').innerHTML = `
+        <div class="stat-badge">📊 今日 ${data.matches.length} 场</div>
+        <div class="stat-badge stat-finished">✅ ${ft} 场已完赛</div>
+        <div class="stat-badge stat-upcoming">⏳ ${timed} 场未开赛</div>
+      `;
+
+      const container = document.getElementById('matches-list');
+      container.style.display = 'block';
+
+      // 先显示未开赛，再显示已完赛
+      const ordered = [...data.matches].sort((a, b) => {
+        if (a.status !== 'FT' && b.status === 'FT') return -1;
+        if (a.status === 'FT' && b.status !== 'FT') return 1;
+        return (a.time || '').localeCompare(b.time || '');
+      });
+
+      ordered.forEach(m => {
+        const isFinished = m.status === 'FT';
+        const pred = m.prediction;
+        const card = document.createElement('div');
+        card.className = 'match-card' + (isFinished ? ' finished' : ' upcomng');
+        card.innerHTML = `
+          <div class="match-card-header">
+            <span class="match-group">${m.group || ''}</span>
+            ${m.time ? `<span class="match-time-badge">${m.time}</span>` : ''}
+            <span class="match-stage-badge">${({
+              'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强',
+              'QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛'
+            })[m.stage] || m.stage || ''}</span>
+            <span class="match-status ${isFinished ? 'status-finished' : 'status-upcoming'}">
+              ${isFinished ? '已结束' : '未开赛'}
+            </span>
+          </div>
+          <div class="match-card-body" onclick="window.location='/match/${m.t1}/${m.t2}'">
+            <div class="team-row">
+              <span class="team-name">${m.team1Info?.flag || ''} ${m.team1Info?.name || m.team1}</span>
+              <span class="team-score ${isFinished && m.g1 > m.g2 ? 'winner-score' : ''}">${isFinished ? m.g1 : (pred ? pred.expectedGoals.home.toFixed(1) : '-')}</span>
+            </div>
+            <div class="team-row">
+              <span class="team-name">${m.team2Info?.flag || ''} ${m.team2Info?.name || m.team2}</span>
+              <span class="team-score ${isFinished && m.g2 > m.g1 ? 'winner-score' : ''}">${isFinished ? m.g2 : (pred ? pred.expectedGoals.away.toFixed(1) : '-')}</span>
+            </div>
+            ${!isFinished && pred ? `
+            <div class="prob-bar-container">
+              <div class="prob-bar">
+                <div class="prob-segment prob-home" style="width:${pred.prob.winHome}%">${pred.prob.winHome}%</div>
+                <div class="prob-segment prob-draw" style="width:${pred.prob.draw}%">${pred.prob.draw}%</div>
+                <div class="prob-segment prob-away" style="width:${pred.prob.winAway}%">${pred.prob.winAway}%</div>
+              </div>
+            </div>
+            <div class="odds-compare-row" id="odds-compare-${m.t1}-${m.t2}">
+              <span class="odds-vs-model">加载赔率中...</span>
+            </div>
+            <div class="match-xg-info">预期进球: ${pred.expectedGoals.home} - ${pred.expectedGoals.away}  · 点击查看详细预测</div>
+            `.trim() : ''}
+            ${isFinished ? '<div class="match-result-info">点击查看详情</div>' : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // 批量加载赔率（用于未开赛比赛）
+      const oddsIds = [];
+      ordered.forEach(m => {
+        if (m.status !== 'FT' && m.t1 && m.t2) {
+          oddsIds.push({ t1: m.t1, t2: m.t2 });
+        }
+      });
+      oddsIds.forEach(({ t1, t2 }) => {
+        const el = document.getElementById(`odds-compare-${t1}-${t2}`);
+        if (!el) return;
+        fetch(`/api/odds/match/${t1}/${t2}`).then(r => r.json()).then(oddsData => {
+          if (!oddsData.found) {
+            el.innerHTML = '';
+            return;
+          }
+          const bm = Object.values(oddsData.bookmakers)[0];
+          if (!bm) { el.innerHTML = ''; return; }
+          el.innerHTML = `
+            <span class="odds-badge">赔率</span>
+            <span class="odds-compare-item"><span class="odds-compare-label">主</span><span class="odds-compare-val odds-h">${bm.home.toFixed(2)}</span></span>
+            <span class="odds-compare-item"><span class="odds-compare-label">平</span><span class="odds-compare-val odds-d">${bm.draw.toFixed(2)}</span></span>
+            <span class="odds-compare-item"><span class="odds-compare-label">客</span><span class="odds-compare-val odds-a">${bm.away.toFixed(2)}</span></span>
+          `;
+        }).catch(() => { el.innerHTML = ''; });
+      });
+    })
+    .catch(err => {
+      document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败，请刷新重试';
+    });
+  </script>
+</body>
+</html>
