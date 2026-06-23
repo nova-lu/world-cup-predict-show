@@ -94,7 +94,7 @@ app.get('/methodology', (req, res) => {
 
 // 404
 app.use((req, res) => {
-  res.status(404).render('pages/404', { title: '404 · 页面未找到' });
+  res.status(404).render('pages/404', { title: '404 · 页面未找到', page: '404' });
 });
 
 // 错误处理
