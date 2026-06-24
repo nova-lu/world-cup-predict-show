@@ -647,3 +647,49 @@ a:hover { text-decoration: underline; }
 .odds-compare-label { color: var(--text-muted); font-size: 0.72rem; }
 .odds-compare-val { font-weight: 600; }
 .odds-vs-model { color: rgba(140,160,200,0.6); font-size: 0.72rem; }
+
+/* ===== Cache Status Bar ===== */
+#cache-status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.cache-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.cache-indicator.cache-fresh { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.cache-indicator.cache-expiring { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+.cache-indicator.cache-stale { background: var(--win-away); box-shadow: 0 0 6px var(--win-away); }
+.cache-indicator.cache-degraded { background: #f0883e; box-shadow: 0 0 6px #f0883e; }
+.cache-indicator.cache-unknown { background: var(--text-muted); }
+.cache-refresh-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  line-height: 1.5;
+}
+.cache-refresh-btn:hover { opacity: 0.85; }
+.cache-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (max-width: 600px) {
+  #cache-status-bar { gap: 6px; padding: 6px 10px; font-size: 0.72rem; flex-wrap: wrap; }
+  .cache-refresh-btn { padding: 3px 10px; font-size: 0.7rem; }
+}

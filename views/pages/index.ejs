@@ -51,9 +51,10 @@
   <%- include('../partials/footer') %>
 
   <script>
-  fetch('/api/matches/today?hours=48')
-    .then(r => r.json())
-    .then(data => {
+  async function loadTodayData(force) {
+    try {
+      if (force) document.getElementById('loading-spinner').style.display = 'block';
+      const data = await cachedFetch('/api/matches/today?hours=48', { force });
       document.getElementById('loading-spinner').style.display = 'none';
       document.getElementById('today-date').textContent = `${data.windowLabel || '未来48小时赛程'} · ${data.matches.length} 场比赛`;
 
@@ -74,6 +75,7 @@
 
       const container = document.getElementById('matches-list');
       container.style.display = 'block';
+      container.innerHTML = '';
 
       // 先显示未开赛，再显示已完赛
       const ordered = [...data.matches].sort((a, b) => {
@@ -152,10 +154,16 @@
           `;
         }).catch(() => { el.innerHTML = ''; });
       });
-    })
-    .catch(err => {
+    } catch (err) {
       document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败，请刷新重试';
-    });
+    }
+  }
+
+  // 页面加载时首次加载
+  loadTodayData(false);
+
+  // 注册刷新回调
+  window.cacheUI.onRefresh('today', () => loadTodayData(true));
   </script>
 </body>
 </html>

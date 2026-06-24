@@ -472,22 +472,27 @@
       `2026世界杯 · ${totalTeams} 支球队 · 基于 ${totalSims.toLocaleString()} 次模拟`;
   }
 
-  // Load data
-  fetch('/api/bracket')
-    .then(r => {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then(data => {
+  async function loadBracketData(force) {
+    if (force) {
+      document.getElementById('loading-spinner').style.display = 'flex';
+      document.getElementById('bracket-container').style.display = 'none';
+    }
+    try {
+      const data = await cachedFetch('/api/bracket', { force });
       document.getElementById('loading-spinner').style.display = 'none';
       document.getElementById('bracket-container').style.display = 'flex';
-
       renderSidebar(data.teams || {});
       renderBracket(data);
-    })
-    .catch(err => {
+    } catch (err) {
       document.getElementById('loading-spinner').innerHTML = '⚠️ 淘汰赛数据加载失败: ' + err.message;
-    });
+    }
+  }
+
+  // Register refresh callback
+  window.cacheUI.onRefresh('bracket', () => loadBracketData(true));
+
+  // Load data on page load
+  loadBracketData(false);
   </script>
 </body>
 </html>

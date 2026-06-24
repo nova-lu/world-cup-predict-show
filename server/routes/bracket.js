@@ -5,11 +5,11 @@
  * 构建淘汰赛树数据结构
  * 从蒙特卡洛模拟结果提取各支球队在各轮次的晋级概率
  */
-export async function buildBracketData() {
+export async function buildBracketData(force = false) {
   // 从蒙特卡洛获取模拟数据
   const monteCarloService = await import('../services/monteCarloService.js');
   const sims = 10000;
-  const result = monteCarloService.runMonteCarlo(sims);
+  const result = monteCarloService.runMonteCarlo(sims, force);
 
   // 小组赛阶段配置（12组）
   const groupConfig = 'ABCDEFGHIJKL'.split('').map((g, i) => ({
@@ -94,7 +94,7 @@ export async function buildBracketData() {
 
 export default async function bracketRouter(req, res) {
   try {
-    const data = await buildBracketData();
+    const data = await buildBracketData(req.forceRefresh);
     res.json(data);
   } catch (err) {
     console.error('[Bracket]', err.message);

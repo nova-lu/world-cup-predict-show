@@ -139,78 +139,90 @@
   const t1 = '<%= team1Slug %>';
   const t2 = '<%= team2Slug %>';
 
-  Promise.all([
-    fetch(`/api/matches/match/${t1}/${t2}`).then(r => r.json()),
-    fetch(`/api/matches/compare/${t1}/${t2}?scores=true`).then(r => r.json()),
-  ]).then(([matchData, compareData]) => {
-    document.getElementById('loading-spinner').style.display = 'none';
-    const pred = matchData.prediction;
-    const match = matchData.match;
-
-    document.getElementById('match-title').textContent =
-      `${pred.home.flag} ${pred.home.name} vs ${pred.away.name} ${pred.away.flag}`;
-
-    document.getElementById('prediction-detail').style.display = 'block';
-
-    // 概率
-    document.getElementById('win-home-pct').textContent = pred.prob.winHome + '%';
-    document.getElementById('draw-pct').textContent = pred.prob.draw + '%';
-    document.getElementById('win-away-pct').textContent = pred.prob.winAway + '%';
-
-    // xG
-    document.getElementById('xg-home-name').textContent = pred.home.flag + ' ' + pred.home.name;
-    document.getElementById('xg-away-name').textContent = pred.away.flag + ' ' + pred.away.name;
-    document.getElementById('xg-home-val').textContent = pred.expectedGoals.home;
-    document.getElementById('xg-away-val').textContent = pred.expectedGoals.away;
-    const maxXg = Math.max(pred.expectedGoals.home, pred.expectedGoals.away, 1.5);
-    document.getElementById('xg-home-bar').style.width = (pred.expectedGoals.home / maxXg * 100) + '%';
-    document.getElementById('xg-away-bar').style.width = (pred.expectedGoals.away / maxXg * 100) + '%';
-
-    // Elo
-    document.getElementById('elo-home-name').textContent = pred.home.flag + ' ' + pred.home.name;
-    document.getElementById('elo-away-name').textContent = pred.away.flag + ' ' + pred.away.name;
-    document.getElementById('elo-home-score').textContent = pred.home.elo;
-    document.getElementById('elo-away-score').textContent = pred.away.elo;
-
-    // 比赛信息
-    if (match) {
-      document.getElementById('match-info-bar').style.display = 'block';
-      const stageLabels = {
-        'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强',
-        'QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛','THIRD_PLACE':'季军赛'
-      };
-      document.getElementById('mi-stage').textContent = stageLabels[match.stage] || match.stage || '-';
-      document.getElementById('mi-group').textContent = match.group ? match.group + '组' : '-';
-      document.getElementById('mi-matchday').textContent = match.matchday ? '第' + match.matchday + '轮' : '-';
-      document.getElementById('mi-time').textContent = (match.date || '') + ' ' + (match.time || '');
-      document.getElementById('mi-status').textContent = match.status === 'FT' ? '已完赛' : match.status === 'TIMED' ? '未开赛' : match.status;
-      document.getElementById('mi-score').textContent = (match.g1 != null) ? match.g1 + ' : ' + match.g2 : '-';
-
-      // 进度
-      document.getElementById('progress-section').style.display = 'block';
-      const stageOrder = ['GROUP_STAGE','LAST_32','LAST_16','QUARTER_FINALS','SEMI_FINALS','FINAL'];
-      const currentIdx = stageOrder.indexOf(match.stage);
-      document.querySelectorAll('.progress-step').forEach((el, i) => {
-        if (i < currentIdx) el.classList.add('completed');
-        else if (i === currentIdx) el.classList.add('current');
-        else el.classList.add('upcoming');
-      });
+  async function loadMatchData(force) {
+    if (force) {
+      document.getElementById('loading-spinner').style.display = 'block';
     }
+    // Clear content before re-rendering on refresh
+    document.getElementById('prediction-detail').style.display = 'none';
+    document.getElementById('error-message').style.display = 'none';
+    document.getElementById('scores-grid').innerHTML = '';
+    document.getElementById('odds-content').innerHTML = '<div class="loading-sm">加载赔率数据...</div>';
 
-    // 比分分布
-    if (compareData.topScores && compareData.topScores.length > 0) {
-      document.getElementById('scores-section').style.display = 'block';
-      const grid = document.getElementById('scores-grid');
-      compareData.topScores.slice(0, 8).forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'score-chip';
-        div.innerHTML = `<span class="score-result">${s.home}:${s.away}</span><span class="score-prob">${s.prob}%</span>`;
-        grid.appendChild(div);
-      });
-    }
+    try {
+      const [matchData, compareData] = await Promise.all([
+        cachedFetch(`/api/matches/match/${t1}/${t2}`, { force }),
+        cachedFetch(`/api/matches/compare/${t1}/${t2}?scores=true`, { force }),
+      ]);
 
-    // 赔率
-    fetch(`/api/odds/match/${t1}/${t2}`).then(r => r.json()).then(oddsData => {
+      document.getElementById('loading-spinner').style.display = 'none';
+      const pred = matchData.prediction;
+      const match = matchData.match;
+
+      document.getElementById('match-title').textContent =
+        `${pred.home.flag} ${pred.home.name} vs ${pred.away.name} ${pred.away.flag}`;
+
+      document.getElementById('prediction-detail').style.display = 'block';
+
+      // 概率
+      document.getElementById('win-home-pct').textContent = pred.prob.winHome + '%';
+      document.getElementById('draw-pct').textContent = pred.prob.draw + '%';
+      document.getElementById('win-away-pct').textContent = pred.prob.winAway + '%';
+
+      // xG
+      document.getElementById('xg-home-name').textContent = pred.home.flag + ' ' + pred.home.name;
+      document.getElementById('xg-away-name').textContent = pred.away.flag + ' ' + pred.away.name;
+      document.getElementById('xg-home-val').textContent = pred.expectedGoals.home;
+      document.getElementById('xg-away-val').textContent = pred.expectedGoals.away;
+      const maxXg = Math.max(pred.expectedGoals.home, pred.expectedGoals.away, 1.5);
+      document.getElementById('xg-home-bar').style.width = (pred.expectedGoals.home / maxXg * 100) + '%';
+      document.getElementById('xg-away-bar').style.width = (pred.expectedGoals.away / maxXg * 100) + '%';
+
+      // Elo
+      document.getElementById('elo-home-name').textContent = pred.home.flag + ' ' + pred.home.name;
+      document.getElementById('elo-away-name').textContent = pred.away.flag + ' ' + pred.away.name;
+      document.getElementById('elo-home-score').textContent = pred.home.elo;
+      document.getElementById('elo-away-score').textContent = pred.away.elo;
+
+      // 比赛信息
+      if (match) {
+        document.getElementById('match-info-bar').style.display = 'block';
+        const stageLabels = {
+          'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强',
+          'QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛','THIRD_PLACE':'季军赛'
+        };
+        document.getElementById('mi-stage').textContent = stageLabels[match.stage] || match.stage || '-';
+        document.getElementById('mi-group').textContent = match.group ? match.group + '组' : '-';
+        document.getElementById('mi-matchday').textContent = match.matchday ? '第' + match.matchday + '轮' : '-';
+        document.getElementById('mi-time').textContent = (match.date || '') + ' ' + (match.time || '');
+        document.getElementById('mi-status').textContent = match.status === 'FT' ? '已完赛' : match.status === 'TIMED' ? '未开赛' : match.status;
+        document.getElementById('mi-score').textContent = (match.g1 != null) ? match.g1 + ' : ' + match.g2 : '-';
+
+        // 进度
+        document.getElementById('progress-section').style.display = 'block';
+        const stageOrder = ['GROUP_STAGE','LAST_32','LAST_16','QUARTER_FINALS','SEMI_FINALS','FINAL'];
+        const currentIdx = stageOrder.indexOf(match.stage);
+        document.querySelectorAll('.progress-step').forEach((el, i) => {
+          if (i < currentIdx) el.classList.add('completed');
+          else if (i === currentIdx) el.classList.add('current');
+          else el.classList.add('upcoming');
+        });
+      }
+
+      // 比分分布
+      if (compareData.topScores && compareData.topScores.length > 0) {
+        document.getElementById('scores-section').style.display = 'block';
+        const grid = document.getElementById('scores-grid');
+        compareData.topScores.slice(0, 8).forEach(s => {
+          const div = document.createElement('div');
+          div.className = 'score-chip';
+          div.innerHTML = `<span class="score-result">${s.home}:${s.away}</span><span class="score-prob">${s.prob}%</span>`;
+          grid.appendChild(div);
+        });
+      }
+
+      // 赔率
+      const oddsData = await cachedFetch(`/api/odds/match/${t1}/${t2}`, { force });
       const oc = document.getElementById('odds-content');
       if (!oddsData.found || !oddsData.bookmakers) {
         oc.innerHTML = '<p class="text-muted">暂未获取到市场赔率</p>';
@@ -260,13 +272,14 @@
       table.appendChild(fairRow);
       
       oc.appendChild(table);
-    }).catch(() => {
-      document.getElementById('odds-content').innerHTML = '<p class="text-muted">赔率数据加载失败</p>';
-    });
-  }).catch(err => {
-    document.getElementById('loading-spinner').style.display = 'none';
-    document.getElementById('error-message').style.display = 'block';
-  });
+    } catch (err) {
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('error-message').style.display = 'block';
+    }
+  }
+
+  window.cacheUI.onRefresh('match', () => loadMatchData(true));
+  loadMatchData(false);
   </script>
 </body>
 </html>

@@ -34,93 +34,107 @@
   <script>
   const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 
-  // 加载晋级概率
-  fetch('/api/standings/advancement?sims=5000')
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById('loading-spinner').style.display = 'none';
-      document.getElementById('advancement-table').style.display = 'block';
+  async function loadStandingsData(force) {
+    // 刷新时显示加载中
+    if (force) {
+      document.getElementById('loading-spinner').style.display = 'block';
+    }
 
-      // 小组标签 - 只显示 API 返回中有数据的组
-      const tabs = document.getElementById('group-tabs');
-      tabs.style.display = 'flex';
-  
-      // 根据数据确定实际存在的组
-      const availableGroups = [...new Set(data.teams.filter(t => t.group).map(t => t.group))].sort();
-      const allGroups = availableGroups.length > 0 ? availableGroups : GROUPS;
-  
-      // 添加"全部"按钮
-      const allBtn = document.createElement('button');
-      allBtn.className = 'group-tab active';
-      allBtn.textContent = '全部';
-      allBtn.onclick = () => switchGroup('all');
-      tabs.appendChild(allBtn);
-  
-      allGroups.forEach(g => {
-        const btn = document.createElement('button');
-        btn.className = 'group-tab' + (g === 'A' ? ' active' : '');
-        btn.textContent = g + '组';
-        btn.onclick = () => switchGroup(g);
-        tabs.appendChild(btn);
-      });
+    // 清除旧内容（防止刷新时重复追加）
+    document.getElementById('group-tabs').innerHTML = '';
+    document.getElementById('advancement-table').innerHTML = '';
+    document.getElementById('group-standings').innerHTML = '';
 
-      // 渲染晋级表
-      function renderAdvancement(group) {
-        const filtered = group === 'all' 
-          ? data.teams 
-          : data.teams.filter(t => t.group === group);
-        
-        let html = `<h2>${group === 'all' ? '全部球队' : group + '组'} · 出线概率</h2>`;
-        html += '<div class="adv-table">';
-        html += '<div class="adv-header"><span>排名</span><span>球队</span><span>Elo</span><span>小组</span><span>出线概率</span><span>进度</span></div>';
-        filtered.forEach((t, i) => {
-          const pct = t.prob.round16;
-          const barW = Math.max(pct, 2);
-          html += `
-            <div class="adv-row" onclick="window.location='/teams/${t.slug}'">
-              <span class="adv-rank">${i + 1}</span>
-              <span class="adv-team">${t.flag || '⚽'} ${t.name || t.slug}</span>
-              <span class="adv-elo">${t.elo || '-'}</span>
-              <span class="adv-group">${t.group || '-'}</span>
-              <span class="adv-pct">${pct}%</span>
-              <span class="adv-bar-cell"><span class="adv-bar" style="width:${barW}%"></span></span>
-            </div>
-          `;
-        });
-        html += '</div>';
-        document.getElementById('advancement-table').innerHTML = html;
-      }
+    // 加载晋级概率
+    const advData = await cachedFetch('/api/standings/advancement?sims=5000', { force });
 
-      window.switchGroup = function(g) {
-        document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.group-tab').forEach(t => {
-          if (t.textContent === g + '组') t.classList.add('active');
-        });
-        renderAdvancement(g);
-      };
+    document.getElementById('loading-spinner').style.display = 'none';
+    document.getElementById('advancement-table').style.display = 'block';
 
-      renderAdvancement('all');
+    // 小组标签 - 只显示 API 返回中有数据的组
+    const tabs = document.getElementById('group-tabs');
+    tabs.style.display = 'flex';
+
+    // 根据数据确定实际存在的组
+    const availableGroups = [...new Set(advData.teams.filter(t => t.group).map(t => t.group))].sort();
+    const allGroups = availableGroups.length > 0 ? availableGroups : GROUPS;
+
+    // 添加"全部"按钮
+    const allBtn = document.createElement('button');
+    allBtn.className = 'group-tab active';
+    allBtn.textContent = '全部';
+    allBtn.onclick = () => switchGroup('all');
+    tabs.appendChild(allBtn);
+
+    allGroups.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'group-tab' + (g === 'A' ? ' active' : '');
+      btn.textContent = g + '组';
+      btn.onclick = () => switchGroup(g);
+      tabs.appendChild(btn);
     });
 
-  // 加载小组积分榜
-  fetch('/api/standings/groups')
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById('group-standings').style.display = 'block';
-      let html = '<h2>小组实时积分榜</h2>';
-      GROUPS.forEach(g => {
-        const groupData = data.groups[g];
-        if (!groupData || !groupData.standings || groupData.standings.length === 0) return;
-        html += `<div class="group-standings-block"><h3>${g}组</h3><table class="standings-table">`;
-        html += '<thead><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>进</th><th>失</th><th>净</th><th>分</th></tr></thead><tbody>';
-        groupData.standings.forEach((t, i) => {
-          const highlight = i < 2 ? ' class="qualify-row"' : '';
-          html += `<tr${highlight}><td>${i+1}</td><td>${t.info?.flag || ''} ${t.info?.name || t.slug}</td><td>${t.played}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd > 0 ? '+' : ''}${t.gd}</td><td><strong>${t.pts}</strong></td></tr>`;
-        });
-        html += '</tbody></table></div>';
+    // 渲染晋级表
+    function renderAdvancement(group) {
+      const filtered = group === 'all' 
+        ? advData.teams 
+        : advData.teams.filter(t => t.group === group);
+      
+      let html = `<h2>${group === 'all' ? '全部球队' : group + '组'} · 出线概率</h2>`;
+      html += '<div class="adv-table">';
+      html += '<div class="adv-header"><span>排名</span><span>球队</span><span>Elo</span><span>小组</span><span>出线概率</span><span>进度</span></div>';
+      filtered.forEach((t, i) => {
+        const pct = t.prob.round16;
+        const barW = Math.max(pct, 2);
+        html += `
+          <div class="adv-row" onclick="window.location='/teams/${t.slug}'">
+            <span class="adv-rank">${i + 1}</span>
+            <span class="adv-team">${t.flag || '⚽'} ${t.name || t.slug}</span>
+            <span class="adv-elo">${t.elo || '-'}</span>
+            <span class="adv-group">${t.group || '-'}</span>
+            <span class="adv-pct">${pct}%</span>
+            <span class="adv-bar-cell"><span class="adv-bar" style="width:${barW}%"></span></span>
+          </div>
+        `;
       });
-      document.getElementById('group-standings').innerHTML += html;
+      html += '</div>';
+      document.getElementById('advancement-table').innerHTML = html;
+    }
+
+    window.switchGroup = function(g) {
+      document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.group-tab').forEach(t => {
+        if (t.textContent === g + '组') t.classList.add('active');
+      });
+      renderAdvancement(g);
+    };
+
+    renderAdvancement('all');
+
+    // 加载小组积分榜
+    const groupsData = await cachedFetch('/api/standings/groups', { force });
+
+    document.getElementById('group-standings').style.display = 'block';
+    let html = '<h2>小组实时积分榜</h2>';
+    GROUPS.forEach(g => {
+      const groupData = groupsData.groups[g];
+      if (!groupData || !groupData.standings || groupData.standings.length === 0) return;
+      html += `<div class="group-standings-block"><h3>${g}组</h3><table class="standings-table">`;
+      html += '<thead><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>进</th><th>失</th><th>净</th><th>分</th></tr></thead><tbody>';
+      groupData.standings.forEach((t, i) => {
+        const highlight = i < 2 ? ' class="qualify-row"' : '';
+        html += `<tr${highlight}><td>${i+1}</td><td>${t.info?.flag || ''} ${t.info?.name || t.slug}</td><td>${t.played}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd > 0 ? '+' : ''}${t.gd}</td><td><strong>${t.pts}</strong></td></tr>`;
+      });
+      html += '</tbody></table></div>';
     });
+    document.getElementById('group-standings').innerHTML += html;
+  }
+
+  // 注册刷新回调
+  window.cacheUI.onRefresh('standings', () => loadStandingsData(true));
+
+  // 页面加载时初始化
+  loadStandingsData(false);
   </script>
 </body>
 </html>

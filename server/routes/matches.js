@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getTeamInfo, getRatings } from '../services/dataService.js';
 import { predictMatch, predictUpcoming } from '../services/predictionService.js';
 import { fetchAllMatches, fetchUpcomingMatches, fetchStandings } from '../services/footballApi.js';
+import { buildCacheMeta } from '../middleware/cache.js';
 
 const router = Router();
 const BJ_TIMEZONE = 'Asia/Shanghai';
@@ -31,7 +32,7 @@ router.get('/today', async (req, res) => {
     const now = new Date();
     const end = new Date(now.getTime() + windowHours * 3600_000);
 
-    const all = await fetchAllMatches();
+    const all = await fetchAllMatches(req.forceRefresh);
     const matches = all
       .filter(m => {
         if (!m.utcDate) return false;
@@ -66,6 +67,7 @@ router.get('/today', async (req, res) => {
           prediction: pred?.prediction || null,
         };
       }),
+      _cache: buildCacheMeta('api:matches', true, null),
     });
   } catch (e) {
     console.error('[matches/today] API 失败，降级:', e.message);
@@ -87,6 +89,7 @@ router.get('/today', async (req, res) => {
         team2Info: getTeamInfo(m.t2),
       })),
       _degraded: true,
+      _cache: { hit: false, degraded: true },
     });
   }
 });
@@ -95,7 +98,7 @@ router.get('/today', async (req, res) => {
 router.get('/schedule', async (req, res) => {
   try {
     const { date, group, status } = req.query;
-    let matches = await fetchAllMatches();
+    let matches = await fetchAllMatches(req.forceRefresh);
 
     if (date) matches = matches.filter(m => m.date === date);
     if (group && group !== 'all') matches = matches.filter(m => m.group === group);
@@ -109,12 +112,13 @@ router.get('/schedule', async (req, res) => {
         team1Info: getTeamInfo(m.t1),
         team2Info: getTeamInfo(m.t2),
       })),
+      _cache: buildCacheMeta('api:matches', true, null),
     });
   } catch (e) {
     console.error('[matches/schedule] 降级:', e.message);
     const { getMatches: getStatic } = await import('../services/dataService.js');
     const matches = getStatic();
-    res.json({ total: matches.length, matches, _degraded: true });
+    res.json({ total: matches.length, matches, _degraded: true, _cache: { hit: false, degraded: true } });
   }
 });
 
@@ -122,7 +126,7 @@ router.get('/schedule', async (req, res) => {
 router.get('/upcoming', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
-    const matches = await fetchUpcomingMatches(14);
+    const matches = await fetchUpcomingMatches(14, req.forceRefresh);
     const predictions = predictUpcoming(matches);
 
     res.json({
@@ -136,23 +140,24 @@ router.get('/upcoming', async (req, res) => {
           team2Info: getTeamInfo(p.match.t2),
           prediction: p.prediction,
         })),
+      _cache: buildCacheMeta('api:matches', true, null),
     });
   } catch (e) {
     console.error('[matches/upcoming] 降级:', e.message);
     const { getUpcomingMatches: getStatic } = await import('../services/dataService.js');
     const matches = getStatic(20);
-    res.json({ total: matches.length, matches, _degraded: true });
+    res.json({ total: matches.length, matches, _degraded: true, _cache: { hit: false, degraded: true } });
   }
 });
 
 // ===== 单场比赛预测（支持 API 和静态数据） =====
 router.get('/match/:t1/:t2', async (req, res) => {
   const { t1, t2 } = req.params;
-  const prediction = predictMatch(t1, t2);
+  const prediction = predictMatch(t1, t2, null, req.forceRefresh);
 
   try {
     // 尝试从 API 获取比赛信息
-    const all = await fetchAllMatches();
+    const all = await fetchAllMatches(req.forceRefresh);
     const match = all.find(m =>
       (m.t1 === t1 && m.t2 === t2) || (m.t1 === t2 && m.t2 === t1)
     );
@@ -161,12 +166,13 @@ router.get('/match/:t1/:t2', async (req, res) => {
       return res.json({
         match: { ...match, team1Info: getTeamInfo(t1), team2Info: getTeamInfo(t2) },
         prediction,
+        _cache: buildCacheMeta(`pred:${t1}:${t2}:`, true, null),
       });
     }
   } catch {}
 
   // 降级：纯实力预测
-  res.json({ match: null, prediction, note: '基于 Elo 实力的纯预测' });
+  res.json({ match: null, prediction, note: '基于 Elo 实力的纯预测', _cache: { hit: false } });
 });
 
 // ===== 两队对比 =====

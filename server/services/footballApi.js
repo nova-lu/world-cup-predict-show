@@ -173,10 +173,10 @@ const STAGE_MAP = {
 };
 
 // ===== 拉取并标准化所有比赛 =====
-export async function fetchAllMatches() {
+export async function fetchAllMatches(force = false) {
   const cacheKey = 'api:matches';
-  const cached = get(cacheKey);
-  if (cached) return cached;
+  const cached = get(cacheKey, { force });
+  if (cached.hit) return cached.value;
 
   const data = await apiFetch(`/competitions/${COMPETITION_ID}/matches`);
   const rawMatches = data.matches || [];
@@ -211,16 +211,16 @@ export async function fetchAllMatches() {
     };
   });
 
-  set(cacheKey, matches, 300_000); // 缓存 5 分钟
+  set(cacheKey, matches, { source: 'api', ttlMs: 1800000 });
   console.log(`[footballApi] 拉取 ${matches.length} 场比赛 (${matches.filter(m=>m.status==='FT').length} 已完赛)`);
   return matches;
 }
 
 // ===== 拉取小组积分榜 =====
-export async function fetchStandings() {
+export async function fetchStandings(force = false) {
   const cacheKey = 'api:standings';
-  const cached = get(cacheKey);
-  if (cached) return cached;
+  const cached = get(cacheKey, { force });
+  if (cached.hit) return cached.value;
 
   const data = await apiFetch(`/competitions/${COMPETITION_ID}/standings`);
   const rawStandings = data.standings || [];
@@ -244,28 +244,28 @@ export async function fetchStandings() {
     groups[groupName] = table;
   }
 
-  set(cacheKey, groups, 300_000);
+  set(cacheKey, groups, { source: 'api', ttlMs: 1800000 });
   console.log(`[footballApi] 拉取 ${Object.keys(groups).length} 组积分榜`);
   return groups;
 }
 
 // ===== 获取今日比赛 =====
-export async function fetchTodayMatches() {
-  const all = await fetchAllMatches();
+export async function fetchTodayMatches(force = false) {
+  const all = await fetchAllMatches(force);
   const today = new Date().toISOString().slice(0, 10);
   return all.filter(m => m.date === today);
 }
 
 // ===== 获取未来比赛 =====
-export async function fetchUpcomingMatches(days = 7) {
-  const all = await fetchAllMatches();
+export async function fetchUpcomingMatches(days = 7, force = false) {
+  const all = await fetchAllMatches(force);
   const today = new Date().toISOString().slice(0, 10);
   const end = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
   return all.filter(m => m.date >= today && m.date <= end && m.status !== 'FT');
 }
 
 // ===== 获取某场比赛预测所需信息 =====
-export async function fetchMatchByTeams(t1, t2) {
-  const all = await fetchAllMatches();
+export async function fetchMatchByTeams(t1, t2, force = false) {
+  const all = await fetchAllMatches(force);
   return all.find(m => (m.t1 === t1 && m.t2 === t2) || (m.t1 === t2 && m.t2 === t1)) || null;
 }

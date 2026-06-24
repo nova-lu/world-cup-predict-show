@@ -160,10 +160,10 @@ function simulateTournament(matches, rng) {
 }
 
 // ===== 主入口：N 次蒙特卡洛模拟 =====
-export function runMonteCarlo(numSims = 5000) {
+export function runMonteCarlo(numSims = 5000, force = false) {
   const cacheKey = `mc:full:${numSims}`;
-  const cached = get(cacheKey);
-  if (cached) return cached;
+  const cached = get(cacheKey, { force });
+  if (cached.hit) return cached.value;
 
   // 使用 dataService 获取静态比赛数据
   const matches = getStaticMatches();
@@ -287,7 +287,7 @@ export function runMonteCarlo(numSims = 5000) {
     teams,
   };
 
-  set(cacheKey, output, 600_000); // 10分钟缓存
+  set(cacheKey, output, { source: 'computed', ttlMs: 1800000 });
   console.log(`[MonteCarlo] ${numSims} 次模拟完成，耗时 ${elapsed}s`);
   return output;
 }

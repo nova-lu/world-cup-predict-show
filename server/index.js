@@ -6,6 +6,7 @@ import standingsRouter from './routes/standings.js';
 import teamsRouter from './routes/teams.js';
 import oddsRouter from './routes/odds.js';
 import bracketRouter from './routes/bracket.js';
+import { parseForceParam } from './middleware/parseForce.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -18,6 +19,9 @@ app.set('views', path.join(__dirname, '..', 'views'));
 // 静态文件
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// 全局解析 force=1 参数（仅 /api 路由）
+app.use('/api', parseForceParam);
+
 // JSON API
 app.use('/api/matches', matchesRouter);
 app.use('/api/standings', standingsRouter);
@@ -27,7 +31,16 @@ app.use('/api/bracket', bracketRouter);
 
 // 缓存统计
 app.get('/api/cache/stats', (req, res) => {
-  import('./middleware/cache.js').then(mod => res.json(mod.stats()));
+  import('./middleware/cache.js').then(mod => {
+    const s = mod.stats();
+    if (req.forceRefresh) {
+      // force=1 时刷新缓存统计（清空后重新加载）
+      mod.flush();
+      mod.initCache().then(() => res.json(mod.stats()));
+    } else {
+      res.json(s);
+    }
+  });
 });
 
 // ---------- 页面路由 ----------
