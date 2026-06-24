@@ -35,7 +35,7 @@ app.get('/api/cache/stats', (req, res) => {
 // 首页：今日赛事
 app.get('/', (req, res) => {
   res.render('pages/index', {
-    title: '2026世界杯 · 今日赛事',
+    title: '2026世界杯 · 48小时赛程（北京时间）',
     page: 'today',
     disclaimer: '所有预测数据基于数学模型计算，仅供娱乐参考，不构成任何决策建议。',
   });

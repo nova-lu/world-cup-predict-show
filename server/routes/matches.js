@@ -1,26 +1,66 @@
 import { Router } from 'express';
 import { getTeamInfo, getRatings } from '../services/dataService.js';
 import { predictMatch, predictUpcoming } from '../services/predictionService.js';
-import { fetchAllMatches, fetchTodayMatches, fetchUpcomingMatches, fetchStandings } from '../services/footballApi.js';
+import { fetchAllMatches, fetchUpcomingMatches, fetchStandings } from '../services/footballApi.js';
 
 const router = Router();
+const BJ_TIMEZONE = 'Asia/Shanghai';
+
+function getFormatter(opts) {
+  return new Intl.DateTimeFormat('zh-CN', { timeZone: BJ_TIMEZONE, ...opts });
+}
+
+function formatBeijingDate(d) {
+  return getFormatter({ year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replace(/\//g, '-');
+}
+
+function formatBeijingTime(d) {
+  return getFormatter({ hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+}
+
+function formatBeijingKickoffLabel(d) {
+  const date = getFormatter({ month: '2-digit', day: '2-digit' }).format(d).replace(/\//g, '-');
+  const time = formatBeijingTime(d);
+  return `${date} ${time}`;
+}
 
 // ===== 今日赛事（核心页面数据源） =====
 router.get('/today', async (req, res) => {
   try {
-    const matches = await fetchTodayMatches();
+    const windowHours = Math.min(Math.max(parseInt(req.query.hours) || 48, 1), 120);
+    const now = new Date();
+    const end = new Date(now.getTime() + windowHours * 3600_000);
+
+    const all = await fetchAllMatches();
+    const matches = all
+      .filter(m => {
+        if (!m.utcDate) return false;
+        const kickoff = new Date(m.utcDate);
+        return kickoff >= now && kickoff <= end;
+      })
+      .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+
     const predictions = predictUpcoming(matches);
     const finished = matches.filter(m => m.status === 'FT');
 
     res.json({
-      date: new Date().toISOString().slice(0, 10),
+      date: formatBeijingDate(now),
+      timezone: BJ_TIMEZONE,
+      windowHours,
+      windowStart: now.toISOString(),
+      windowEnd: end.toISOString(),
+      windowLabel: `北京时间未来${windowHours}小时赛程`,
       total: matches.length,
       finished: finished.length,
       upcoming: matches.length - finished.length,
       matches: matches.map(m => {
         const pred = predictions.find(p => p.match.t1 === m.t1 && p.match.t2 === m.t2);
+        const kickoff = m.utcDate ? new Date(m.utcDate) : null;
         return {
           ...m,
+          date: kickoff ? formatBeijingDate(kickoff) : m.date,
+          time: kickoff ? formatBeijingTime(kickoff) : m.time,
+          kickoffLabel: kickoff ? formatBeijingKickoffLabel(kickoff) : (m.time || ''),
           team1Info: getTeamInfo(m.t1),
           team2Info: getTeamInfo(m.t2),
           prediction: pred?.prediction || null,
@@ -30,13 +70,19 @@ router.get('/today', async (req, res) => {
   } catch (e) {
     console.error('[matches/today] API 失败，降级:', e.message);
     // 降级到静态数据
-    const { getTodayMatches: getStatic } = await import('../services/dataService.js');
-    const today = getStatic();
+    const windowHours = Math.min(Math.max(parseInt(req.query.hours) || 48, 1), 120);
+    const now = new Date();
+    const { getUpcomingMatches: getStatic } = await import('../services/dataService.js');
+    const today = getStatic(40);
     res.json({
-      date: new Date().toISOString().slice(0, 10),
+      date: formatBeijingDate(now),
+      timezone: BJ_TIMEZONE,
+      windowHours,
+      windowLabel: `北京时间未来${windowHours}小时赛程`,
       total: today.length,
       matches: today.map(m => ({
         ...m,
+        kickoffLabel: m.date && m.time ? `${m.date} ${m.time}` : (m.time || ''),
         team1Info: getTeamInfo(m.t1),
         team2Info: getTeamInfo(m.t2),
       })),

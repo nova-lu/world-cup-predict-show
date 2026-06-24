@@ -11,7 +11,7 @@
 
   <main class="main-content">
     <div class="page-header">
-      <h1>今日赛事</h1>
+      <h1>48小时赛程</h1>
       <p class="subtitle" id="today-date"></p>
     </div>
     <div class="disclaimer-banner">
@@ -24,7 +24,7 @@
     <div id="loading-spinner" class="loading">加载中...</div>
     <div id="matches-list" class="matches-list" style="display:none"></div>
     <div id="empty-message" class="empty-state" style="display:none">
-      <p>📭 今日无赛事安排</p>
+      <p>📭 未来48小时无赛事安排</p>
       <p class="subtitle">请查看 <a href="/schedule">完整赛程</a></p>
     </div>
 
@@ -51,11 +51,11 @@
   <%- include('../partials/footer') %>
 
   <script>
-  fetch('/api/matches/today')
+  fetch('/api/matches/today?hours=48')
     .then(r => r.json())
     .then(data => {
       document.getElementById('loading-spinner').style.display = 'none';
-      document.getElementById('today-date').textContent = data.date + ' · ' + data.matches.length + ' 场比赛';
+      document.getElementById('today-date').textContent = `${data.windowLabel || '未来48小时赛程'} · ${data.matches.length} 场比赛`;
 
       if (data.matches.length === 0) {
         document.getElementById('empty-message').style.display = 'block';
@@ -67,7 +67,7 @@
       const timed = data.matches.filter(m => m.status !== 'FT').length;
       document.getElementById('today-stats').style.display = 'flex';
       document.getElementById('today-stats').innerHTML = `
-        <div class="stat-badge">📊 今日 ${data.matches.length} 场</div>
+        <div class="stat-badge">📊 窗口内 ${data.matches.length} 场</div>
         <div class="stat-badge stat-finished">✅ ${ft} 场已完赛</div>
         <div class="stat-badge stat-upcoming">⏳ ${timed} 场未开赛</div>
       `;
@@ -79,7 +79,7 @@
       const ordered = [...data.matches].sort((a, b) => {
         if (a.status !== 'FT' && b.status === 'FT') return -1;
         if (a.status === 'FT' && b.status !== 'FT') return 1;
-        return (a.time || '').localeCompare(b.time || '');
+        return (a.utcDate || '').localeCompare(b.utcDate || '');
       });
 
       ordered.forEach(m => {
@@ -90,7 +90,7 @@
         card.innerHTML = `
           <div class="match-card-header">
             <span class="match-group">${m.group || ''}</span>
-            ${m.time ? `<span class="match-time-badge">${m.time}</span>` : ''}
+            ${(m.kickoffLabel || m.time) ? `<span class="match-time-badge">${m.kickoffLabel || m.time}</span>` : ''}
             <span class="match-stage-badge">${({
               'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强',
               'QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛'
