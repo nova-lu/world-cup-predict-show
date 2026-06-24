@@ -1,10 +1,25 @@
 // football-data.org API 集成服务
 // 负责：赛程拉取、结果同步、小组积分榜、球队映射
-import { getApiKey, hasApiKey } from '../config.js';
+
+import { getApiKey } from '../config.js';
 import { get, set } from '../middleware/cache.js';
+import dnsPromises from 'node:dns/promises';
+import { fetch as undiciFetch, ProxyAgent } from 'undici';
 
 const BASE = 'https://api.football-data.org/v4';
-const COMPETITION_ID = 2000;  // FIFA World Cup
+const COMPETITION_ID = 2000;
+
+const proxyUrl =
+  process.env.HTTPS_PROXY ||
+  process.env.https_proxy ||
+  process.env.HTTP_PROXY ||
+  process.env.http_proxy ||
+  '';
+
+const proxyDispatcher = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
+
+console.log(`[footballApi] Node ${process.version}`);
+console.log(`[footballApi] 代理模式: ${proxyUrl ? `ON (${proxyUrl})` : 'OFF (直连)'}`);
 
 // ===== Team Name Mapping (API → Model Slug) =====
 const TEAM_NAME_MAP = {
@@ -72,26 +87,78 @@ export function slugToApi(slug) {
   return SLUG_TO_API[slug] || slug;
 }
 
-// ===== API 调用封装 =====
+// ===== API 调用封装（增强诊断） =====
 async function apiFetch(path) {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error('FOOTBALL_API_KEY 未配置');
 
   const url = `${BASE}${path}`;
-  const resp = await fetch(url, {
-    headers: { 'X-Auth-Token': apiKey },
-  });
+  const timeoutMs = Number(process.env.FOOTBALL_API_TIMEOUT_MS || 20000);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error('HTTPS request timeout')), timeoutMs);
 
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => '');
-    throw new Error(`API ${resp.status}: ${body.slice(0, 200)}`);
+  try {
+    console.log(`[footballApi] 请求: ${url}`);
+    const resp = await undiciFetch(url, {
+      dispatcher: proxyDispatcher,
+      headers: { 'X-Auth-Token': apiKey },
+      signal: controller.signal,
+    });
+
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => '');
+      if (resp.status === 403) {
+        console.error('[footballApi] 403: 代理链路可能已通，但 token 无效或套餐权限不足');
+      }
+      throw new Error(`API ${resp.status}: ${body.slice(0, 300)}`);
+    }
+
+    const json = await resp.json();
+
+    const rateRemain = resp.headers.get('x-requests-available') || '?';
+    const rateMinute = resp.headers.get('x-requestcounter-minute') || '?';
+    console.log(`[footballApi] ✓ ${path} — 剩余:${rateRemain}/分:${rateMinute}`);
+
+    return json;
+  } catch (err) {
+    console.error(`[footballApi] ✗ 请求失败 ${url}`);
+    console.error('[footballApi] name=', err?.name);
+    console.error('[footballApi] message=', err?.message);
+    console.error('[footballApi] code=', err?.code);
+    console.error('[footballApi] errno=', err?.errno);
+    console.error('[footballApi] syscall=', err?.syscall);
+    console.error('[footballApi] address=', err?.address);
+    console.error('[footballApi] port=', err?.port);
+    if (err?.cause) {
+      console.error('[footballApi] cause=', err.cause);
+      console.error('[footballApi] cause.code=', err.cause?.code);
+      console.error('[footballApi] cause.message=', err.cause?.message);
+    }
+
+    const code = err?.code || err?.cause?.code;
+    if (code === 'ENOTFOUND') {
+      try {
+        const host = new URL(url).hostname;
+        const [v4, v6] = await Promise.allSettled([dnsPromises.resolve4(host), dnsPromises.resolve6(host)]);
+        console.error('[footballApi] DNS resolve4=', v4.status === 'fulfilled' ? v4.value : v4.reason?.code || v4.reason?.message);
+        console.error('[footballApi] DNS resolve6=', v6.status === 'fulfilled' ? v6.value : v6.reason?.code || v6.reason?.message);
+      } catch (dnsErr) {
+        console.error('[footballApi] DNS diagnostics failed=', dnsErr?.message || dnsErr);
+      }
+    }
+
+    if (code === 'ETIMEDOUT' || err?.name === 'AbortError') {
+      console.error('[footballApi] timeoutMs=', timeoutMs);
+      console.error('[footballApi] HTTPS_PROXY=', process.env.HTTPS_PROXY || process.env.https_proxy || '(not set)');
+      console.error('[footballApi] HTTP_PROXY=', process.env.HTTP_PROXY || process.env.http_proxy || '(not set)');
+      console.error('[footballApi] NO_PROXY=', process.env.NO_PROXY || process.env.no_proxy || '(not set)');
+      console.error('[footballApi] Proxy dispatcher=', proxyDispatcher ? 'configured' : 'not configured');
+    }
+
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-
-  const rateRemain = resp.headers.get('X-Requests-Available') || '?';
-  const rateMinute = resp.headers.get('X-RequestCounter-Minute') || '?';
-  console.log(`[footballApi] ${path} — 剩余:${rateRemain}/分:${rateMinute}`);
-
-  return resp.json();
 }
 
 // ===== Stage 映射 =====
