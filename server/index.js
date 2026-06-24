@@ -5,6 +5,7 @@ import matchesRouter from './routes/matches.js';
 import standingsRouter from './routes/standings.js';
 import teamsRouter from './routes/teams.js';
 import oddsRouter from './routes/odds.js';
+import bracketRouter from './routes/bracket.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -22,6 +23,7 @@ app.use('/api/matches', matchesRouter);
 app.use('/api/standings', standingsRouter);
 app.use('/api/teams', teamsRouter);
 app.use(oddsRouter);
+app.use('/api/bracket', bracketRouter);
 
 // 缓存统计
 app.get('/api/cache/stats', (req, res) => {
@@ -89,6 +91,54 @@ app.get('/methodology', (req, res) => {
   res.render('pages/methodology', {
     title: '2026世界杯 · 预测模型说明',
     page: 'methodology',
+  });
+});
+
+// 淘汰赛树
+app.get('/bracket', (req, res) => {
+  res.render('pages/bracket', {
+    title: '2026世界杯 · 淘汰赛树',
+    page: 'bracket',
+  });
+});
+
+// 交互式模拟器
+app.get('/simulator', (req, res) => {
+  res.render('pages/simulator', {
+    title: '2026世界杯 · 数据模拟器',
+    page: 'simulator',
+  });
+});
+
+// 模型回测
+app.get('/backtest', (req, res) => {
+  res.render('pages/backtest', {
+    title: '2026世界杯 · 模型回测',
+    page: 'backtest',
+  });
+});
+
+// 分析文章
+app.get('/blog', (req, res) => {
+  res.render('pages/blog', {
+    title: '2026世界杯 · 分析文章',
+    page: 'blog',
+  });
+});
+
+app.get('/blog/:slug', (req, res) => {
+  res.render('pages/blog-article', {
+    title: '文章 · 2026世界杯分析',
+    page: 'blog',
+    articleSlug: req.params.slug,
+  });
+});
+
+// 预测市场 Demo
+app.get('/demo', (req, res) => {
+  res.render('pages/demo', {
+    title: '2026世界杯 · 预测市场模拟',
+    page: 'demo',
   });
 });
 

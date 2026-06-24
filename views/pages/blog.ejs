@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .blog-card {
+      background: #1a2332;
+      border: 1px solid #2a3a4e;
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.15s;
+      display: flex;
+      flex-direction: column;
+    }
+    .blog-card:hover {
+      border-color: #4a8bc2;
+      transform: translateY(-2px);
+    }
+    .blog-card-date {
+      font-size: 0.82rem;
+      color: #6a7a8e;
+      margin-bottom: 8px;
+    }
+    .blog-card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #e0e8f0;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .blog-card-excerpt {
+      font-size: 0.9rem;
+      color: #8a9aaa;
+      line-height: 1.55;
+      margin-bottom: 14px;
+      flex: 1;
+    }
+    .blog-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .blog-tag {
+      display: inline-block;
+      background: #2a3a4e;
+      color: #8ab8e0;
+      font-size: 0.75rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .blog-card-link {
+      display: inline-block;
+      color: #4a8bc2;
+      font-size: 0.88rem;
+      font-weight: 500;
+      text-decoration: none;
+      align-self: flex-start;
+    }
+    .blog-card-link:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .blog-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content blog-page">
+    <div class="page-header">
+      <h1>📝 赛事深度分析</h1>
+      <p class="subtitle">2026世界杯 · 数据解读 · 赛场故事</p>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ 以下文章内容均为基于数据的分析解读，仅供娱乐参考
+    </div>
+
+    <%
+      const articles = [
+        {
+          slug: 'messi-record',
+          date: '2026-06-23',
+          title: '梅西破纪录：追平克洛泽世界杯进球神话',
+          excerpt: '阿根廷对阵……梅西梅开二度，以 16 粒世界杯进球追平克洛泽的历史纪录。本文回顾梅西的世界杯进球之路，并分析他能否在淘汰赛完成超越。',
+          tags: ['梅西', '阿根廷', '纪录']
+        },
+        {
+          slug: 'cape-verde-dark-horse',
+          date: '2026-06-22',
+          title: '黑马佛得角：小组赛不败，非洲新势力崛起',
+          excerpt: '首次晋级世界杯的佛得角在小组赛中保持不败，先后逼平强敌并拿下关键胜利。这支西非小国球队凭借严密的防守体系和高效反击惊艳世界。',
+          tags: ['佛得角', '黑马', '非洲']
+        },
+        {
+          slug: 'draw-epidemic',
+          date: '2026-06-21',
+          title: '平局魔咒：小组赛平局率达到 38%，原因何在？',
+          excerpt: '本届世界杯小组赛前两轮平局率高达 38%，远超往届平均值。从战术保守化、体能分配、到新赛制下的积分策略，我们尝试解析这一现象背后的数据逻辑。',
+          tags: ['数据', '战术', '小组赛']
+        },
+        {
+          slug: 'mbappe-milestone',
+          date: '2026-06-20',
+          title: '姆巴佩里程碑：加冕法国队史射手王',
+          excerpt: '24 岁的姆巴佩在 vs 丹麦的比赛中打入个人国家队第 47 球，超越亨利成为法国队史射手王。本文回顾姆巴佩的爆发轨迹与他在本届赛事中的战术角色。',
+          tags: ['姆巴佩', '法国', '纪录']
+        },
+        {
+          slug: 'portugal-form',
+          date: '2026-06-19',
+          title: '葡萄牙状态分析：黄金一代能否兑现天赋？',
+          excerpt: '葡萄牙小组赛两战全胜，B 费、莱奥、菲利克斯等攻击手状态火热。但面对淘汰赛的防守强度，这支攻强守弱的球队能否走得更远？',
+          tags: ['葡萄牙', '状态', '淘汰赛']
+        },
+        {
+          slug: 'hosts-performance',
+          date: '2026-06-18',
+          title: '东道主表现：美加墨三国联办，主场优势几何？',
+          excerpt: '2026 世界杯由美国、加拿大、墨西哥联合主办。三国球队的小组赛表现各有千秋——美国青年军火力全开，加拿大防守坚韧，墨西哥经验老道。主场加持的真实效果如何？',
+          tags: ['东道主', '美国', '加拿大', '墨西哥']
+        },
+        {
+          slug: 'championship-landscape',
+          date: '2026-06-17',
+          title: '夺冠格局：为何没有一支球队夺冠概率超过 17%？',
+          excerpt: '本届世界杯夺冠概率分布之分散前所未有——模型显示最大热门也不到 17%。48 队扩军、主客场均衡化、强队青黄不接等因素共同造就了"全员皆有机会"的乱世格局。',
+          tags: ['夺冠', '格局', '数据']
+        }
+      ];
+    %>
+
+    <div class="blog-grid">
+      <% articles.forEach(function(a) { %>
+        <div class="blog-card">
+          <div class="blog-card-date"><%= a.date %></div>
+          <div class="blog-card-title"><%= a.title %></div>
+          <div class="blog-card-excerpt"><%= a.excerpt %></div>
+          <div class="blog-card-tags">
+            <% a.tags.forEach(function(t) { %>
+              <span class="blog-tag">#<%= t %></span>
+            <% }); %>
+          </div>
+          <a href="/blog/<%= a.slug %>" class="blog-card-link">阅读全文 →</a>
+        </div>
+      <% }); %>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

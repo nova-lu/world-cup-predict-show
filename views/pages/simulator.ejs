@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>数据模拟器</h1>
+      <p class="subtitle">可调 Monte Carlo 模拟 · 实时查看各队晋级概率分布</p>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ 以下概率基于数学模拟，仅供娱乐参考。模拟次数越多，结果越稳定。
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="sim-controls" id="sim-controls">
+      <div class="sim-controls-row">
+        <div class="sim-slider-group">
+          <label for="sim-slider">模拟次数：<strong id="sim-count-label">10,000</strong></label>
+          <input type="range" id="sim-slider" class="sim-slider" min="1000" max="50000" step="1000" value="10000">
+          <div class="sim-presets">
+            <button class="sim-preset" data-value="1000">1K</button>
+            <button class="sim-preset" data-value="5000">5K</button>
+            <button class="sim-preset active" data-value="10000">10K</button>
+            <button class="sim-preset" data-value="50000">50K</button>
+          </div>
+        </div>
+        <button class="sim-run-btn" id="sim-run-btn">▶ 运行模拟</button>
+      </div>
+    </div>
+
+    <!-- 加载中 -->
+    <div id="loading-spinner" class="loading" style="display:none">
+      <div class="spinner"></div>
+      <p>正在 Monte Carlo 模拟中<span class="dots"></span></p>
+      <p class="subtitle" style="margin-top:8px">模拟 <span id="loading-sims"></span> 次，请稍候...</p>
+    </div>
+
+    <!-- 结果概览 -->
+    <div id="sim-results" style="display:none">
+      <div class="sim-meta" id="sim-meta"></div>
+
+      <!-- 冠军概率表 (Top 12) -->
+      <div class="info-section">
+        <h2>🏆 冠军概率 Top 12</h2>
+        <div id="champion-table"></div>
+      </div>
+
+      <!-- 阶段概率矩阵 -->
+      <div class="info-section">
+        <h2>📊 各队阶段概率矩阵</h2>
+        <p class="subtitle" style="margin-bottom:12px">每个单元格显示该队晋级到对应阶段的概率百分比</p>
+        <div class="matrix-wrapper">
+          <table class="stage-matrix" id="stage-matrix"></table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <style>
+  /* ===== Simulator Specific Styles ===== */
+  .sim-controls {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .sim-controls-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .sim-slider-group {
+    flex: 1;
+    min-width: 280px;
+  }
+  .sim-slider-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .sim-slider-group label strong {
+    color: var(--accent);
+  }
+  .sim-slider {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 3px;
+    outline: none;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .sim-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  }
+  .sim-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+  .sim-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .sim-preset {
+    padding: 4px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .sim-preset:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .sim-preset.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .sim-run-btn {
+    padding: 12px 32px;
+    background: linear-gradient(135deg, var(--accent-green), #2ea043);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+  .sim-run-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  .sim-run-btn:active {
+    transform: translateY(0);
+  }
+  .sim-run-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 12px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
+  }
+
+  /* Meta info */
+  .sim-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .sim-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sim-meta strong {
+    color: var(--text);
+  }
+
+  /* Champion table */
+  .champ-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .champ-table th {
+    background: rgba(255,255,255,0.03);
+    padding: 10px 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .champ-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .champ-table tr:hover {
+    background: var(--bg-hover);
+  }
+  .champ-table tr:last-child td {
+    border-bottom: none;
+  }
+  .champ-rank {
+    font-weight: 700;
+    color: var(--text-muted);
+    width: 36px;
+    text-align: center;
+  }
+  .champ-top3 .champ-rank {
+    color: var(--warning);
+    font-size: 1.1rem;
+  }
+  .champ-team {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .champ-team .flag {
+    font-size: 1.2rem;
+  }
+  .champ-elo {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    width: 50px;
+  }
+  .champ-pct {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    width: 60px;
+    text-align: right;
+    color: var(--accent-green);
+  }
+  .champ-bar-cell {
+    width: 40%;
+    min-width: 100px;
+  }
+  .champ-bar {
+    display: block;
+    height: 18px;
+    background: linear-gradient(90deg, #f0883e, #da3633, #f85149);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+    min-width: 2px;
+  }
+  .champ-bar-gold {
+    background: linear-gradient(90deg, #d29922, #f0c040, #d29922);
+  }
+  .champ-bar-silver {
+    background: linear-gradient(90deg, #8b949e, #c9d1d9, #8b949e);
+  }
+  .champ-bar-bronze {
+    background: linear-gradient(90deg, #8b6914, #c9852e, #8b6914);
+  }
+
+  /* Stage Matrix */
+  .matrix-wrapper {
+    overflow-x: auto;
+  }
+  .stage-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    min-width: 600px;
+  }
+  .stage-matrix th {
+    background: rgba(255,255,255,0.03);
+    padding: 8px 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .stage-matrix th:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--bg-card);
+    z-index: 1;
+  }
+  .stage-matrix td {
+    padding: 6px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+  .stage-matrix tr:hover td {
+    background: var(--bg-hover);
+  }
+  .stage-matrix td:first-child {
+    text-align: left;
+    font-weight: 600;
+    position: sticky;
+    left: 0;
+    background: var(--bg-card);
+    z-index: 1;
+    white-space: nowrap;
+  }
+  .stage-matrix tr:hover td:first-child {
+    background: var(--bg-hover);
+  }
+  .stage-matrix .team-row {
+    cursor: pointer;
+  }
+  .stage-matrix .team-row:hover td {
+    background: var(--bg-hover);
+  }
+  .cell-high {
+    color: var(--accent-green);
+  }
+  .cell-mid {
+    color: var(--warning);
+  }
+  .cell-low {
+    color: var(--text-muted);
+  }
+  .cell-zero {
+    color: var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sim-controls-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .sim-run-btn {
+      width: 100%;
+      text-align: center;
+    }
+    .champ-table { font-size: 0.78rem; }
+    .champ-table td, .champ-table th { padding: 8px; }
+    .champ-bar-cell { min-width: 60px; }
+    .stage-matrix { font-size: 0.75rem; }
+    .stage-matrix td, .stage-matrix th { padding: 4px 6px; }
+  }
+  </style>
+
+  <script>
+  (function() {
+    'use strict';
+
+    const slider = document.getElementById('sim-slider');
+    const countLabel = document.getElementById('sim-count-label');
+    const presets = document.querySelectorAll('.sim-preset');
+    const runBtn = document.getElementById('sim-run-btn');
+    const spinner = document.getElementById('loading-spinner');
+    const loadingSims = document.getElementById('loading-sims');
+    const results = document.getElementById('sim-results');
+    const meta = document.getElementById('sim-meta');
+    const champTable = document.getElementById('champion-table');
+    const stageMatrix = document.getElementById('stage-matrix');
+
+    const STAGES = [
+      { key: 'round32', label: '32强' },
+      { key: 'round16', label: '16强' },
+      { key: 'quarter', label: '8强' },
+      { key: 'semi', label: '4强' },
+      { key: 'final', label: '决赛' },
+      { key: 'champion', label: '冠军' },
+    ];
+
+    // ---- Helper: Format number ----
+    function formatNum(n) {
+      return Number(n).toLocaleString();
+    }
+
+    // ---- Slider / Presets ----
+    function updateSliderVal(val) {
+      slider.value = val;
+      countLabel.textContent = formatNum(val);
+      presets.forEach(b => b.classList.toggle('active', parseInt(b.dataset.value) === val));
+    }
+
+    slider.addEventListener('input', function() {
+      const val = parseInt(this.value);
+      countLabel.textContent = formatNum(val);
+      presets.forEach(b => b.classList.toggle('active', parseInt(b.dataset.value) === val));
+    });
+
+    presets.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const val = parseInt(this.dataset.value);
+        updateSliderVal(val);
+      });
+    });
+
+    // ---- Color helpers ----
+    function cellClass(val) {
+      if (val >= 50) return 'cell-high';
+      if (val >= 20) return 'cell-mid';
+      if (val >= 1) return 'cell-low';
+      return 'cell-zero';
+    }
+
+    function barClass(rank) {
+      if (rank === 1) return 'champ-bar-gold';
+      if (rank === 2) return 'champ-bar-silver';
+      if (rank === 3) return 'champ-bar-bronze';
+      return '';
+    }
+
+    // ---- Render champion table ----
+    function renderChampionTable(teams) {
+      const top12 = teams.slice(0, 12);
+      const maxChamp = Math.max(...top12.map(t => t.prob.champion), 1);
+
+      let html = '<table class="champ-table">';
+      html += '<thead><tr><th>#</th><th>球队</th><th>Elo</th><th>小组</th><th>概率</th><th></th></tr></thead><tbody>';
+      top12.forEach((t, i) => {
+        const rank = i + 1;
+        const pct = t.prob.champion;
+        const barW = Math.max((pct / maxChamp) * 100, 1);
+        const top3Class = rank <= 3 ? 'champ-top3' : '';
+        html += `<tr class="${top3Class}">
+          <td class="champ-rank">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</td>
+          <td class="champ-team"><span class="flag">${t.flag || '⚽'}</span> ${t.name || t.slug}</td>
+          <td class="champ-elo">${t.elo || '-'}</td>
+          <td style="color:var(--text-muted);font-size:0.8rem">${t.group || '-'}</td>
+          <td class="champ-pct">${pct.toFixed(1)}%</td>
+          <td class="champ-bar-cell"><span class="champ-bar ${barClass(rank)}" style="width:${barW}%"></span></td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      champTable.innerHTML = html;
+    }
+
+    // ---- Render stage matrix ----
+    function renderStageMatrix(teams) {
+      let html = '<thead><tr><th>球队</th>';
+      STAGES.forEach(s => {
+        html += `<th>${s.label}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+
+      teams.forEach(t => {
+        html += `<tr class="team-row">`;
+        html += `<td><span class="flag">${t.flag || '⚽'}</span> ${t.name || t.slug}</td>`;
+        STAGES.forEach(s => {
+          const val = t.prob[s.key] || 0;
+          const cls = cellClass(val);
+          html += `<td class="${cls}">${val.toFixed(1)}%</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody>';
+      stageMatrix.innerHTML = html;
+    }
+
+    // ---- Run simulation ----
+    async function runSimulation() {
+      const sims = parseInt(slider.value);
+
+      // Disable controls
+      runBtn.disabled = true;
+      runBtn.textContent = '⏳ 模拟中...';
+      results.style.display = 'none';
+      spinner.style.display = 'block';
+      loadingSims.textContent = formatNum(sims);
+
+      try {
+        const response = await fetch('/api/standings/advancement?sims=' + sims);
+        if (!response.ok) throw new Error('API 请求失败: ' + response.status);
+        const data = await response.json();
+
+        // Hide spinner, show results
+        spinner.style.display = 'none';
+        results.style.display = 'block';
+
+        // Meta info
+        const total = data.simulations || sims;
+        const elapsed = data.elapsed || '-';
+        const ts = data.generatedAt ? new Date(data.generatedAt).toLocaleString('zh-CN') : '-';
+        meta.innerHTML = `
+          <span>🔄 模拟 <strong>${formatNum(total)}</strong> 次</span>
+          <span>⏱️ 耗时 <strong>${elapsed}</strong></span>
+          <span>📅 生成时间 <strong>${ts}</strong></span>
+          <span>📊 参赛队 <strong>${data.teams.length}</strong> 支</span>
+        `;
+
+        // Render tables
+        renderChampionTable(data.teams);
+        renderStageMatrix(data.teams);
+
+      } catch (err) {
+        spinner.style.display = 'none';
+        results.style.display = 'block';
+        results.innerHTML = `
+          <div style="text-align:center;padding:40px;color:var(--win-away)">
+            <h2>❌ 模拟失败</h2>
+            <p style="margin-top:8px">${err.message}</p>
+          </div>
+        `;
+        console.error('[Simulator]', err);
+      } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = '▶ 运行模拟';
+      }
+    }
+
+    // ---- Bind Run button ----
+    runBtn.addEventListener('click', runSimulation);
+
+    // ---- Auto-run on page load with default 10K ----
+    runSimulation();
+
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .article-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #4a8bc2;
+      font-size: 0.9rem;
+      text-decoration: none;
+      margin-bottom: 20px;
+    }
+    .article-back-link:hover {
+      text-decoration: underline;
+    }
+    .article-header {
+      margin-bottom: 28px;
+    }
+    .article-meta {
+      font-size: 0.85rem;
+      color: #6a7a8e;
+      margin-bottom: 10px;
+    }
+    .article-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .article-tag {
+      display: inline-block;
+      background: #2a3a4e;
+      color: #8ab8e0;
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .article-body {
+      line-height: 1.8;
+      color: #c8d8e8;
+      font-size: 1rem;
+    }
+    .article-body h2 {
+      font-size: 1.3rem;
+      color: #e0e8f0;
+      margin: 28px 0 12px;
+      border-bottom: 1px solid #2a3a4e;
+      padding-bottom: 8px;
+    }
+    .article-body h3 {
+      font-size: 1.1rem;
+      color: #d0dce8;
+      margin: 22px 0 10px;
+    }
+    .article-body p {
+      margin-bottom: 16px;
+    }
+    .article-body .highlight-box {
+      background: #1a2738;
+      border-left: 4px solid #4a8bc2;
+      padding: 16px 18px;
+      border-radius: 6px;
+      margin: 18px 0;
+      color: #b0c8e0;
+    }
+    .article-body .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: 0.9rem;
+    }
+    .article-body .data-table th,
+    .article-body .data-table td {
+      border: 1px solid #2a3a4e;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    .article-body .data-table th {
+      background: #1a2738;
+      color: #8ab8e0;
+      font-weight: 600;
+    }
+    .article-body .data-table td {
+      color: #b0c8e0;
+    }
+    .article-body ul, .article-body ol {
+      margin: 10px 0 16px 22px;
+      color: #c0d0e0;
+    }
+    .article-body li {
+      margin-bottom: 6px;
+    }
+    .article-body strong {
+      color: #e8f0f8;
+    }
+    .article-footer-nav {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #2a3a4e;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .article-footer-nav a {
+      color: #4a8bc2;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .article-footer-nav a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .article-body {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content article-page">
+    <a href="/blog" class="article-back-link">← 返回博客列表</a>
+
+    <%
+      const articles = {
+        'messi-record': {
+          date: '2026-06-23',
+          title: '梅西破纪录：追平克洛泽世界杯进球神话',
+          tags: ['梅西', '阿根廷', '纪录'],
+          bodyHtml: `
+            <p>2026 年 6 月 23 日，阿根廷在小组赛第二轮对阵 —— 梅西在下半场第 67 分钟和第 83 分钟连入两球，帮助球队 3-1 取胜的同时，也以 16 粒世界杯进球追平了米罗斯拉夫·克洛泽保持的历史纪录。</p>
+
+            <h2>纪录之路</h2>
+            <p>梅西的世界杯进球分布如下：</p>
+            <table class="data-table">
+              <tr><th>届次</th><th>进球数</th><th>出场数</th><th>最佳成绩</th></tr>
+              <tr><td>2006 德国</td><td>1</td><td>3</td><td>8 强</td></tr>
+              <tr><td>2010 南非</td><td>0</td><td>5</td><td>8 强</td></tr>
+              <tr><td>2014 巴西</td><td>4</td><td>7</td><td>亚军</td></tr>
+              <tr><td>2018 俄罗斯</td><td>1</td><td>4</td><td>16 强</td></tr>
+              <tr><td>2022 卡塔尔</td><td>7</td><td>7</td><td><strong>冠军</strong></td></tr>
+              <tr><td>2026 美加墨</td><td>3（进行中）</td><td>2</td><td>—</td></tr>
+              <tr><td><strong>总计</strong></td><td><strong>16</strong></td><td><strong>28</strong></td><td></td></tr>
+            </table>
+
+            <div class="highlight-box">
+              <strong>纪录对比：</strong>克洛泽 16 球用了 24 场（场均 0.67 球），梅西 16 球用了 28 场（场均 0.57 球）。但梅西已参加的届次更多，且 2022 年以 7 球夺冠的表现堪称个人巅峰。
+            </div>
+
+            <h2>超越的可能性</h2>
+            <p>阿根廷已经锁定小组出线，若进入淘汰赛，梅西最多还有 4 场可踢。以他目前的状态——本届每 90 分钟预期进球（xG）高达 0.82——追平甚至超越 17 球纪录并非遥不可及。</p>
+            <p>不过，梅西已 39 岁，体能管理将是关键。阿根廷主帅斯卡洛尼在确认出线后很可能让部分主力轮换休息，这或许会限制梅西的出场时间。</p>
+
+            <h2>历史地位</h2>
+            <p>无论最终能否独占榜首，梅西已经用六届世界杯的稳定输出证明了自己作为最伟大足球运动员之一的地位。世界杯冠军 + 世界杯金球 + 历史进球纪录竞争者——这样的成就前无古人。</p>
+          `
+        },
+        'cape-verde-dark-horse': {
+          date: '2026-06-22',
+          title: '黑马佛得角：小组赛不败，非洲新势力崛起',
+          tags: ['佛得角', '黑马', '非洲'],
+          bodyHtml: `
+            <p>当佛得角在 2025 年 10 月锁定世界杯参赛资格时，大多数人认为这支人口不到 60 万的西非岛国只是"参与即胜利"。小组赛两轮过后，佛得角 1 胜 1 平保持不败，力压种子队排名小组第二——这个结果让整个足坛为之侧目。</p>
+
+            <h2>防守为本</h2>
+            <p>佛得角的战术并不复杂：稳固防守 + 高速反击。小组赛前两场，他们场均只有 38% 的控球率，但防守端仅被对手射正 5 次，预期失球（xGA）合计仅 1.1 个。</p>
+
+            <div class="highlight-box">
+              <strong>关键数据：</strong>佛得角场均拦截 17.5 次，解围 32 次——两项数据均位列本届赛事前三。中卫组合洛佩斯与费尔南德斯的搭档覆盖了禁区内绝大部分危险区域。
+            </div>
+
+            <h2>反击效率</h2>
+            <p>防守不是全部。佛得角的反击效率极高：两场比赛共完成 9 次射门，5 次射正，打进 3 球。射门转化率 33%，在所有球队中排名第一。</p>
+            <p>头号射手利马·蒙泰罗已打入 2 球，他的速度与跑位让任何防线都不敢掉以轻心。</p>
+
+            <h2>非洲足球的新范式</h2>
+            <p>传统非洲强队（尼日利亚、喀麦隆、加纳等）在本届赛事中表现平平，反倒是佛得角这样的"小球队"打出了令人信服的足球。这或许代表了非洲足球的新方向——依靠整体纪律而非个人天赋。</p>
+            <p>最后一轮，佛得角将面对小组头名。只要打平即可确保出线——这支西非黑马的故事，远未结束。</p>
+          `
+        },
+        'draw-epidemic': {
+          date: '2026-06-21',
+          title: '平局魔咒：小组赛平局率达到 38%，原因何在？',
+          tags: ['数据', '战术', '小组赛'],
+          bodyHtml: `
+            <p>2026 世界杯小组赛前两轮战罢，一个醒目的数据浮出水面：平局率高达 38%，远超 2018 年（22%）和 2022 年（25%）。</p>
+
+            <h2>数据全景</h2>
+            <table class="data-table">
+              <tr><th>届次</th><th>小组赛平局率</th><th>0-0 占比</th><th>1-1 占比</th></tr>
+              <tr><td>2018 俄罗斯</td><td>22%</td><td>7%</td><td>11%</td></tr>
+              <tr><td>2022 卡塔尔</td><td>25%</td><td>8%</td><td>13%</td></tr>
+              <tr><td>2026 美加墨（前两轮）</td><td><strong>38%</strong></td><td><strong>14%</strong></td><td><strong>17%</strong></td></tr>
+            </table>
+
+            <h2>原因一：扩军效应</h2>
+            <p>48 队参赛意味着更多"实力接近"的中下游球队对决。此前 32 队时代，小组赛强弱分明的情况更多；而如今中等水平球队之间的比赛，双方都缺乏一击制胜的绝对实力，更容易走向平局。</p>
+
+            <h2>原因二：体能分配</h2>
+            <p>本届赛事在北美夏季进行，高温高湿的气候条件迫使球队在比赛前中段采取保守节奏。许多球队选择上半场控球消耗，下半场才发力——这种"慢热"策略增加了比赛陷入僵局的概率。</p>
+
+            <h2>原因三：积分策略</h2>
+            <p>扩军后的小组出线规则为：小组前两名直接出线，另有 8 个成绩最好的小组第三也晋级 32 强。这意味着拿 1 分的价值比以往更高——弱队更愿意"守平"，强队在确保晋级的前提下也倾向于不冒险。</p>
+
+            <div class="highlight-box">
+              <strong>模型预测：</strong>如果平局率维持在 38% 以上，这将是自 1990 年（40%）以来平局率最高的一届世界杯。1990 年以防守足球著称，而 2026 年的平局潮则更多源于赛制与战术的双重作用。
+            </div>
+
+            <h2>展望</h2>
+            <p>淘汰赛阶段采用单场决胜制，平局后将进入加时和点球——这将迫使球队从第一分钟就采取更积极的姿态。小组赛的"平局魔咒"或许会随着淘汰赛的到来而终结。</p>
+          `
+        },
+        'mbappe-milestone': {
+          date: '2026-06-20',
+          title: '姆巴佩里程碑：加冕法国队史射手王',
+          tags: ['姆巴佩', '法国', '纪录'],
+          bodyHtml: `
+            <p>2026 年 6 月 20 日，基利安·姆巴佩在法国对阵丹麦的小组赛中打入个人国家队第 47 球，超越蒂埃里·亨利（46 球），独享法国队史射手王宝座。更可怕的是，他完成这一成就时年仅 27 岁。</p>
+
+            <h2>数字背后的速度</h2>
+            <table class="data-table">
+              <tr><th>球员</th><th>进球数</th><th>出场数</th><th>完成年龄</th></tr>
+              <tr><td>基利安·姆巴佩</td><td><strong>47</strong></td><td>86</td><td>27 岁</td></tr>
+              <tr><td>蒂埃里·亨利</td><td>46</td><td>123</td><td>32 岁</td></tr>
+              <tr><td>奥利维耶·吉鲁</td><td>44</td><td>131</td><td>35 岁</td></tr>
+              <tr><td>米歇尔·普拉蒂尼</td><td>41</td><td>72</td><td>32 岁</td></tr>
+            </table>
+
+            <p>姆巴佩的场均进球率（0.55 球/场）不仅是法国队史最高，在所有出场超过 50 次的欧洲顶级射手中也名列前茅。</p>
+
+            <h2>战术角色转变</h2>
+            <p>在法国队，姆巴佩的角色经历了多次演变。早期他作为边路爆破手存在，凭借绝对速度撕开防线；2022 世界杯后，德尚赋予了他更多自由——他可以在中路游走，作为伪 9 号组织进攻。</p>
+
+            <div class="highlight-box">
+              <strong>本届表现：</strong>两场小组赛贡献 3 球 1 助攻，场均射门 4.5 次，预期进球（xG）合计 2.8。姆巴佩的巅峰状态让法国成为本届赛事最大热门之一。
+            </div>
+
+            <h2>纪录的尽头</h2>
+            <p>以姆巴佩目前的速度，只要保持健康，他完全有可能在 30 岁前将国家队进球数推至 70 球以上。国际足坛的历史级射手榜（C 罗 130 球、阿里·代伊 108 球、梅西 106 球）或许会在未来十年迎来一位新的挑战者。</p>
+          `
+        },
+        'portugal-form': {
+          date: '2026-06-19',
+          title: '葡萄牙状态分析：黄金一代能否兑现天赋？',
+          tags: ['葡萄牙', '状态', '淘汰赛'],
+          bodyHtml: `
+            <p>葡萄牙小组赛前两场全胜，进 7 球失 2 球，以统治性表现提前锁定出线名额。这支号称"黄金二代"的葡萄牙，与 2016 年欧洲杯夺冠的那支球队相比，拥有更强的攻击火力和更多元的战术选择。</p>
+
+            <h2>攻击线火力全开</h2>
+            <ul>
+              <li><strong>布鲁诺·费尔南德斯：</strong>2 球 2 助攻，场均关键传球 4.3 次，是葡萄牙的进攻节拍器</li>
+              <li><strong>拉斐尔·莱奥：</strong>场均 3.5 次成功过人，边路一对一成功率 68%，制造了 2 个点球</li>
+              <li><strong>若昂·菲利克斯：</strong>在伪 9 号位置上完成 1 球 2 助，跑位与串联能力突出</li>
+              <li><strong>维蒂尼亚：</strong>中场传球成功率 93%，场均 80 次触球，是攻防转换的枢纽</li>
+            </ul>
+
+            <h2>防守隐忧</h2>
+            <p>尽管两战全胜，葡萄牙的防守并非无懈可击。两场比赛对手共获得 12 次射门机会，预期失球（xGA）合计 2.4。后防线平均年龄 31 岁（佩佩 43 岁、R·迪亚斯 29 岁、坎塞洛 32 岁），在密集赛程下的体能消耗值得关注。</p>
+
+            <div class="highlight-box">
+              <strong>模型观点：</strong>葡萄牙的夺冠概率为 12.3%，在 48 队中排名第 4。攻强守弱的特点使得他们在面对顶级强队（法国、阿根廷、巴西）时存在不确定性——淘汰赛的防守强度将是真正的试金石。
+            </div>
+
+            <h2>淘汰赛展望</h2>
+            <p>葡萄牙落位在相对均衡的半区，最可能在 8 强战遭遇西班牙或荷兰。以目前的攻击力，葡萄牙有能力与任何球队对攻；但若想重现 2016 年的辉煌，防守端的专注度与稳健度将是决定性因素。</p>
+          `
+        },
+        'hosts-performance': {
+          date: '2026-06-18',
+          title: '东道主表现：美加墨三国联办，主场优势几何？',
+          tags: ['东道主', '美国', '加拿大', '墨西哥'],
+          bodyHtml: `
+            <p>2026 世界杯首次由三个国家联合主办。美国、加拿大、墨西哥三支东道主球队在小组赛阶段表现如何？"主场优势"在这一特殊赛制下是否依然成立？</p>
+
+            <h2>美国：青年军的火力风暴</h2>
+            <p>美国队前两场轰入 6 球，是东道主中攻击力最强的。普利西奇、维阿、巴洛贡组成的攻击线速度与技术兼备，在对阵中北美球队时具备明显优势。</p>
+            <p>关键数据：美国场均控球率 58%，场均射门 16.5 次，射正率 48%——这些数据在所有球队中均排名前 8。</p>
+
+            <h2>加拿大：防守反击的务实派</h2>
+            <p>加拿大的小组赛策略以稳为主：1 胜 1 平，仅失 1 球。阿方索·戴维斯在左路的攻防覆盖能力是世界级的，中卫组合（维多利亚 + 科内柳斯）的稳定性超出预期。</p>
+
+            <div class="highlight-box">
+              <strong>有趣发现：</strong>加拿大在主场（温哥华）比赛时的场均跑动距离为 117km，比其他场地多出 4km——主场精神加成并非玄学。
+            </div>
+
+            <h2>墨西哥：经验丰富的"老江湖"</h2>
+            <p>墨西哥连续八届世界杯小组出线，本届依旧稳健：1 胜 1 负（输给阿根廷在预料之中），老将奥乔亚和瓜尔达多的经验在关键时刻发挥了作用。</p>
+
+            <h2>主场优势的数据验证</h2>
+            <p>从历史数据看，世界杯东道主在小组赛阶段的胜率约为 65%，远高于非东道主的 45%。但本届三国联办的"主场稀释"效应值得关注——三支东道主球队在场次上无法全部享受主场待遇，且心理上的"国家荣誉感"被分散。</p>
+            <p>不过，三国球队全员晋级淘汰赛的概率仍高达 85% 以上——北美大陆的足球热情，正在 2026 年夏天被彻底点燃。</p>
+          `
+        },
+        'championship-landscape': {
+          date: '2026-06-17',
+          title: '夺冠格局：为何没有一支球队夺冠概率超过 17%？',
+          tags: ['夺冠', '格局', '数据'],
+          bodyHtml: `
+            <p>2026 世界杯小组赛过半，各大博彩公司预测模型给出了一幅前所未有的景象：<strong>没有一支球队的夺冠概率超过 17%</strong>。这在国际大赛中极为罕见——2022 世界杯巴西 22%，2018 年德国 24%，2014 年西班牙 27%。</p>
+
+            <h2>夺冠概率 TOP 8（模型估算）</h2>
+            <table class="data-table">
+              <tr><th>排名</th><th>球队</th><th>夺冠概率</th><th>上届成绩</th></tr>
+              <tr><td>1</td><td>法国</td><td>16.8%</td><td>亚军</td></tr>
+              <tr><td>2</td><td>阿根廷</td><td>15.2%</td><td>冠军</td></tr>
+              <tr><td>3</td><td>巴西</td><td>13.4%</td><td>8 强</td></tr>
+              <tr><td>4</td><td>葡萄牙</td><td>12.3%</td><td>8 强</td></tr>
+              <tr><td>5</td><td>西班牙</td><td>9.8%</td><td>16 强</td></tr>
+              <tr><td>6</td><td>英格兰</td><td>8.7%</td><td>8 强</td></tr>
+              <tr><td>7</td><td>德国</td><td>6.5%</td><td>小组赛</td></tr>
+              <tr><td>8</td><td>荷兰</td><td>5.4%</td><td>8 强</td></tr>
+            </table>
+
+            <h2>原因分析</h2>
+            <p><strong>1. 48 队扩军——赛程更密，爆冷更多</strong></p>
+            <p>扩军后的世界杯赛程更加密集，强队需要踢更多比赛才能夺冠（冠军需踢 8 场而非 7 场）。赛程密度增加使冷门概率上升，强队的稳定性优势被削弱。</p>
+
+            <p><strong>2. 实力均衡化——"超级强队"缺失</strong></p>
+            <p>本届赛事没有一支"梦之队"。法国状态火热但姆巴佩依赖症明显；阿根廷整体老化；巴西缺乏真正的核心组织者。传统三强各有短板，让第二梯队的葡萄牙、西班牙、英格兰看到了机会。</p>
+
+            <p><strong>3. 主客场均衡化</strong></p>
+            <p>三国联办意味着传统的中立场地赛制被打破——没有一支球队拥有绝对的主场优势。法国可能在墨西哥城面临高海拔挑战，阿根廷在加拿大的低温场地需要适应。</p>
+
+            <div class="highlight-box">
+              <strong>历史类比：</strong>最接近本届格局的是 2010 南非世界杯——当时没有一支球队的赔率低于 4.0，最终西班牙、荷兰、德国、乌拉圭四强各具特色。2026 年或许会重演这种"群雄逐鹿"的经典剧本。
+            </div>
+
+            <h2>结语</h2>
+            <p>17% 的天花板意味着本届世界杯的不可预测性可能达到历史之最。对于球迷而言，这或许是好事——没有超级大热门的赛事，每一场淘汰赛都可能诞生新的传奇。</p>
+          `
+        }
+      };
+
+      const article = articles[articleSlug];
+    %>
+
+    <% if (article) { %>
+      <div class="article-header">
+        <h1><%= article.title %></h1>
+        <div class="article-meta">📅 <%= article.date %> · 深度分析</div>
+        <div class="article-tags">
+          <% article.tags.forEach(function(t) { %>
+            <span class="article-tag">#<%= t %></span>
+          <% }); %>
+        </div>
+      </div>
+
+      <div class="article-body">
+        <%- article.bodyHtml %>
+      </div>
+
+      <div class="article-footer-nav">
+        <a href="/blog">← 返回博客列表</a>
+        <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">↑ 回到顶部</a>
+      </div>
+    <% } else { %>
+      <div class="page-header">
+        <h1>文章未找到</h1>
+        <p class="subtitle">抱歉，您访问的文章不存在</p>
+      </div>
+      <p style="color:#8899aa;text-align:center;margin-top:20px;">
+        <a href="/blog" style="color:#4a8bc2;">← 返回博客列表</a>
+      </p>
+    <% } %>
+  </main>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>
