@@ -1,8 +1,26 @@
 import { Router } from 'express';
 import { getTeamInfo, getRatings } from '../services/dataService.js';
-import { predictMatch, predictUpcoming } from '../services/predictionService.js';
+import { predictMatch as eloPredictMatch, predictUpcoming } from '../services/predictionService.js';
 import { fetchAllMatches, fetchUpcomingMatches, fetchStandings } from '../services/footballApi.js';
 import { buildCacheMeta } from '../middleware/cache.js';
+import mlConfig from '../ml/config.js';
+
+// ML 推理（懒加载，仅启用时引入）
+let mlPredictor = null;
+async function getMLPredictor() {
+  if (!mlConfig.enabled) return null;
+  if (!mlPredictor) {
+    try {
+      const mod = await import('../ml/inference/predictor.js');
+      const available = await mod.checkModels();
+      if (available) mlPredictor = mod;
+      else console.warn('[matches] ML 模型不可用，降级到 Elo');
+    } catch (e) {
+      console.warn('[matches] ML 推理加载失败:', e.message);
+    }
+  }
+  return mlPredictor;
+}
 
 const router = Router();
 const BJ_TIMEZONE = 'Asia/Shanghai';
@@ -150,13 +168,38 @@ router.get('/upcoming', async (req, res) => {
   }
 });
 
-// ===== 单场比赛预测（支持 API 和静态数据） =====
+// ===== 单场比赛预测（支持引擎切换） =====
 router.get('/match/:t1/:t2', async (req, res) => {
   const { t1, t2 } = req.params;
-  const prediction = predictMatch(t1, t2, null, req.forceRefresh);
+  const engine = req.query.engine || 'elo';
+
+  let prediction;
+
+  if (engine === 'ml' || engine === 'ensemble') {
+    const mlMod = await getMLPredictor();
+    if (mlMod) {
+      try {
+        const mlPred = await mlMod.predictMatch(t1, t2, new Date().toISOString().split('T')[0]);
+        if (engine === 'ml') {
+          prediction = mlPred;
+        } else {
+          const eloPred = eloPredictMatch(t1, t2, null, req.forceRefresh);
+          prediction = mlMod.ensemblePrediction(eloPred, mlPred);
+        }
+      } catch (e) {
+        console.warn(`[matches] ${engine} 推理失败，降级到 Elo:`, e.message);
+        prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+        prediction._degraded = true;
+      }
+    } else {
+      prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+      prediction._degraded = true;
+    }
+  } else {
+    prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+  }
 
   try {
-    // 尝试从 API 获取比赛信息
     const all = await fetchAllMatches(req.forceRefresh);
     const match = all.find(m =>
       (m.t1 === t1 && m.t2 === t2) || (m.t1 === t2 && m.t2 === t1)
@@ -166,13 +209,12 @@ router.get('/match/:t1/:t2', async (req, res) => {
       return res.json({
         match: { ...match, team1Info: getTeamInfo(t1), team2Info: getTeamInfo(t2) },
         prediction,
-        _cache: buildCacheMeta(`pred:${t1}:${t2}:`, true, null),
+        _cache: buildCacheMeta(`pred:${t1}:${t2}:${engine}`, true, null),
       });
     }
   } catch {}
 
-  // 降级：纯实力预测
-  res.json({ match: null, prediction, note: '基于 Elo 实力的纯预测', _cache: { hit: false } });
+  res.json({ match: null, prediction, note: '基于实力的纯预测', engine, _cache: { hit: false } });
 });
 
 // ===== 两队对比 =====

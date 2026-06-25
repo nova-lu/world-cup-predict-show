@@ -499,6 +499,17 @@ a:hover { text-decoration: underline; }
 }
 .winner-score { color: var(--accent-green); }
 .match-xg-info { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; text-align: right; }
+.engine-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  background: #1a3a6c;
+  color: #88bbff;
+  border: 1px solid #2a5a8c;
+  vertical-align: middle;
+  margin-left: 4px;
+}
 .match-result-info { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; text-align: right; }
 
 /* ===== Quick Nav ===== */
@@ -647,6 +658,235 @@ a:hover { text-decoration: underline; }
 .odds-compare-label { color: var(--text-muted); font-size: 0.72rem; }
 .odds-compare-val { font-weight: 600; }
 .odds-vs-model { color: rgba(140,160,200,0.6); font-size: 0.72rem; }
+
+/* ════════════════════════════════════════════
+   ML 引擎 UI
+   ════════════════════════════════════════════ */
+
+/* 引擎选择器 */
+.engine-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 16px 0;
+}
+.engine-tab {
+  padding: 8px 20px;
+  border: 1.5px solid #2a3a5c;
+  border-radius: 20px;
+  background: transparent;
+  color: #8899bb;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.engine-tab:hover {
+  border-color: #3b82f6;
+  color: #bbb;
+}
+.engine-tab.active {
+  background: linear-gradient(135deg, #1a3a6c, #2a5a9c);
+  border-color: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(59,130,246,0.3);
+}
+
+/* ML 详情网格 */
+.ml-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+.ml-card {
+  background: #1a1f2e;
+  border: 1px solid #2a3a5c;
+  border-radius: 10px;
+  padding: 12px;
+}
+.ml-card-title {
+  font-size: 0.78rem;
+  color: #6688aa;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ml-card-wide {
+  grid-column: 1 / -1;
+}
+
+/* TOP 5 比分 (ML) */
+.ml-scores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ml-score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.ml-score-result {
+  min-width: 42px;
+  font-weight: 600;
+  color: #ddd;
+}
+.ml-score-prob-bar {
+  flex: 1;
+  height: 12px;
+  background: #0d1117;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ml-score-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #22d3ee);
+  border-radius: 6px;
+  transition: width 0.3s;
+}
+.ml-score-prob {
+  min-width: 50px;
+  text-align: right;
+  color: #88aacc;
+  font-size: 0.82rem;
+}
+
+/* 大小球 */
+.ml-ou-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+.ou-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 3px 0;
+}
+.ou-item.ou-total {
+  grid-column: 1 / -1;
+  border-top: 1px solid #2a3a5c;
+  margin-top: 4px;
+  padding-top: 6px;
+  font-weight: 600;
+}
+.ou-label { color: #6688aa; }
+.ou-val { color: #ddd; font-weight: 500; }
+
+/* BTTS */
+.btts-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.btts-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.btts-row span:first-child {
+  min-width: 20px;
+  color: #8899bb;
+}
+.btts-track {
+  flex: 1;
+  height: 14px;
+  background: #0d1117;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.btts-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.3s;
+}
+.btts-yes { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.btts-no { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.btts-pct {
+  min-width: 50px;
+  text-align: right;
+  color: #ddd;
+}
+
+/* 风险评估 */
+.risk-display {
+  text-align: center;
+}
+.risk-badge {
+  display: inline-block;
+  padding: 4px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+.risk-low { background: #16a34a22; color: #22c55e; border: 1px solid #22c55e; }
+.risk-medium { background: #eab30822; color: #eab308; border: 1px solid #eab308; }
+.risk-high { background: #ef444422; color: #ef4444; border: 1px solid #ef4444; }
+.risk-score {
+  display: block;
+  font-size: 0.82rem;
+  color: #8899bb;
+  margin-bottom: 4px;
+}
+.risk-desc {
+  font-size: 0.78rem;
+  color: #667788;
+  margin: 0;
+}
+
+/* 覆盖度 */
+.cov-display {
+  text-align: center;
+}
+.cov-pct {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b82f6;
+  line-height: 1.2;
+}
+.cov-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #667788;
+  margin: 4px 0;
+}
+.cov-pct.cov-small {
+  font-size: 1.1rem;
+  color: #22d3ee;
+}
+
+/* 引擎版本徽章 */
+.engine-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  background: linear-gradient(135deg, #3b82f6, #22d3ee);
+  color: #fff;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* 模型元数据 */
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
+}
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.83rem;
+  padding: 3px 0;
+}
+.meta-label { color: #6688aa; }
+.meta-val { color: #ddd; font-weight: 500; }
 
 /* ===== Cache Status Bar ===== */
 #cache-status-bar {

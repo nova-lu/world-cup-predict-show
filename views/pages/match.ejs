@@ -18,6 +18,13 @@
     </div>
     <div id="loading-spinner" class="loading">加载中...</div>
 
+    <!-- 引擎选择器 -->
+    <div class="engine-selector" id="engine-tabs">
+      <button class="engine-tab active" data-engine="elo" onclick="switchEngine('elo')">Elo 经典</button>
+      <button class="engine-tab" data-engine="ml" onclick="switchEngine('ml')">ML v1</button>
+      <button class="engine-tab" data-engine="ensemble" onclick="switchEngine('ensemble')">集成</button>
+    </div>
+
     <div id="prediction-detail" style="display:none">
       <!-- 概率卡片 -->
       <div class="prediction-summary">
@@ -108,6 +115,65 @@
         </div>
       </div>
 
+      <!-- ML 引擎额外信息 -->
+      <div class="info-section" id="ml-info-section" style="display:none">
+        <h2>ML 引擎详情 <span class="engine-badge" id="ml-version-badge">v1</span></h2>
+        <div class="ml-grid">
+          <!-- TOP 5 比分 -->
+          <div class="ml-card" id="ml-top-scores">
+            <div class="ml-card-title">最可能比分</div>
+            <div class="ml-scores-list" id="ml-scores-list"></div>
+          </div>
+          <!-- 大小球 -->
+          <div class="ml-card" id="ml-over-under">
+            <div class="ml-card-title">大小球</div>
+            <div class="ml-ou-grid" id="ml-ou-grid">
+              <div class="ou-item"><span class="ou-label">O2.5</span><span class="ou-val" id="ou-25-over">-%</span></div>
+              <div class="ou-item"><span class="ou-label">U2.5</span><span class="ou-val" id="ou-25-under">-%</span></div>
+              <div class="ou-item"><span class="ou-label">O3.5</span><span class="ou-val" id="ou-35-over">-%</span></div>
+              <div class="ou-item"><span class="ou-label">U3.5</span><span class="ou-val" id="ou-35-under">-%</span></div>
+              <div class="ou-item ou-total"><span class="ou-label">预期总进球</span><span class="ou-val" id="ou-expected-total">-</span></div>
+            </div>
+          </div>
+          <!-- BTTS -->
+          <div class="ml-card" id="ml-btts">
+            <div class="ml-card-title">双方进球 (BTTS)</div>
+            <div class="btts-bars">
+              <div class="btts-row"><span>是</span><div class="btts-track"><div class="btts-fill btts-yes" id="btts-yes-bar"></div></div><span class="btts-pct" id="btts-yes-pct">-%</span></div>
+              <div class="btts-row"><span>否</span><div class="btts-track"><div class="btts-fill btts-no" id="btts-no-bar"></div></div><span class="btts-pct" id="btts-no-pct">-%</span></div>
+            </div>
+          </div>
+          <!-- 风险评估 -->
+          <div class="ml-card" id="ml-risk">
+            <div class="ml-card-title">风险评估</div>
+            <div class="risk-display">
+              <span class="risk-badge" id="risk-level-badge">-</span>
+              <span class="risk-score" id="risk-score-text">-</span>
+              <p class="risk-desc" id="risk-description">-</p>
+            </div>
+          </div>
+          <!-- 覆盖度 -->
+          <div class="ml-card" id="ml-coverage">
+            <div class="ml-card-title">覆盖度</div>
+            <div class="cov-display">
+              <span class="cov-pct" id="coverage-pct">-%</span>
+              <span class="cov-label">TOP 3 比分覆盖</span>
+              <span class="cov-pct cov-small" id="coverage-top3">-%</span>
+            </div>
+          </div>
+          <!-- 模型元数据 -->
+          <div class="ml-card ml-card-wide" id="ml-meta">
+            <div class="ml-card-title">模型元数据</div>
+            <div class="meta-grid">
+              <div class="meta-item"><span class="meta-label">引擎</span><span class="meta-val" id="meta-engine">ml-v1</span></div>
+              <div class="meta-item"><span class="meta-label">置信度</span><span class="meta-val" id="meta-confidence">-</span></div>
+              <div class="meta-item"><span class="meta-label">特征数</span><span class="meta-val" id="meta-features">-</span></div>
+              <div class="meta-item"><span class="meta-label">校准</span><span class="meta-val" id="meta-calibrated">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 进度指示器 -->
       <div class="info-section" id="progress-section" style="display:none">
         <h2>比赛进度</h2>
@@ -138,8 +204,10 @@
   <script>
   const t1 = '<%= team1Slug %>';
   const t2 = '<%= team2Slug %>';
+  let currentEngine = 'elo';
 
-  async function loadMatchData(force) {
+  async function loadMatchData(force, engine) {
+    engine = engine || currentEngine;
     if (force) {
       document.getElementById('loading-spinner').style.display = 'block';
     }
@@ -147,11 +215,12 @@
     document.getElementById('prediction-detail').style.display = 'none';
     document.getElementById('error-message').style.display = 'none';
     document.getElementById('scores-grid').innerHTML = '';
+    document.getElementById('ml-info-section').style.display = 'none';
     document.getElementById('odds-content').innerHTML = '<div class="loading-sm">加载赔率数据...</div>';
 
     try {
       const [matchData, compareData] = await Promise.all([
-        cachedFetch(`/api/matches/match/${t1}/${t2}`, { force }),
+        cachedFetch(`/api/matches/match/${t1}/${t2}?engine=${engine}`, { force }),
         cachedFetch(`/api/matches/compare/${t1}/${t2}?scores=true`, { force }),
       ]);
 
@@ -159,30 +228,51 @@
       const pred = matchData.prediction;
       const match = matchData.match;
 
+      // 更新引擎选择器
+      document.querySelectorAll('.engine-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.engine-tab[data-engine="${engine}"]`).classList.add('active');
+      currentEngine = engine;
+
+      // Elo 格式与 ML 格式兼容处理
+      const isElo = !pred.engine || pred.engine === 'elo';
+      const homeName = pred.home ? pred.home.name : pred.homeTeam;
+      const awayName = pred.away ? pred.away.name : pred.awayTeam;
+      const homeFlag = pred.home ? (pred.home.flag || '⚽') : '⚽';
+      const awayFlag = pred.away ? (pred.away.flag || '⚽') : '⚽';
+      const homeProb = isElo ? pred.prob.winHome : (pred.probabilities.homeWin * 100).toFixed(1);
+      const drawProb = isElo ? pred.prob.draw : (pred.probabilities.draw * 100).toFixed(1);
+      const awayProb = isElo ? pred.prob.winAway : (pred.probabilities.awayWin * 100).toFixed(1);
+      const xgHome = isElo ? pred.expectedGoals.home : pred.expectedGoals.home;
+      const xgAway = isElo ? pred.expectedGoals.away : pred.expectedGoals.away;
+
       document.getElementById('match-title').textContent =
-        `${pred.home.flag} ${pred.home.name} vs ${pred.away.name} ${pred.away.flag}`;
+        `${homeFlag} ${homeName} vs ${awayName} ${awayFlag}`;
 
       document.getElementById('prediction-detail').style.display = 'block';
 
       // 概率
-      document.getElementById('win-home-pct').textContent = pred.prob.winHome + '%';
-      document.getElementById('draw-pct').textContent = pred.prob.draw + '%';
-      document.getElementById('win-away-pct').textContent = pred.prob.winAway + '%';
+      document.getElementById('win-home-pct').textContent = homeProb + '%';
+      document.getElementById('draw-pct').textContent = drawProb + '%';
+      document.getElementById('win-away-pct').textContent = awayProb + '%';
 
       // xG
-      document.getElementById('xg-home-name').textContent = pred.home.flag + ' ' + pred.home.name;
-      document.getElementById('xg-away-name').textContent = pred.away.flag + ' ' + pred.away.name;
-      document.getElementById('xg-home-val').textContent = pred.expectedGoals.home;
-      document.getElementById('xg-away-val').textContent = pred.expectedGoals.away;
-      const maxXg = Math.max(pred.expectedGoals.home, pred.expectedGoals.away, 1.5);
-      document.getElementById('xg-home-bar').style.width = (pred.expectedGoals.home / maxXg * 100) + '%';
-      document.getElementById('xg-away-bar').style.width = (pred.expectedGoals.away / maxXg * 100) + '%';
+      document.getElementById('xg-home-name').textContent = homeFlag + ' ' + homeName;
+      document.getElementById('xg-away-name').textContent = awayFlag + ' ' + awayName;
+      document.getElementById('xg-home-val').textContent = xgHome;
+      document.getElementById('xg-away-val').textContent = xgAway;
+      const maxXg = Math.max(xgHome, xgAway, 1.5);
+      document.getElementById('xg-home-bar').style.width = (xgHome / maxXg * 100) + '%';
+      document.getElementById('xg-away-bar').style.width = (xgAway / maxXg * 100) + '%';
 
-      // Elo
-      document.getElementById('elo-home-name').textContent = pred.home.flag + ' ' + pred.home.name;
-      document.getElementById('elo-away-name').textContent = pred.away.flag + ' ' + pred.away.name;
-      document.getElementById('elo-home-score').textContent = pred.home.elo;
-      document.getElementById('elo-away-score').textContent = pred.away.elo;
+      // Elo 或 Elo 等效
+      if (pred.home && pred.home.elo) {
+        document.getElementById('elo-home-name').textContent = homeFlag + ' ' + homeName;
+        document.getElementById('elo-away-name').textContent = awayFlag + ' ' + awayName;
+        document.getElementById('elo-home-score').textContent = pred.home.elo;
+        document.getElementById('elo-away-score').textContent = pred.away.elo;
+      } else {
+        document.querySelector('.info-section:has(.elo-row)').style.display = 'none';
+      }
 
       // 比赛信息
       if (match) {
@@ -198,7 +288,6 @@
         document.getElementById('mi-status').textContent = match.status === 'FT' ? '已完赛' : match.status === 'TIMED' ? '未开赛' : match.status;
         document.getElementById('mi-score').textContent = (match.g1 != null) ? match.g1 + ' : ' + match.g2 : '-';
 
-        // 进度
         document.getElementById('progress-section').style.display = 'block';
         const stageOrder = ['GROUP_STAGE','LAST_32','LAST_16','QUARTER_FINALS','SEMI_FINALS','FINAL'];
         const currentIdx = stageOrder.indexOf(match.stage);
@@ -209,7 +298,7 @@
         });
       }
 
-      // 比分分布
+      // 比分分布 (Elo 的 topScores)
       if (compareData.topScores && compareData.topScores.length > 0) {
         document.getElementById('scores-section').style.display = 'block';
         const grid = document.getElementById('scores-grid');
@@ -226,60 +315,102 @@
       const oc = document.getElementById('odds-content');
       if (!oddsData.found || !oddsData.bookmakers) {
         oc.innerHTML = '<p class="text-muted">暂未获取到市场赔率</p>';
-        return;
+      } else {
+        oc.innerHTML = '';
+        const table = document.createElement('div');
+        table.className = 'odds-table';
+        const thead = document.createElement('div');
+        thead.className = 'odds-row odds-header';
+        thead.innerHTML = '<span class="odds-bm">博彩公司</span><span class="odds-val odds-h">主胜</span><span class="odds-val odds-d">平局</span><span class="odds-val odds-a">客胜</span>';
+        table.appendChild(thead);
+        for (const [bm, o] of Object.entries(oddsData.bookmakers)) {
+          const row = document.createElement('div');
+          row.className = 'odds-row';
+          row.innerHTML = `<span class="odds-bm">${bm}</span><span class="odds-val odds-h">${o.home.toFixed(3)}</span><span class="odds-val odds-d">${o.draw.toFixed(3)}</span><span class="odds-val odds-a">${o.away.toFixed(3)}</span>`;
+          table.appendChild(row);
+        }
+        const b = oddsData.best;
+        const totalImplied = 1/b.home + 1/b.draw + 1/b.away;
+        const fairRow = document.createElement('div');
+        fairRow.className = 'odds-row odds-fair';
+        fairRow.innerHTML = `<span class="odds-bm">公平概率</span><span class="odds-val odds-h">${(1/b.home / totalImplied * 100).toFixed(1)}%</span><span class="odds-val odds-d">${(1/b.draw / totalImplied * 100).toFixed(1)}%</span><span class="odds-val odds-a">${(1/b.away / totalImplied * 100).toFixed(1)}%</span>`;
+        table.appendChild(fairRow);
+        oc.appendChild(table);
       }
-      oc.innerHTML = '';
-      
-      // 构建赔率表格
-      const table = document.createElement('div');
-      table.className = 'odds-table';
-      
-      // 表头
-      const thead = document.createElement('div');
-      thead.className = 'odds-row odds-header';
-      thead.innerHTML = '<span class="odds-bm">博彩公司</span><span class="odds-val odds-h">主胜</span><span class="odds-val odds-d">平局</span><span class="odds-val odds-a">客胜</span>';
-      table.appendChild(thead);
-      
-      let firstBm = '';
-      for (const [bm, o] of Object.entries(oddsData.bookmakers)) {
-        if (!firstBm) firstBm = bm;
-        const row = document.createElement('div');
-        row.className = 'odds-row';
-        row.innerHTML = `
-          <span class="odds-bm">${bm}</span>
-          <span class="odds-val odds-h">${o.home.toFixed(3)}</span>
-          <span class="odds-val odds-d">${o.draw.toFixed(3)}</span>
-          <span class="odds-val odds-a">${o.away.toFixed(3)}</span>
-        `;
-        table.appendChild(row);
+
+      // ---------- ML 引擎额外信息 ----------
+      if (!isElo && pred.engine) {
+        document.getElementById('ml-info-section').style.display = 'block';
+        document.getElementById('ml-version-badge').textContent = pred.engineVersion || 'v1';
+
+        // TOP 5 比分（来自 ML 的 topScores 结构）
+        const topScores = pred.topScores || [];
+        const scoresList = document.getElementById('ml-scores-list');
+        scoresList.innerHTML = '';
+        topScores.slice(0, 5).forEach(s => {
+          const div = document.createElement('div');
+          div.className = 'ml-score-row';
+          div.innerHTML = `<span class="ml-score-result">${s.home} : ${s.away}</span><span class="ml-score-prob-bar"><span class="ml-score-bar" style="width:${(s.probability * 1000)}%"></span></span><span class="ml-score-prob">${(s.probability * 100).toFixed(1)}%</span>`;
+          scoresList.appendChild(div);
+        });
+
+        // 大小球
+        if (pred.overUnder) {
+          document.getElementById('ou-25-over').textContent = (pred.overUnder.over2_5 * 100).toFixed(1) + '%';
+          document.getElementById('ou-25-under').textContent = (pred.overUnder.under2_5 * 100).toFixed(1) + '%';
+          document.getElementById('ou-35-over').textContent = (pred.overUnder.over3_5 * 100).toFixed(1) + '%';
+          document.getElementById('ou-35-under').textContent = (pred.overUnder.under3_5 * 100).toFixed(1) + '%';
+          document.getElementById('ou-expected-total').textContent = pred.overUnder.expectedTotal;
+        }
+
+        // BTTS
+        if (pred.btts) {
+          const bttsYes = pred.btts.yes * 100;
+          const bttsNo = pred.btts.no * 100;
+          document.getElementById('btts-yes-pct').textContent = bttsYes.toFixed(1) + '%';
+          document.getElementById('btts-no-pct').textContent = bttsNo.toFixed(1) + '%';
+          document.getElementById('btts-yes-bar').style.width = bttsYes + '%';
+          document.getElementById('btts-no-bar').style.width = bttsNo + '%';
+        }
+
+        // 风险评估
+        if (pred.risk) {
+          const badge = document.getElementById('risk-level-badge');
+          badge.textContent = pred.risk.level === 'low' ? '低风险' : pred.risk.level === 'medium' ? '中风险' : '高风险';
+          badge.className = 'risk-badge risk-' + pred.risk.level;
+          document.getElementById('risk-score-text').textContent = '评分: ' + pred.risk.score;
+          document.getElementById('risk-description').textContent = pred.risk.description;
+        }
+
+        // 覆盖度
+        if (pred.coverage) {
+          document.getElementById('coverage-pct').textContent = pred.coverage.percent + '%';
+          document.getElementById('coverage-top3').textContent = pred.coverage.top3ScoreCoverage + '%';
+        }
+
+        // 模型元数据
+        if (pred.metadata) {
+          document.getElementById('meta-engine').textContent = pred.engine || 'ml';
+          document.getElementById('meta-confidence').textContent = pred.metadata.confidence ? (pred.metadata.confidence * 100).toFixed(1) + '%' : '-';
+          document.getElementById('meta-features').textContent = pred.metadata.features ? pred.metadata.features.length : '-';
+          document.getElementById('meta-calibrated').textContent = pred.metadata.calibrated ? '是' : '否';
+        }
       }
-      
-      // 最佳赔率行 + 公平概率
-      const b = oddsData.best;
-      const totalImplied = 1/b.home + 1/b.draw + 1/b.away;
-      const fairH = (1/b.home / totalImplied * 100).toFixed(1);
-      const fairD = (1/b.draw / totalImplied * 100).toFixed(1);
-      const fairA = (1/b.away / totalImplied * 100).toFixed(1);
-      
-      const fairRow = document.createElement('div');
-      fairRow.className = 'odds-row odds-fair';
-      fairRow.innerHTML = `
-        <span class="odds-bm">公平概率</span>
-        <span class="odds-val odds-h">${fairH}%</span>
-        <span class="odds-val odds-d">${fairD}%</span>
-        <span class="odds-val odds-a">${fairA}%</span>
-      `;
-      table.appendChild(fairRow);
-      
-      oc.appendChild(table);
+
     } catch (err) {
       document.getElementById('loading-spinner').style.display = 'none';
       document.getElementById('error-message').style.display = 'block';
     }
   }
 
-  window.cacheUI.onRefresh('match', () => loadMatchData(true));
-  loadMatchData(false);
+  // 引擎切换
+  function switchEngine(engine) {
+    if (engine === currentEngine) return;
+    loadMatchData(false, engine);
+  }
+
+  window.cacheUI.onRefresh('match', () => loadMatchData(true, currentEngine));
+  loadMatchData(false, 'elo');
   </script>
 </body>
 </html>

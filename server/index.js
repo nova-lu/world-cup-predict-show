@@ -29,7 +29,48 @@ app.use('/api/teams', teamsRouter);
 app.use(oddsRouter);
 app.use('/api/bracket', bracketRouter);
 
-// 缓存统计
+// ML 引擎状态
+app.get('/api/ml/status', async (req, res) => {
+  try {
+    const mlConfig = await import('./ml/config.js').then(m => m.default);
+    let modelsReady = false;
+    let modelInfo = null;
+    let error = null;
+
+    try {
+      const predictor = await import('./ml/inference/predictor.js');
+      modelsReady = await predictor.checkModels();
+      if (modelsReady) {
+        const manifest = await import('./ml/manifests/v1.json', { assert: { type: 'json' } }).then(m => m.default).catch(() => null);
+        modelInfo = manifest || { version: 'v1', status: 'manifest not found' };
+      }
+    } catch (e) {
+      error = e.message;
+    }
+
+    res.json({
+      enabled: mlConfig.enabled,
+      engine: mlConfig.engine,
+      version: mlConfig.version,
+      modelsReady,
+      modelInfo,
+      error,
+    });
+  } catch (e) {
+    res.json({ enabled: false, error: e.message });
+  }
+});
+
+// ML 回测结果
+app.get('/api/ml/backtest', async (req, res) => {
+  try {
+    const { runBacktest } = await import('./ml/backtest/engine.js');
+    const results = await runBacktest(req.forceRefresh);
+    res.json(results);
+  } catch (e) {
+    res.json({ status: 'error', engine: 'ml', message: e.message });
+  }
+});
 app.get('/api/cache/stats', (req, res) => {
   import('./middleware/cache.js').then(mod => {
     const s = mod.stats();

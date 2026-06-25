@@ -5,6 +5,13 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// 项目根目录
+export const ROOT_DIR = path.resolve(__dirname, '..');
+// 数据目录
+export const DATA_DIR = path.join(ROOT_DIR, 'data');
+// ML 模块目录
+export const ML_DIR = path.join(ROOT_DIR, 'server', 'ml');
 const envPath = path.resolve(__dirname, '..', '.env');
 
 function parseEnvFile(content) {
