@@ -3,6 +3,7 @@ import { getTeamInfo, getRatings } from '../services/dataService.js';
 import { predictMatch as eloPredictMatch, predictUpcoming } from '../services/predictionService.js';
 import { fetchAllMatches, fetchUpcomingMatches, fetchStandings } from '../services/footballApi.js';
 import { buildCacheMeta } from '../middleware/cache.js';
+import { get as cacheGet, set as cacheSet } from '../middleware/cache.js';
 import mlConfig from '../ml/config.js';
 
 // ML 推理（懒加载，仅启用时引入）
@@ -176,24 +177,31 @@ router.get('/match/:t1/:t2', async (req, res) => {
   let prediction;
 
   if (engine === 'ml' || engine === 'ensemble') {
-    const mlMod = await getMLPredictor();
-    if (mlMod) {
-      try {
-        const mlPred = await mlMod.predictMatch(t1, t2, new Date().toISOString().split('T')[0]);
-        if (engine === 'ml') {
-          prediction = mlPred;
-        } else {
-          const eloPred = eloPredictMatch(t1, t2, null, req.forceRefresh);
-          prediction = mlMod.ensemblePrediction(eloPred, mlPred);
+    const cacheKey = engine === 'ml' ? `ml:pred:${t1}:${t2}` : `ens:pred:${t1}:${t2}`;
+    const cached = cacheGet(cacheKey, { force: req.forceRefresh });
+    if (cached.hit) {
+      prediction = cached.value;
+    } else {
+      const mlMod = await getMLPredictor();
+      if (mlMod) {
+        try {
+          const mlPred = await mlMod.predictMatch(t1, t2, new Date().toISOString().split('T')[0]);
+          if (engine === 'ml') {
+            prediction = mlPred;
+          } else {
+            const eloPred = eloPredictMatch(t1, t2, null, req.forceRefresh);
+            prediction = mlMod.ensemblePrediction(eloPred, mlPred);
+          }
+          cacheSet(cacheKey, prediction, { source: 'ml' });
+        } catch (e) {
+          console.warn(`[matches] ${engine} 推理失败，降级到 Elo:`, e.message);
+          prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+          prediction._degraded = true;
         }
-      } catch (e) {
-        console.warn(`[matches] ${engine} 推理失败，降级到 Elo:`, e.message);
+      } else {
         prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
         prediction._degraded = true;
       }
-    } else {
-      prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
-      prediction._degraded = true;
     }
   } else {
     prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
