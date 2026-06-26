@@ -698,6 +698,62 @@
  | **新增** | server/ml/odds/sources/football-data.js | football-data.org 适配 |
  | **新增** | server/ml/odds/sources/odds-api.js | the-odds-api 适配 |
  | **新增** | server/ml/odds/schema.js | 赔率标准化结构 |
+
+---
+
+## Phase 5.1 — ML 概率校准与一致性修复（新增）
+
+### 背景问题
+
+近期实测中，ML 引擎与 Elo 引擎在 1X2 概率上出现显著偏差，部分比赛概率与 FIFA 公开实力预期不一致。排查后发现偏差主要来自三类问题：
+
+1. **推理层概率语义错误**：训练标签编码与推理读取键值不一致（0/1/2 vs W/D/L）。
+2. **训练/推理分布漂移**：单场 API 推理缺失主客场、近期状态等关键上下文特征。
+3. **集成层校准不足**：ML 与泊松概率未做后验校准即直接融合，且缺少置信度门控。
+
+### 修复目标
+
+- 让 ML 输出在概率语义上与训练标签严格一致。
+- 让单场 API 推理特征分布尽量贴近训练分布。
+- 让 ensemble 在低置信度场景自动降低 ML 权重，减少极端偏差。
+- 通过可量化指标验证“更符合近期 FIFA 实力预期”。
+
+### 实施任务
+
+#### P0（立即修复）
+
+1. 修复 `rf_1x2` 分类概率读取映射（支持 0/1/2 与 W/D/L 双语义兼容）。
+2. 移除重复归一化逻辑，避免人为放大概率偏差。
+3. 对 `lambda_home/lambda_away` 增加合理裁剪区间（防止泊松矩阵异常）。
+4. 修复单场特征 `is_home` 固定为 0 的错误，接入真实主客场语义。
+5. 在路由层补齐最近比赛上下文（recent goals/form/days since last）。
+
+#### P1（短周期增强）
+
+1. 增加后验概率校准（Platt / Isotonic）并版本化落盘。
+2. 集成层增加置信度门控（ML 低置信度或与 Elo 分歧大时提升 Elo 权重）。
+3. 增加淘汰赛语义约束（禁止输出与赛制冲突的高 draw 概率）。
+4. secondary markets（BTTS/OU/Risk）从单源 ML 改为双引擎融合。
+
+#### P2（中期治理）
+
+1. 统一队名映射（API/FIFA/slug/ML）并输出映射命中率监控。
+2. recent form 特征引入时序衰减与对手强度加权。
+3. 扩展滚动时间窗回测，替代单一切分验证。
+
+### 验收指标（必须量化）
+
+1. `Brier Score`：较修复前下降。
+2. `LogLoss`：较修复前下降。
+3. `ECE`（Expected Calibration Error）：较修复前下降。
+4. 主客场方向一致性：同一比赛主客互换后概率应发生合理变化。
+5. 与 Elo 分歧分布：高分歧样本占比下降。
+
+### 交付物
+
+- 代码修复 PR（推理层、特征层、路由层、集成层）。
+- `manifests/v*.json` 新增校准版本字段（`calibrationVersion`）。
+- 回测报告新增校准页（Reliability curve + 分桶命中率）。
  | **新增** | server/ml/backtest/engine.js | 回测引擎 |
  | **新增** | server/ml/config.js | ML 模块配置 |
  | **新增** | server/ml/models/.gitkeep | 模型目录占位 |

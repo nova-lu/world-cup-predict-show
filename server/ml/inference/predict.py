@@ -9,15 +9,20 @@ import numpy as np
 import os
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), '..', 'models', 'v1')
+CALIBRATION_VERSION = 'platt-v1'
 
 def load_models():
-    return {
+    models = {
         'xgb_home': joblib.load(os.path.join(MODEL_DIR, 'xgb_home.pkl')),
         'xgb_away': joblib.load(os.path.join(MODEL_DIR, 'xgb_away.pkl')),
         'rf_1x2': joblib.load(os.path.join(MODEL_DIR, 'rf_1x2.pkl')),
         'xgb_btts': joblib.load(os.path.join(MODEL_DIR, 'xgb_btts.pkl')),
         'xgb_over_under': joblib.load(os.path.join(MODEL_DIR, 'xgb_over_under.pkl')),
     }
+
+    cal_path = os.path.join(MODEL_DIR, 'rf_1x2_calibrated.pkl')
+    models['rf_1x2_calibrated'] = joblib.load(cal_path) if os.path.exists(cal_path) else None
+    return models
 
 FEATURE_COLUMNS = [
     'team_rank', 'team_points', 'opponent_rank', 'opponent_points',
@@ -28,6 +33,25 @@ FEATURE_COLUMNS = [
     'team_recent_form', 'opponent_recent_form',
     'tournament_weight', 'days_since_last_match_team', 'days_since_last_match_opponent',
 ]
+
+
+def _get_prob(probs_dict, candidates):
+    """Fetch class probability with tolerant key matching (int/str/np scalar)."""
+    for key in candidates:
+        if key in probs_dict:
+            return float(probs_dict[key])
+        str_key = str(key)
+        if str_key in probs_dict:
+            return float(probs_dict[str_key])
+        try:
+            int_key = int(key)
+            if int_key in probs_dict:
+                return float(probs_dict[int_key])
+            if str(int_key) in probs_dict:
+                return float(probs_dict[str(int_key)])
+        except Exception:
+            pass
+    return 0.0
 
 def predict(features_dict, models):
     """Run all models on a single feature vector"""
@@ -41,12 +65,37 @@ def predict(features_dict, models):
     X = np.array([X_list], dtype=np.float32)
 
     # 预期进球
-    lambda_home = float(models['xgb_home'].predict(X)[0])
-    lambda_away = float(models['xgb_away'].predict(X)[0])
+    lambda_home = float(np.clip(models['xgb_home'].predict(X)[0], 0.2, 4.0))
+    lambda_away = float(np.clip(models['xgb_away'].predict(X)[0], 0.2, 4.0))
 
     # 1X2 概率
-    rf_probs = models['rf_1x2'].predict_proba(X)[0]
-    probs_dict = dict(zip(models['rf_1x2'].classes_, rf_probs))
+    rf_model = models['rf_1x2']
+    rf_probs = rf_model.predict_proba(X)[0]
+    probs_dict = dict(zip(rf_model.classes_, rf_probs))
+    calibration_version = 'none'
+
+    calibrated_model = models.get('rf_1x2_calibrated')
+    if calibrated_model is not None:
+        try:
+            cal_probs = calibrated_model.predict_proba(X)[0]
+            probs_dict = dict(zip(calibrated_model.classes_, cal_probs))
+            rf_probs = cal_probs
+            calibration_version = CALIBRATION_VERSION
+        except Exception:
+            calibration_version = 'none'
+
+    # Training currently encodes result labels via LabelEncoder: D=0, L=1, W=2.
+    # Keep tolerant mapping to support future string-based classes.
+    home_raw = _get_prob(probs_dict, ['W', 2, '2'])
+    draw_raw = _get_prob(probs_dict, ['D', 0, '0'])
+    away_raw = _get_prob(probs_dict, ['L', 1, '1'])
+    rf_selected_sum = home_raw + draw_raw + away_raw
+    if rf_selected_sum <= 0:
+        home_prob, draw_prob, away_prob = 0.34, 0.33, 0.33
+    else:
+        home_prob = home_raw / rf_selected_sum
+        draw_prob = draw_raw / rf_selected_sum
+        away_prob = away_raw / rf_selected_sum
 
     # BTTS
     btts_proba = models['xgb_btts'].predict_proba(X)[0]
@@ -56,14 +105,13 @@ def predict(features_dict, models):
     ou_proba = models['xgb_over_under'].predict_proba(X)[0]
     ou_dict = dict(zip(models['xgb_over_under'].classes_, ou_proba))
 
-    rf_sum = sum(probs_dict.values())
     return {
         'lambda_home': round(lambda_home, 3),
         'lambda_away': round(lambda_away, 3),
         'probabilities': {
-            'homeWin': round(float(probs_dict.get('W', 0)) / rf_sum, 4) if rf_sum > 0 else 0.34,
-            'draw': round(float(probs_dict.get('D', 0)) / rf_sum, 4) if rf_sum > 0 else 0.33,
-            'awayWin': round(float(probs_dict.get('L', 0)) / rf_sum, 4) if rf_sum > 0 else 0.33,
+            'homeWin': round(float(home_prob), 4),
+            'draw': round(float(draw_prob), 4),
+            'awayWin': round(float(away_prob), 4),
         },
         'btts': {
             'yes': round(float(btts_dict.get(1, btts_dict.get('1', 0))), 4),
@@ -74,6 +122,7 @@ def predict(features_dict, models):
             'under2_5': round(float(ou_dict.get(0, ou_dict.get('0', 0))), 4),
         },
         'confidence': round(max(rf_probs), 4),
+        'calibration_version': calibration_version,
     }
 
 def main():

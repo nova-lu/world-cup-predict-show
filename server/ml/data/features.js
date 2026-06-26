@@ -19,7 +19,8 @@ export async function buildMatchFeatures(homeTeam, awayTeam, matchDate, context 
   const pointsDiff = (homeRank.points !== null && awayRank.points !== null) ? homeRank.points - awayRank.points : null;
   const sameConfed = (homeRank.association && awayRank.association) ? (homeRank.association === awayRank.association ? 1 : 0) : 0;
   const hosts2026 = ['United States', 'Mexico', 'Canada'];
-  const isHost = hosts2026.includes(homeTeam) ? 1 : 0;
+  const isHome = context.isHome ?? 0;
+  const isHost = context.isHost ?? (hosts2026.includes(homeTeam) ? 1 : 0);
   const homeElo = eloData?.[homeTeam]?.rating ?? null;
   const awayElo = eloData?.[awayTeam]?.rating ?? null;
   const eloDiff = (homeElo !== null && awayElo !== null) ? homeElo - awayElo : null;
@@ -32,7 +33,7 @@ export async function buildMatchFeatures(homeTeam, awayTeam, matchDate, context 
       opponent_points: awayRank.points,
       rank_diff: rankDiff,
       points_diff: pointsDiff,
-      is_home: 0,
+      is_home: isHome,
       is_host: isHost,
       is_knockout: context.isKnockout ?? 0,
       same_confed: sameConfed,

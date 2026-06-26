@@ -22,6 +22,7 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 from sklearn.preprocessing import LabelEncoder
+from sklearn.calibration import CalibratedClassifierCV
 import xgboost as xgb
 import joblib
 
@@ -67,6 +68,8 @@ MODEL_CONFIG = {
     "xgb_btts": {"type": "classifier", "target": "both_scored", "file": "xgb_btts.pkl"},
     "xgb_over_under": {"type": "classifier", "target": "total_goals_binary", "file": "xgb_over_under.pkl"},
 }
+
+CALIBRATION_VERSION = "platt-v1"
 
 
 def load_and_prepare_data():
@@ -220,6 +223,26 @@ def train_rf_classifier(X_train, y_train, X_val, y_val, name):
     return model
 
 
+def calibrate_classifier_prefit(base_model, X_cal, y_cal, method="sigmoid"):
+    """Calibrate a pre-fitted classifier with API-compat fallback across sklearn versions."""
+    try:
+        calibrator = CalibratedClassifierCV(estimator=base_model, method=method, cv="prefit")
+    except TypeError:
+        calibrator = CalibratedClassifierCV(base_estimator=base_model, method=method, cv="prefit")
+
+    try:
+        calibrator.fit(X_cal, y_cal)
+        return calibrator
+    except Exception:
+        # sklearn>=1.6 no longer accepts cv='prefit'; fall back to CV calibration.
+        try:
+            calibrator = CalibratedClassifierCV(estimator=base_model, method=method, cv=3)
+        except TypeError:
+            calibrator = CalibratedClassifierCV(base_estimator=base_model, method=method, cv=3)
+        calibrator.fit(X_cal, y_cal)
+        return calibrator
+
+
 def evaluate_regressor(model, X, y, dataset_name):
     """Evaluate regression model."""
     preds = model.predict(X)
@@ -322,6 +345,12 @@ def build_manifest(models_info, metrics_summary, run_id):
             "test": ">= 2023",
         },
         "models": models_info,
+        "calibration": {
+            "enabled": True,
+            "version": CALIBRATION_VERSION,
+            "method": "sigmoid",
+            "target": "rf_1x2",
+        },
         "metrics": metrics_summary,
     }
     with open(MANIFEST_PATH, "w") as f:
@@ -337,6 +366,9 @@ def main():
 
     # 1. Load & prepare
     df, label_enc = load_and_prepare_data()
+    label_encoder_path = os.path.join(MODELS_DIR, "label_encoder_result.pkl")
+    joblib.dump(label_enc, label_encoder_path)
+    print(f"  Saved label encoder: {label_encoder_path}")
 
     # 2. Split
     X_train, X_val, X_test, targets, train_df, val_df, test_df = split_time_series(df)
@@ -379,6 +411,24 @@ def main():
                             os.path.join(REPORTS_DIR, "importance_rf_1x2.png"))
     models["rf_1x2"] = model
     models_info.append({"name": "rf_1x2", "type": "RandomForestClassifier", "target": "result", "file": "rf_1x2.pkl"})
+
+    # ── Calibrated RF Classifier: result (1X2, Platt Scaling on validation set) ──
+    cal_model = calibrate_classifier_prefit(
+        models["rf_1x2"],
+        X_val,
+        targets["rf_1x2"]["y_val"],
+        method="sigmoid",
+    )
+    save_model(cal_model, "rf_1x2_calibrated.pkl")
+    models["rf_1x2_calibrated"] = cal_model
+    models_info.append({
+        "name": "rf_1x2_calibrated",
+        "type": "CalibratedClassifierCV",
+        "target": "result",
+        "file": "rf_1x2_calibrated.pkl",
+        "method": "sigmoid",
+        "calibrationVersion": CALIBRATION_VERSION,
+    })
 
     # ── XGBoost Classifier: both_scored ──
     model = train_xgb_classifier(X_train, targets["xgb_btts"]["y_train"],
@@ -442,6 +492,23 @@ def main():
             "test": evaluate_classifier(models[name], X_test, targets[name]["y_test"], "Test", is_multiclass=is_mc),
         }
 
+    # Calibrated 1X2 metrics (focus on validation and test)
+    print(f"\n▶ rf_1x2_calibrated:")
+    for X, y, ds_name in [
+        (X_val, targets["rf_1x2"]["y_val"], "Val"),
+        (X_test, targets["rf_1x2"]["y_test"], "Test"),
+    ]:
+        m = evaluate_classifier(models["rf_1x2_calibrated"], X, y, ds_name, is_multiclass=True)
+        parts = [f"  {ds_name:>6} | Acc: {m['accuracy']:.4f}"]
+        if "log_loss" in m:
+            parts.append(f"LogLoss: {m['log_loss']:.4f}")
+        print(" | ".join(parts))
+
+    all_metrics["rf_1x2_calibrated"] = {
+        "val": evaluate_classifier(models["rf_1x2_calibrated"], X_val, targets["rf_1x2"]["y_val"], "Val", is_multiclass=True),
+        "test": evaluate_classifier(models["rf_1x2_calibrated"], X_test, targets["rf_1x2"]["y_test"], "Test", is_multiclass=True),
+    }
+
     # 5. Save training report
     report = {
         "run_id": run_id,
@@ -458,6 +525,12 @@ def main():
             "test_years": f"{test_df['_year'].min()}-{test_df['_year'].max()}",
         },
         "model_config": MODEL_CONFIG,
+        "calibration": {
+            "enabled": True,
+            "version": CALIBRATION_VERSION,
+            "method": "sigmoid",
+            "target": "rf_1x2",
+        },
         "metrics": all_metrics,
     }
 
@@ -474,7 +547,7 @@ def main():
         f.write(f"Timestamp: {report['timestamp']}\n\n")
         f.write(f"Total rows: {len(df):,}\n")
         f.write(f"Train: {len(train_df):,} rows | Val: {len(val_df):,} rows | Test: {len(test_df):,} rows\n\n")
-        f.write("─" * 50 + "\n")
+        f.write("-" * 50 + "\n")
         for name, splits in all_metrics.items():
             f.write(f"\n{name}:\n")
             for split_name, m in splits.items():

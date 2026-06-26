@@ -1,21 +1,21 @@
-FOOTBALL MATCH PREDICTION — TRAINING REPORT
-Run ID: 20260625_155443
-Timestamp: 2026-06-25T15:54:49.296145Z
+FOOTBALL MATCH PREDICTION � TRAINING REPORT
+Run ID: 20260626_024553
+Timestamp: 2026-06-26T02:46:03.000442Z
 
 Total rows: 46,383
 Train: 39,144 rows | Val: 3,589 rows | Test: 3,650 rows
 
-──────────────────────────────────────────────────
+--------------------------------------------------
 
 xgb_home:
-train: rmse=1.366 mae=1.0335 mean_actual=1.7226 mean_pred=1.7221
-val: rmse=1.4003 mae=1.0508 mean_actual=1.613 mean_pred=1.7031
-test: rmse=1.4019 mae=1.0717 mean_actual=1.6337 mean_pred=1.7219
+train: rmse=1.3836 mae=1.0443 mean_actual=1.7226 mean_pred=1.7212
+val: rmse=1.3938 mae=1.0461 mean_actual=1.613 mean_pred=1.7028
+test: rmse=1.4015 mae=1.0736 mean_actual=1.6337 mean_pred=1.7219
 
 xgb_away:
-train: rmse=1.1192 mae=0.8436 mean_actual=1.1434 mean_pred=1.1427
-val: rmse=1.1298 mae=0.8296 mean_actual=1.095 mean_pred=1.0745
-test: rmse=1.1546 mae=0.859 mean_actual=1.1422 mean_pred=1.0861
+train: rmse=1.114 mae=0.8404 mean_actual=1.1434 mean_pred=1.143
+val: rmse=1.1249 mae=0.8279 mean_actual=1.095 mean_pred=1.0762
+test: rmse=1.1546 mae=0.857 mean_actual=1.1422 mean_pred=1.0868
 
 rf_1x2:
 train: accuracy=0.6419 n_samples=39144 log_loss=0.8637
@@ -23,11 +23,15 @@ val: accuracy=0.5709 n_samples=3589 log_loss=0.907
 test: accuracy=0.5534 n_samples=3650 log_loss=0.9221
 
 xgb_btts:
-train: accuracy=0.6076 n_samples=39144 log_loss=0.657 brier_score=0.2327
-val: accuracy=0.5815 n_samples=3589 log_loss=0.6696 brier_score=0.2386
-test: accuracy=0.5666 n_samples=3650 log_loss=0.6797 brier_score=0.2433
+train: accuracy=0.617 n_samples=39144 log_loss=0.651 brier_score=0.2298
+val: accuracy=0.5857 n_samples=3589 log_loss=0.6704 brier_score=0.239
+test: accuracy=0.5614 n_samples=3650 log_loss=0.68 brier_score=0.2434
 
 xgb_over_under:
-train: accuracy=0.6158 n_samples=39144 log_loss=0.646 brier_score=0.228
-val: accuracy=0.5798 n_samples=3589 log_loss=0.6694 brier_score=0.2387
-test: accuracy=0.5803 n_samples=3650 log_loss=0.6719 brier_score=0.2397
+train: accuracy=0.6333 n_samples=39144 log_loss=0.6359 brier_score=0.2233
+val: accuracy=0.5729 n_samples=3589 log_loss=0.6713 brier_score=0.2396
+test: accuracy=0.58 n_samples=3650 log_loss=0.6717 brier_score=0.2396
+
+rf_1x2_calibrated:
+val: accuracy=0.7314 n_samples=3589 log_loss=0.7044
+test: accuracy=0.5844 n_samples=3650 log_loss=0.9063

@@ -258,6 +258,18 @@ app.use('/api', parseForceParam);
 
 | 文件 | 端点 | 改动点 |
 |---|---|---|
+
+## Phase 5.1 补充：模型可观测与回滚（运维侧）
+
+为了支持 ML 校准专项上线，缓存层与 API 响应建议补充以下观测信息：
+
+1. 在预测类接口响应中增加 `metadata.modelVersion`、`metadata.calibrationVersion`、`metadata.ensembleWeights`。
+2. 在降级场景（ML 推理失败）明确返回 `_degraded: true` 与 `degradeReason`。
+3. 对 `engine=ensemble` 增加门控日志：记录触发降权的原因（低置信度或引擎分歧）。
+4. 通过缓存键区分模型版本：`ml:pred:{t1}:{t2}:{version}`，避免版本切换时命中旧缓存。
+5. 预留快速回滚路径：配置切换为 `engine=elo` 时，页面可无代码改动恢复稳定输出。
+
+该补充不改变 Phase 4 缓存主目标，但可以显著提升 Phase 5+ 的线上可诊断性。
 | routes/matches.js | GET /today | fetchAllMatches(req.forceRefresh) |
 | routes/matches.js | GET /schedule | fetchAllMatches(req.forceRefresh) |
 | routes/matches.js | GET /upcoming | fetchAllMatches(req.forceRefresh) |

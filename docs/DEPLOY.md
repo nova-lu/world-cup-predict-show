@@ -433,6 +433,14 @@ rm -rf data/cache/*.json
 - [ ] `curl http://localhost:3000/api/ml/status` 返回 `modelsReady: true`
 - [ ] `curl "http://localhost:3000/api/matches/match/Brazil/Argentina?engine=ml"` 返回完整预测
 
+### Phase 5.1 额外检查（校准与一致性）
+
+- [ ] `elo/ml/ensemble` 三引擎在同一场比赛可同时返回且字段完整
+- [ ] 低置信度样本（`metadata.confidence` 低）触发 ensemble 动态降权
+- [ ] 不再频繁出现固定回退概率 `0.34/0.33/0.33`
+- [ ] 主客场互换后，ML 预测概率有合理变化（不再近似不变）
+- [ ] 训练后校准报告包含 Brier / ECE / Reliability Curve（若启用校准器）
+
 ---
 
 ## 十二、版本历史

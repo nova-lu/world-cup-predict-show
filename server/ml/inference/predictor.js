@@ -91,7 +91,11 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
   const btts = computeBTTS(scoreMatrix);
 
   // 校准：混合模型概率与泊松概率
-  const blendedProbs = blendProbabilities(probabilities, mlResult.probabilities);
+  const blendedProbs = blendProbabilities(
+    probabilities,
+    mlResult.probabilities,
+    mlConfig.ensemble.mlWeight,
+  );
 
   // 风险评估
   const risk = computeRisk(blendedProbs, mlResult.confidence);
@@ -119,6 +123,7 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
     market: null,
     metadata: {
       modelVersion: mlConfig.version,
+      calibrationVersion: mlResult.calibration_version || 'none',
       confidence: mlResult.confidence,
       calibrated: true,
       features: Object.keys(features),
@@ -130,7 +135,7 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
  * 混合模型直接分类概率与泊松派生概率
  * 取加权平均：modelWeight × 模型概率 + (1-modelWeight) × 泊松概率
  */
-function blendProbabilities(poissonProbs, modelProbs, modelWeight = 0.5) {
+function blendProbabilities(poissonProbs, modelProbs, modelWeight = mlConfig.ensemble.mlWeight) {
   const raw = {
     homeWin: modelWeight * modelProbs.homeWin + (1 - modelWeight) * poissonProbs.homeWin,
     draw: modelWeight * modelProbs.draw + (1 - modelWeight) * poissonProbs.draw,
@@ -188,11 +193,30 @@ function runPythonInference(featuresList) {
  * 集成预测（Elo + ML 加权平均）
  */
 export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
-  const { eloWeight = mlConfig.ensemble.eloWeight, mlWeight = mlConfig.ensemble.mlWeight } = options;
+  const {
+    eloWeight = mlConfig.ensemble.eloWeight,
+    mlWeight = mlConfig.ensemble.mlWeight,
+    dynamicWeight = true,
+  } = options;
 
   const totalWeight = eloWeight + mlWeight;
-  const wElo = eloWeight / totalWeight;
-  const wML = mlWeight / totalWeight;
+  let wElo = eloWeight / totalWeight;
+  let wML = mlWeight / totalWeight;
+
+  if (dynamicWeight) {
+    const mlConf = Number(mlPrediction?.metadata?.confidence ?? 0.5);
+    const probGap = Math.max(
+      Math.abs((eloPrediction?.probabilities?.homeWin ?? 0) - (mlPrediction?.probabilities?.homeWin ?? 0)),
+      Math.abs((eloPrediction?.probabilities?.draw ?? 0) - (mlPrediction?.probabilities?.draw ?? 0)),
+      Math.abs((eloPrediction?.probabilities?.awayWin ?? 0) - (mlPrediction?.probabilities?.awayWin ?? 0)),
+    );
+
+    // When ML confidence is low or Elo/ML strongly disagree, trust Elo more.
+    if (mlConf < 0.58 || probGap > 0.22) {
+      wML = Math.min(wML, 0.5);
+      wElo = 1 - wML;
+    }
+  }
 
   return {
     engine: 'ensemble',
@@ -216,6 +240,7 @@ export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
       ensembleWeights: { elo: wElo, ml: wML },
       eloVersion: eloPrediction.engine,
       mlVersion: mlPrediction.engine,
+      calibrationVersion: mlPrediction?.metadata?.calibrationVersion || 'none',
     },
   };
 }

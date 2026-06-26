@@ -25,6 +25,7 @@ async function getMLPredictor() {
 
 const router = Router();
 const BJ_TIMEZONE = 'Asia/Shanghai';
+const HOST_SLUGS = new Set(['usa', 'mexico', 'canada']);
 
 function getFormatter(opts) {
   return new Intl.DateTimeFormat('zh-CN', { timeZone: BJ_TIMEZONE, ...opts });
@@ -42,6 +43,60 @@ function formatBeijingKickoffLabel(d) {
   const date = getFormatter({ month: '2-digit', day: '2-digit' }).format(d).replace(/\//g, '-');
   const time = formatBeijingTime(d);
   return `${date} ${time}`;
+}
+
+function buildRecentContext(allMatches, homeSlug, awaySlug, matchDateISO) {
+  const windowSize = 5;
+  const matchTs = new Date(matchDateISO).getTime();
+  const finished = allMatches
+    .filter(m => m.status === 'FT' && m.utcDate)
+    .filter(m => new Date(m.utcDate).getTime() < matchTs)
+    .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime());
+
+  const teamWindow = (slug) => finished.filter(m => m.t1 === slug || m.t2 === slug).slice(-windowSize);
+
+  const stat = (slug) => {
+    const rows = teamWindow(slug);
+    if (!rows.length) {
+      return { goals: 0, conceded: 0, form: 0.5, daysSince: 7 };
+    }
+    let goals = 0;
+    let conceded = 0;
+    let formScore = 0;
+
+    for (const m of rows) {
+      const isHome = m.t1 === slug;
+      const gFor = isHome ? (m.g1 ?? 0) : (m.g2 ?? 0);
+      const gAgainst = isHome ? (m.g2 ?? 0) : (m.g1 ?? 0);
+      goals += gFor;
+      conceded += gAgainst;
+      if (gFor > gAgainst) formScore += 2;
+      else if (gFor === gAgainst) formScore += 1;
+    }
+
+    const last = rows[rows.length - 1];
+    const daysSince = Math.max(1, Math.round((matchTs - new Date(last.utcDate).getTime()) / 86400000));
+
+    return {
+      goals: Math.round((goals / rows.length) * 100) / 100,
+      conceded: Math.round((conceded / rows.length) * 100) / 100,
+      form: Math.round((formScore / (rows.length * 2)) * 1000) / 1000,
+      daysSince,
+    };
+  };
+
+  const home = stat(homeSlug);
+  const away = stat(awaySlug);
+  return {
+    homeRecentGoals: home.goals,
+    homeRecentConceded: home.conceded,
+    homeRecentForm: home.form,
+    homeDaysSinceLast: home.daysSince,
+    awayRecentGoals: away.goals,
+    awayRecentConceded: away.conceded,
+    awayRecentForm: away.form,
+    awayDaysSinceLast: away.daysSince,
+  };
 }
 
 // ===== 今日赛事（核心页面数据源） =====
@@ -175,6 +230,25 @@ router.get('/match/:t1/:t2', async (req, res) => {
   const engine = req.query.engine || 'elo';
 
   let prediction;
+  let allMatches = [];
+  try {
+    allMatches = await fetchAllMatches(req.forceRefresh);
+  } catch {}
+
+  const matched = allMatches.find(m =>
+    (m.t1 === t1 && m.t2 === t2) || (m.t1 === t2 && m.t2 === t1)
+  );
+  const isPrimaryOrderHome = matched ? (matched.t1 === t1) : true;
+  const matchDate = matched?.date || new Date().toISOString().split('T')[0];
+  const isKnockout = matched?.stage ? (matched.stage !== 'GROUP_STAGE') : 0;
+
+  const mlContext = {
+    isHome: isPrimaryOrderHome ? 1 : 0,
+    isHost: isPrimaryOrderHome ? (HOST_SLUGS.has(t1) ? 1 : 0) : (HOST_SLUGS.has(t2) ? 1 : 0),
+    isKnockout: isKnockout ? 1 : 0,
+    tournamentWeight: isKnockout ? 1.0 : 0.8,
+    ...buildRecentContext(allMatches, t1, t2, `${matchDate}T00:00:00.000Z`),
+  };
 
   if (engine === 'ml' || engine === 'ensemble') {
     const cacheKey = engine === 'ml' ? `ml:pred:${t1}:${t2}` : `ens:pred:${t1}:${t2}`;
@@ -185,7 +259,7 @@ router.get('/match/:t1/:t2', async (req, res) => {
       const mlMod = await getMLPredictor();
       if (mlMod) {
         try {
-          const mlPred = await mlMod.predictMatch(t1, t2, new Date().toISOString().split('T')[0]);
+          const mlPred = await mlMod.predictMatch(t1, t2, matchDate, { context: mlContext });
           if (engine === 'ml') {
             prediction = mlPred;
           } else {
@@ -208,10 +282,7 @@ router.get('/match/:t1/:t2', async (req, res) => {
   }
 
   try {
-    const all = await fetchAllMatches(req.forceRefresh);
-    const match = all.find(m =>
-      (m.t1 === t1 && m.t2 === t2) || (m.t1 === t2 && m.t2 === t1)
-    );
+    const match = matched || null;
 
     if (match) {
       return res.json({

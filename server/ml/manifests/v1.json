@@ -1,7 +1,7 @@
 {
   "version": "v1",
-  "run_id": "20260625_155443",
-  "created_at": "2026-06-25T15:54:49.307546Z",
+  "run_id": "20260626_024553",
+  "created_at": "2026-06-26T02:46:03.003030Z",
   "feature_count": 23,
   "features": [
     "team_rank",
@@ -61,6 +61,14 @@
       "file": "rf_1x2.pkl"
     },
     {
+      "name": "rf_1x2_calibrated",
+      "type": "CalibratedClassifierCV",
+      "target": "result",
+      "file": "rf_1x2_calibrated.pkl",
+      "method": "sigmoid",
+      "calibrationVersion": "platt-v1"
+    },
+    {
       "name": "xgb_btts",
       "type": "XGBClassifier",
       "target": "both_scored",
@@ -73,26 +81,32 @@
       "file": "xgb_over_under.pkl"
     }
   ],
+  "calibration": {
+    "enabled": true,
+    "version": "platt-v1",
+    "method": "sigmoid",
+    "target": "rf_1x2"
+  },
   "metrics": {
     "xgb_home": {
       "train": {
         "dataset": "Train",
-        "rmse": 1.366,
-        "mae": 1.0335,
+        "rmse": 1.3836,
+        "mae": 1.0443,
         "mean_actual": 1.7226,
-        "mean_pred": 1.7221
+        "mean_pred": 1.7212
       },
       "val": {
         "dataset": "Val",
-        "rmse": 1.4003,
-        "mae": 1.0508,
+        "rmse": 1.3938,
+        "mae": 1.0461,
         "mean_actual": 1.613,
-        "mean_pred": 1.7031
+        "mean_pred": 1.7028
       },
       "test": {
         "dataset": "Test",
-        "rmse": 1.4019,
-        "mae": 1.0717,
+        "rmse": 1.4015,
+        "mae": 1.0736,
         "mean_actual": 1.6337,
         "mean_pred": 1.7219
       }
@@ -100,24 +114,24 @@
     "xgb_away": {
       "train": {
         "dataset": "Train",
-        "rmse": 1.1192,
-        "mae": 0.8436,
+        "rmse": 1.114,
+        "mae": 0.8404,
         "mean_actual": 1.1434,
-        "mean_pred": 1.1427
+        "mean_pred": 1.143
       },
       "val": {
         "dataset": "Val",
-        "rmse": 1.1298,
-        "mae": 0.8296,
+        "rmse": 1.1249,
+        "mae": 0.8279,
         "mean_actual": 1.095,
-        "mean_pred": 1.0745
+        "mean_pred": 1.0762
       },
       "test": {
         "dataset": "Test",
         "rmse": 1.1546,
-        "mae": 0.859,
+        "mae": 0.857,
         "mean_actual": 1.1422,
-        "mean_pred": 1.0861
+        "mean_pred": 1.0868
       }
     },
     "rf_1x2": {
@@ -143,47 +157,61 @@
     "xgb_btts": {
       "train": {
         "dataset": "Train",
-        "accuracy": 0.6076,
+        "accuracy": 0.617,
         "n_samples": 39144,
-        "log_loss": 0.657,
-        "brier_score": 0.2327
+        "log_loss": 0.651,
+        "brier_score": 0.2298
       },
       "val": {
         "dataset": "Val",
-        "accuracy": 0.5815,
+        "accuracy": 0.5857,
         "n_samples": 3589,
-        "log_loss": 0.6696,
-        "brier_score": 0.2386
+        "log_loss": 0.6704,
+        "brier_score": 0.239
       },
       "test": {
         "dataset": "Test",
-        "accuracy": 0.5666,
+        "accuracy": 0.5614,
         "n_samples": 3650,
-        "log_loss": 0.6797,
-        "brier_score": 0.2433
+        "log_loss": 0.68,
+        "brier_score": 0.2434
       }
     },
     "xgb_over_under": {
       "train": {
         "dataset": "Train",
-        "accuracy": 0.6158,
+        "accuracy": 0.6333,
         "n_samples": 39144,
-        "log_loss": 0.646,
-        "brier_score": 0.228
+        "log_loss": 0.6359,
+        "brier_score": 0.2233
       },
       "val": {
         "dataset": "Val",
-        "accuracy": 0.5798,
+        "accuracy": 0.5729,
         "n_samples": 3589,
-        "log_loss": 0.6694,
-        "brier_score": 0.2387
+        "log_loss": 0.6713,
+        "brier_score": 0.2396
       },
       "test": {
         "dataset": "Test",
-        "accuracy": 0.5803,
+        "accuracy": 0.58,
         "n_samples": 3650,
-        "log_loss": 0.6719,
-        "brier_score": 0.2397
+        "log_loss": 0.6717,
+        "brier_score": 0.2396
+      }
+    },
+    "rf_1x2_calibrated": {
+      "val": {
+        "dataset": "Val",
+        "accuracy": 0.7314,
+        "n_samples": 3589,
+        "log_loss": 0.7044
+      },
+      "test": {
+        "dataset": "Test",
+        "accuracy": 0.5844,
+        "n_samples": 3650,
+        "log_loss": 0.9063
       }
     }
   }
