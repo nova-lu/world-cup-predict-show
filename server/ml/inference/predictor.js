@@ -141,14 +141,7 @@ function blendProbabilities(poissonProbs, modelProbs, modelWeight = mlConfig.ens
     draw: modelWeight * modelProbs.draw + (1 - modelWeight) * poissonProbs.draw,
     awayWin: modelWeight * modelProbs.awayWin + (1 - modelWeight) * poissonProbs.awayWin,
   };
-  // 归一化确保总和为 1
-  const total = raw.homeWin + raw.draw + raw.awayWin;
-  if (total <= 0) return { homeWin: 0.34, draw: 0.33, awayWin: 0.33 };
-  return {
-    homeWin: Math.round((raw.homeWin / total) * 10000) / 10000,
-    draw: Math.round((raw.draw / total) * 10000) / 10000,
-    awayWin: Math.round((raw.awayWin / total) * 10000) / 10000,
-  };
+  return normalizeAndRoundProbabilities(raw);
 }
 
 /**
@@ -218,6 +211,9 @@ export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
     }
   }
 
+  const eloProbs = extract1X2Probabilities(eloPrediction);
+  const mlProbs = extract1X2Probabilities(mlPrediction);
+
   return {
     engine: 'ensemble',
     engineVersion: `${mlConfig.version}+elo`,
@@ -227,11 +223,11 @@ export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
       home: Math.round((wElo * (eloPrediction.expectedGoals?.home || 0) + wML * (mlPrediction.expectedGoals?.home || 0)) * 100) / 100,
       away: Math.round((wElo * (eloPrediction.expectedGoals?.away || 0) + wML * (mlPrediction.expectedGoals?.away || 0)) * 100) / 100,
     },
-    probabilities: {
-      homeWin: Math.round((wElo * (eloPrediction.probabilities?.homeWin || 0) + wML * (mlPrediction.probabilities?.homeWin || 0)) * 10000) / 10000,
-      draw: Math.round((wElo * (eloPrediction.probabilities?.draw || 0) + wML * (mlPrediction.probabilities?.draw || 0)) * 10000) / 10000,
-      awayWin: Math.round((wElo * (eloPrediction.probabilities?.awayWin || 0) + wML * (mlPrediction.probabilities?.awayWin || 0)) * 10000) / 10000,
-    },
+    probabilities: normalizeAndRoundProbabilities({
+      homeWin: wElo * eloProbs.homeWin + wML * mlProbs.homeWin,
+      draw: wElo * eloProbs.draw + wML * mlProbs.draw,
+      awayWin: wElo * eloProbs.awayWin + wML * mlProbs.awayWin,
+    }),
     overUnder: mlPrediction.overUnder || eloPrediction.overUnder,
     btts: mlPrediction.btts || eloPrediction.btts,
     risk: mlPrediction.risk || eloPrediction.risk,
@@ -243,6 +239,58 @@ export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
       calibrationVersion: mlPrediction?.metadata?.calibrationVersion || 'none',
     },
   };
+}
+
+function extract1X2Probabilities(prediction) {
+  const p = prediction?.probabilities;
+  if (p && Number.isFinite(Number(p.homeWin)) && Number.isFinite(Number(p.draw)) && Number.isFinite(Number(p.awayWin))) {
+    return normalizeAndRoundProbabilities({
+      homeWin: Number(p.homeWin),
+      draw: Number(p.draw),
+      awayWin: Number(p.awayWin),
+    });
+  }
+
+  const legacy = prediction?.prob;
+  if (legacy) {
+    const home = Number(legacy.winHome);
+    const draw = Number(legacy.draw);
+    const away = Number(legacy.winAway);
+    const scale = Math.max(home, draw, away) > 1 ? 100 : 1;
+    return normalizeAndRoundProbabilities({
+      homeWin: home / scale,
+      draw: draw / scale,
+      awayWin: away / scale,
+    });
+  }
+
+  return { homeWin: 0.34, draw: 0.33, awayWin: 0.33 };
+}
+
+function normalizeAndRoundProbabilities(probabilities) {
+  const entries = [
+    ['homeWin', Number(probabilities.homeWin) || 0],
+    ['draw', Number(probabilities.draw) || 0],
+    ['awayWin', Number(probabilities.awayWin) || 0],
+  ];
+  const total = entries.reduce((sum, [, value]) => sum + value, 0);
+  const normalized = total > 0
+    ? entries.map(([key, value]) => [key, value / total])
+    : [['homeWin', 0.34], ['draw', 0.33], ['awayWin', 0.33]];
+
+  const rounded = normalized.map(([key, value]) => [key, Math.round(value * 10000) / 10000]);
+  const roundedSum = rounded.reduce((sum, [, value]) => sum + value, 0);
+  const diff = Math.round((1 - roundedSum) * 10000) / 10000;
+
+  if (Math.abs(diff) >= 0.0001) {
+    let adjustIndex = 0;
+    for (let i = 1; i < rounded.length; i++) {
+      if (rounded[i][1] > rounded[adjustIndex][1]) adjustIndex = i;
+    }
+    rounded[adjustIndex][1] = Math.round((rounded[adjustIndex][1] + diff) * 10000) / 10000;
+  }
+
+  return Object.fromEntries(rounded);
 }
 
 /**
