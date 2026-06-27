@@ -97,10 +97,8 @@ async function writeL2(key, entry) {
   const fp = filePath(key);
   const data = JSON.stringify(entry, null, 2);
   await fsp.mkdir(path.dirname(fp), { recursive: true });
-  // 原子写入：先写临时文件再 rename
-  const tmp = fp + '.tmp';
-  await fsp.writeFile(tmp, data, 'utf-8');
-  await fsp.rename(tmp, fp);
+  // 直接写（Windows rename 跨设备/权限问题频发，放弃 .tmp 原子写入）
+  await fsp.writeFile(fp, data, 'utf-8');
 }
 
 /**

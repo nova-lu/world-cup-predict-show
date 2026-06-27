@@ -121,6 +121,9 @@
             <div class="odds-compare-row" id="odds-compare-${m.t1}-${m.t2}">
               <span class="odds-vs-model">加载赔率中...</span>
             </div>
+            <div class="odds-compare-row" id="pm-compare-${m.t1}-${m.t2}" style="margin-top:2px">
+              <span class="odds-vs-model" style="color:#6366f1">加载预测市场...</span>
+            </div>
             <div class="match-xg-info">预期进球: ${pred.expectedGoals.home} - ${pred.expectedGoals.away}  · 点击查看详细预测 <span class="engine-chip">⚡ Elo/ML/集成</span></div>
             `.trim() : ''}
             ${isFinished ? '<div class="match-result-info">点击查看详情</div>' : ''}
@@ -129,7 +132,7 @@
         container.appendChild(card);
       });
 
-      // 批量加载赔率（用于未开赛比赛）
+      // 批量加载传统赔率
       const oddsIds = [];
       ordered.forEach(m => {
         if (m.status !== 'FT' && m.t1 && m.t2) {
@@ -154,6 +157,29 @@
           `;
         }).catch(() => { el.innerHTML = ''; });
       });
+
+      // 批量加载 Polymarket 融合数据
+      fetch(`/api/odds/fusion/today`).then(r => r.json()).then(fd => {
+        if (!fd.fusion) return;
+        fd.fusion.forEach(f => {
+          const el = document.getElementById(`pm-compare-${f.t1}-${f.t2}`);
+          if (!el) return;
+          if (f.polymarket) {
+            const p = f.polymarket;
+            el.innerHTML = `
+              <span class="pm-badge" style="background:#6366f1;color:#fff;padding:1px 5px;border-radius:4px;font-size:0.65rem;white-space:nowrap">Poly</span>
+              <span class="odds-compare-item"><span class="odds-compare-label">主</span><span class="odds-compare-val" style="color:#6366f1">${(p.homeWin * 100).toFixed(1)}%</span></span>
+              <span class="odds-compare-item"><span class="odds-compare-label">平</span><span class="odds-compare-val" style="color:#6366f1">${(p.draw * 100).toFixed(1)}%</span></span>
+              <span class="odds-compare-item"><span class="odds-compare-label">客</span><span class="odds-compare-val" style="color:#6366f1">${(p.awayWin * 100).toFixed(1)}%</span></span>
+            `;
+          } else if (f.oddsApi) {
+            // 有传统赔率融合数据但没有 Polymarket
+            el.innerHTML = `<span class="pm-badge" style="background:#64748b;color:#fff;padding:1px 5px;border-radius:4px;font-size:0.65rem">融合</span><span style="color:#94a3b8;font-size:0.7rem"> ${(f.fusion.fused.homeWin * 100).toFixed(0)}% / ${(f.fusion.fused.draw * 100).toFixed(0)}% / ${(f.fusion.fused.awayWin * 100).toFixed(0)}%</span>`;
+          } else {
+            el.style.display = 'none';
+          }
+        });
+      }).catch(() => {});
     } catch (err) {
       document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败，请刷新重试';
     }

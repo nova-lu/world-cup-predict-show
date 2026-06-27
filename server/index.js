@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import matchesRouter from './routes/matches.js';
 import standingsRouter from './routes/standings.js';
 import teamsRouter from './routes/teams.js';
-import oddsRouter from './routes/odds.js';
+import oddsRouter from './routes/odds.js';  // Phase 7: 含 Polymarket + Fusion 路由
 import bracketRouter from './routes/bracket.js';
 import { parseForceParam } from './middleware/parseForce.js';
 
@@ -210,6 +210,22 @@ app.get('/demo', (req, res) => {
   res.render('pages/demo', {
     title: '2026世界杯 · 预测市场模拟',
     page: 'demo',
+  });
+});
+
+// Phase 7: Polymarket 市场看板
+app.get('/polymarket', (req, res) => {
+  res.render('pages/polymarket', {
+    title: '2026世界杯 · Polymarket 预测市场',
+    page: 'polymarket',
+  });
+});
+
+// Phase 7: 在线学习看板
+app.get('/online-learning', (req, res) => {
+  res.render('pages/online-learning', {
+    title: '2026世界杯 · 在线学习看板',
+    page: 'online-learning',
   });
 });
 

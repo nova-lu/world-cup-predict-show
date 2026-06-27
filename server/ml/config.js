@@ -76,6 +76,37 @@ const mlConfig = {
 
   // 降级
   degradeToElo: true,
+
+  // ---------- Phase 7 配置 ----------
+  polymarket: {
+    enabled: true,
+    gammaApiBase: 'https://gamma-api.polymarket.com',
+    clobApiBase: 'https://clob.polymarket.com',
+    worldCupTagId: 102232,
+    refreshIntervalMs: 60000,
+    marketListCacheMs: 3600000,
+    minLiquidityUsdc: 1000,
+  },
+  oddsFusion: {
+    enabled: true,
+    strategy: 'log-odds-weighted',
+    minSources: 1,
+    sourceWeights: { oddsApi: 0.35, polymarket: 0.30, model: 0.35 },
+    divergenceAlert: 0.15,
+  },
+  tournamentHierarchy: {
+    enabled: true,
+    defaultTier: 'T1',
+    fallbackChain: ['T1', 'T2', 'T3', 'T4', 'T5', 'base'],
+  },
+  online: {
+    enabled: false,
+    maxUpdatesPerDay: 3,
+    timeoutMs: 30000,
+    minNewMatches: 1,
+    evaluationWindow: 5,
+    rollbackThreshold: { logLossIncrease: 0.03, eceIncrease: 0.02 },
+  },
 };
 
 export default mlConfig;

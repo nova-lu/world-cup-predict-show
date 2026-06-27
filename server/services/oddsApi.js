@@ -83,7 +83,14 @@ async function request(path) {
   const sep = path.includes('?') ? '&' : '?';
   const url = `${BASE}${path}${sep}apiKey=${key}`;
 
-  const res = await fetch(url, { timeout: 10000 });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  let res;
+  try {
+    res = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
   
   // 处理 429 速率限制
   if (res.status === 429) {
