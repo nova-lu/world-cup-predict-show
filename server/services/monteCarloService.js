@@ -156,6 +156,8 @@ function simulateTournament(matches, rng) {
     results.champion = remaining[0];
   }
 
+  // 返回小组排名信息
+  results.groupStandings = standings;
   return results;
 }
 
@@ -170,14 +172,38 @@ export function runMonteCarlo(numSims = 5000, force = false) {
   const allTeams = Object.keys(getRatings());
 
   const counts = {};
+  // 小组排名追踪 (每组1/2名)
+  const groupRankCounts = {};
+
   for (const slug of allTeams) {
     counts[slug] = { champion: 0, final: 0, semi: 0, quarter: 0, round16: 0, round32: 0 };
+    groupRankCounts[slug] = {};
   }
 
   const start = Date.now();
   for (let i = 0; i < numSims; i++) {
     const rng = () => Math.random();
     const result = simulateTournament(matches, rng);
+
+    // 统计小组排名: standings 是 {A: {slug1: {slug, pts,...}}} 结构，需排序
+    if (result.groupStandings) {
+      for (const [g, teamsObj] of Object.entries(result.groupStandings)) {
+        // 移除 "Group " 前缀，与球队信息中的 group 字段一致
+        const groupKey = g.replace(/^Group\s+/i, '');
+        const sorted = Object.values(teamsObj).sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          if (b.gd !== a.gd) return b.gd - a.gd;
+          return b.gf - a.gf;
+        });
+        sorted.forEach((entry, idx) => {
+          const slug = entry.slug;
+          if (!groupRankCounts[slug]) groupRankCounts[slug] = {};
+          if (!groupRankCounts[slug][groupKey]) groupRankCounts[slug][groupKey] = { pos1: 0, pos2: 0 };
+          if (idx === 0) groupRankCounts[slug][groupKey].pos1++;
+          if (idx === 1) groupRankCounts[slug][groupKey].pos2++;
+        });
+      }
+    }
 
     // 统计各阶段
     const track = new Set();
@@ -276,6 +302,17 @@ export function runMonteCarlo(numSims = 5000, force = false) {
           final: +((counts[slug].final / numSims) * 100).toFixed(1),
           champion: +((counts[slug].champion / numSims) * 100).toFixed(1),
         },
+        // 小组排名概率: 每组第1/第2占比
+        groupRank: (() => {
+          const gr = {};
+          for (const [g, r] of Object.entries(groupRankCounts[slug] || {})) {
+            gr[g] = {
+              pos1: +((r.pos1 / numSims) * 100).toFixed(1),
+              pos2: +((r.pos2 / numSims) * 100).toFixed(1),
+            };
+          }
+          return gr;
+        })(),
       };
     })
     .sort((a, b) => b.prob.champion - a.prob.champion);
@@ -287,6 +324,7 @@ export function runMonteCarlo(numSims = 5000, force = false) {
     teams,
   };
 
+  // 设置缓存
   set(cacheKey, output, { source: 'computed', ttlMs: 1800000 });
   console.log(`[MonteCarlo] ${numSims} 次模拟完成，耗时 ${elapsed}s`);
   return output;

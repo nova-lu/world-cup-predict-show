@@ -9,7 +9,13 @@ export async function buildBracketData(force = false) {
   // 从蒙特卡洛获取模拟数据
   const monteCarloService = await import('../services/monteCarloService.js');
   const sims = 10000;
-  const result = monteCarloService.runMonteCarlo(sims, force);
+  let result = monteCarloService.runMonteCarlo(sims, force);
+
+  // 检查旧缓存数据：如果没有 groupRank，强制重新计算
+  if (!force && result.teams && result.teams.length > 0 && !result.teams[0].groupRank) {
+    console.log('[Bracket] 检测到旧缓存，强制刷新模拟数据...');
+    result = monteCarloService.runMonteCarlo(sims, true);
+  }
 
   // 小组赛阶段配置（12组）
   const groupConfig = 'ABCDEFGHIJKL'.split('').map((g, i) => ({
@@ -69,23 +75,102 @@ export async function buildBracketData(force = false) {
     teamProb[t.slug] = {
       name: t.name,
       flag: t.flag,
+      group: t.group,
       round32: t.prob.round32 || 0,
       round16: t.prob.round16 || 0,
       quarter: t.prob.quarter || 0,
       semi: t.prob.semi || 0,
       final: t.prob.final || 0,
       champion: t.prob.champion || 0,
+      groupRank: t.groupRank || {},
     };
   });
+
+  // 解析小组席位: 「1A」→ 该组最可能第1的球队, 「2D」→ 最可能第2的球队
+  function resolveGroupSlot(slot) {
+    const m = slot.match(/^(\d+)([A-Z])$/);
+    if (!m) return null;
+    const pos = parseInt(m[1]); // 1 或 2
+    const grp = m[2];
+    const key = pos === 1 ? 'pos1' : 'pos2';
+
+    // 优先用 groupRank 数据（新版 Monte Carlo）
+    let best = null, bestPct = 0;
+    let hasGroupRank = false;
+    for (const [slug, t] of Object.entries(teamProb)) {
+      const gr = t.groupRank;
+      const pct = gr[grp]?.[key] || 0;
+      if (pct > 0) hasGroupRank = true;
+      if (pct > bestPct && t.group === grp) {
+        bestPct = pct;
+        best = slug;
+      }
+    }
+    if (best) return best;
+
+    // 降级：用 round32 概率估算 — 第1名取该组 round32 最高，第2名取次高
+    if (!hasGroupRank) {
+      const groupTeams = Object.entries(teamProb)
+        .filter(([, t]) => t.group === grp)
+        .sort((a, b) => (b[1].round32 || 0) - (a[1].round32 || 0));
+      if (groupTeams.length >= pos) return groupTeams[pos - 1][0];
+      if (groupTeams.length > 0) return groupTeams[0][0];
+    }
+    return null;
+  }
+
+  // 对每个 match 解析其 home/away 席位
+  function resolveMatch(m) {
+    const resolved = { ...m };
+    // 解析 home
+    const homeTeam = resolveGroupSlot(m.home);
+    if (homeTeam) { resolved.home = homeTeam; }
+    // 解析 away
+    const awayTeam = resolveGroupSlot(m.away);
+    if (awayTeam) { resolved.away = awayTeam; }
+    // 处理多组候选如 "3C/3D/3F/3G/3H" — 从候选组中取最可能晋级32强的球队
+    if (m.home && m.home.includes('/') && !homeTeam) {
+      const bestThird = resolveMultiSlot(m.home);
+      if (bestThird) resolved.home = bestThird;
+    }
+    if (m.away && m.away.includes('/') && !awayTeam) {
+      const bestThird = resolveMultiSlot(m.away);
+      if (bestThird) resolved.away = bestThird;
+    }
+    return resolved;
+  }
+
+  // 解析多组候选：如 "3C/3D/3F/3G/3H" → 取这些组中 round32 概率最高的球队
+  function resolveMultiSlot(slot) {
+    const parts = slot.split('/');
+    let best = null, bestPct = 0;
+    for (const p of parts) {
+      const g = p.replace(/^\d+/, ''); // "3C" → "C"
+      for (const [slug, t] of Object.entries(teamProb)) {
+        if (t.group === g && (t.round32 || 0) > bestPct) {
+          bestPct = t.round32 || 0;
+          best = slug;
+        }
+      }
+    }
+    return best;
+  }
+
+  // 解析所有比赛
+  const resolved32 = round32Matches.map(resolveMatch);
+  const resolved16 = round16Matches.map(resolveMatch);
+  const resolvedQF = quarterMatches.map(resolveMatch);
+  const resolvedSF = semiMatches.map(resolveMatch);
+  const resolvedFinal = resolveMatch(finalMatch);
 
   return {
     groups: groupConfig,
     rounds: {
-      round32: round32Matches,
-      round16: round16Matches,
-      quarter: quarterMatches,
-      semi: semiMatches,
-      final: [finalMatch],
+      round32: resolved32,
+      round16: resolved16,
+      quarter: resolvedQF,
+      semi: resolvedSF,
+      final: [resolvedFinal],
     },
     teams: teamProb,
     simulations: sims,
