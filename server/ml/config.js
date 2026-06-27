@@ -64,6 +64,14 @@ const mlConfig = {
   ensemble: {
     eloWeight: 0.3,
     mlWeight: 0.7,
+    // 动态权重
+    dynamic: {
+      enabled: true,
+      confidenceThreshold: 0.55,    // ML 置信度低于此值时降低 ML 权重
+      disagreementThreshold: 0.15,  // Elo 与 ML 概率差超过此值时触发动态调整
+      minMlWeight: 0.4,            // 动态调整时 ML 最低权重
+      maxMlWeight: 0.8,            // 动态调整时 ML 最高权重
+    },
   },
 
   // 降级

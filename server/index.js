@@ -41,12 +41,19 @@ app.get('/api/ml/status', async (req, res) => {
       const predictor = await import('./ml/inference/predictor.js');
       modelsReady = await predictor.checkModels();
       if (modelsReady) {
-        const manifest = await import('./ml/manifests/v1.json', { assert: { type: 'json' } }).then(m => m.default).catch(() => null);
+        const manifest = await import('./ml/manifests/v1.json', { with: { type: 'json' } }).then(m => m.default).catch(() => null);
         modelInfo = manifest || { version: 'v1', status: 'manifest not found' };
       }
     } catch (e) {
       error = e.message;
     }
+
+    // Phase 6.5c: 降级统计
+    let degradeStats = null;
+    try {
+      const { getDegradeStats } = await import('./routes/matches.js');
+      degradeStats = getDegradeStats();
+    } catch {}
 
     res.json({
       enabled: mlConfig.enabled,
@@ -54,6 +61,16 @@ app.get('/api/ml/status', async (req, res) => {
       version: mlConfig.version,
       modelsReady,
       modelInfo,
+      // Phase 6.5a: 扩展字段
+      ensemble: {
+        base: { elo: mlConfig.ensemble.eloWeight, ml: mlConfig.ensemble.mlWeight },
+        dynamic: mlConfig.ensemble.dynamic,
+      },
+      calibration: {
+        version: modelInfo?.calibration?.version || 'platt-v1',
+        calibrated: modelInfo?.calibration?.calibrated || true,
+      },
+      degrade: degradeStats || { degradeCount: 0 },
       error,
     });
   } catch (e) {

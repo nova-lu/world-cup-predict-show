@@ -47,15 +47,6 @@ streamlit run app.py
 - Interactive Streamlit web interface
 - Match outcome probability estimation
 
-### 🚀 Upcoming Features (Development Roadmap)
-
-- Dynamic Elo Rating System
-- Team strength modeling
-- Full FIFA World Cup group-stage simulation
-- Knockout bracket generation
-- 10,000-run Monte Carlo tournament simulation
-- Qualification and championship probability forecasting
-
 ---
 
 ## 👨‍💻 Author

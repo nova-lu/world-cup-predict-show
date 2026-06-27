@@ -4,7 +4,11 @@ import { predictMatch as eloPredictMatch, predictUpcoming } from '../services/pr
 import { fetchAllMatches, fetchUpcomingMatches, fetchStandings } from '../services/footballApi.js';
 import { buildCacheMeta } from '../middleware/cache.js';
 import { get as cacheGet, set as cacheSet } from '../middleware/cache.js';
+import { normalizePrediction, toProbabilities, validateProbabilities } from '../ml/utils/probability.js';
 import mlConfig from '../ml/config.js';
+
+// Phase 6.5c: 降级计数器
+let degradeCount = 0;
 
 // ML 推理（懒加载，仅启用时引入）
 let mlPredictor = null;
@@ -264,21 +268,37 @@ router.get('/match/:t1/:t2', async (req, res) => {
             prediction = mlPred;
           } else {
             const eloPred = eloPredictMatch(t1, t2, null, req.forceRefresh);
+            normalizePrediction(eloPred, 'elo');
             prediction = mlMod.ensemblePrediction(eloPred, mlPred);
           }
           cacheSet(cacheKey, prediction, { source: 'ml' });
         } catch (e) {
           console.warn(`[matches] ${engine} 推理失败，降级到 Elo:`, e.message);
+          degradeCount++;
           prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
           prediction._degraded = true;
         }
       } else {
+        degradeCount++;
         prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
         prediction._degraded = true;
       }
     }
   } else {
     prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+  }
+
+  // Phase 6.1: 统一概率协议 — 确保 Elo 与 ML 输出格式一致
+  if (!prediction.engine || prediction.engine === 'elo') {
+    normalizePrediction(prediction, 'elo');
+  }
+
+  // Phase 6.5b: prob_sum_error 监控
+  if (prediction.probabilities) {
+    const pv = validateProbabilities(prediction.probabilities);
+    if (!pv.valid) {
+      console.error(`[matches] prob_sum_error | engine=${engine} | ${t1}:${t2} | ${pv.errors.join('; ')}`);
+    }
   }
 
   try {
@@ -305,3 +325,8 @@ router.get('/compare/:t1/:t2', async (req, res) => {
 });
 
 export default router;
+
+// Phase 6.5c: 降级统计导出
+export function getDegradeStats() {
+  return { degradeCount };
+}

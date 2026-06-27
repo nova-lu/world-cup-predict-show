@@ -169,6 +169,8 @@
               <div class="meta-item"><span class="meta-label">置信度</span><span class="meta-val" id="meta-confidence">-</span></div>
               <div class="meta-item"><span class="meta-label">特征数</span><span class="meta-val" id="meta-features">-</span></div>
               <div class="meta-item"><span class="meta-label">校准</span><span class="meta-val" id="meta-calibrated">-</span></div>
+              <div class="meta-item"><span class="meta-label">集成权重</span><span class="meta-val" id="meta-ensemble-weights" style="display:none">-</span></div>
+              <div class="meta-item"><span class="meta-label"></span><span class="meta-val" id="meta-weights-note" style="display:none"></span></div>
             </div>
           </div>
         </div>
@@ -233,17 +235,16 @@
       document.querySelector(`.engine-tab[data-engine="${engine}"]`).classList.add('active');
       currentEngine = engine;
 
-      // Elo 格式与 ML 格式兼容处理
-      const isElo = !pred.engine || pred.engine === 'elo';
+      // Phase 6.1: 后端已统一概率协议，始终从 probabilities 读取
       const homeName = pred.home ? pred.home.name : pred.homeTeam;
       const awayName = pred.away ? pred.away.name : pred.awayTeam;
       const homeFlag = pred.home ? (pred.home.flag || '⚽') : '⚽';
       const awayFlag = pred.away ? (pred.away.flag || '⚽') : '⚽';
-      const homeProb = isElo ? pred.prob.winHome : (pred.probabilities.homeWin * 100).toFixed(1);
-      const drawProb = isElo ? pred.prob.draw : (pred.probabilities.draw * 100).toFixed(1);
-      const awayProb = isElo ? pred.prob.winAway : (pred.probabilities.awayWin * 100).toFixed(1);
-      const xgHome = isElo ? pred.expectedGoals.home : pred.expectedGoals.home;
-      const xgAway = isElo ? pred.expectedGoals.away : pred.expectedGoals.away;
+      const homeProb = (pred.probabilities.homeWin * 100).toFixed(1);
+      const drawProb = (pred.probabilities.draw * 100).toFixed(1);
+      const awayProb = (pred.probabilities.awayWin * 100).toFixed(1);
+      const xgHome = pred.expectedGoals.home;
+      const xgAway = pred.expectedGoals.away;
 
       document.getElementById('match-title').textContent =
         `${homeFlag} ${homeName} vs ${awayName} ${awayFlag}`;
@@ -339,7 +340,7 @@
       }
 
       // ---------- ML 引擎额外信息 ----------
-      if (!isElo && pred.engine) {
+      if (pred.engine && pred.engine !== 'elo') {
         document.getElementById('ml-info-section').style.display = 'block';
         document.getElementById('ml-version-badge').textContent = pred.engineVersion || 'v1';
 
@@ -394,6 +395,17 @@
           document.getElementById('meta-confidence').textContent = pred.metadata.confidence ? (pred.metadata.confidence * 100).toFixed(1) + '%' : '-';
           document.getElementById('meta-features').textContent = pred.metadata.features ? pred.metadata.features.length : '-';
           document.getElementById('meta-calibrated').textContent = pred.metadata.calibrated ? '是' : '否';
+        }
+        // Phase 6.5a: 权重显示
+        if (pred.metadata?.ensembleWeights) {
+          const ew = pred.metadata.ensembleWeights;
+          document.getElementById('meta-ensemble-weights').textContent =
+            `Elo ${(ew.elo * 100).toFixed(0)}% / ML ${(ew.ml * 100).toFixed(0)}%`;
+          document.getElementById('meta-ensemble-weights').style.display = 'block';
+          if (pred.metadata.dynamicAdjusted) {
+            document.getElementById('meta-weights-note').textContent = '· 动态调整';
+            document.getElementById('meta-weights-note').style.display = 'inline';
+          }
         }
       }
 

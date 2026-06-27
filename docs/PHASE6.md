@@ -17,7 +17,16 @@ Phase 5 已完成 ML 引擎接入与训练产物发布，当前系统具备：
 
 ---
 
-## 一、目标与验收标准
+## Phase 6 完成状态
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 6.1 概率协议统一 | ✅ 完成 | `utils/probability.js` 创建, 路由层统一 normalize, 前端简化 |
+| 6.2 权重参数化 | ✅ 完成 | `config.js` 添加 dynamic 子节, predictor.js 读取参数 |
+| 6.3 网格搜索 | ✅ 完成 | `scripts/grid_search.py` 含网格搜索 + 分层评估 + ECE 校准报告 |
+| 6.4 校准评估 | ✅ 完成 | predict.py 已使用 calibrated 模型, ECE 计算在 grid_search.py 中 |
+| 6.5 可观测性 | ✅ 完成 | status 扩展权重/校准/降级, prob_sum_error 监控, degradeCount |
+
 
 ### 目标 G1：集成概率可信且可解释
 

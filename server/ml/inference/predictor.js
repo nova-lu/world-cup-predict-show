@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import mlConfig from '../config.js';
 import { buildMatchFeatures } from '../data/features.js';
+import { normalizePrediction, toProbabilities, validateProbabilities } from '../utils/probability.js';
 import {
   computePoissonMatrix, computeProbabilities, computeTopScores,
   computeOverUnder, computeBTTS, computeRisk, computeCoverage,
@@ -103,7 +104,7 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
   // 覆盖度
   const coverage = computeCoverage(scoreMatrix, 3);
 
-  return {
+  const result = {
     engine: `ml-${mlConfig.version}`,
     engineVersion: mlConfig.version,
     homeTeam,
@@ -129,6 +130,14 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
       features: Object.keys(features),
     },
   };
+
+  // Phase 6.1c: 输出约束校验
+  const pv = validateProbabilities(result.probabilities);
+  if (!pv.valid) {
+    console.warn(`[ml:predictor] prob validation: ${pv.errors.join('; ')}`);
+  }
+
+  return result;
 }
 
 /**
@@ -196,23 +205,24 @@ export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
   let wElo = eloWeight / totalWeight;
   let wML = mlWeight / totalWeight;
 
-  if (dynamicWeight) {
+  const eloProbs = toProbabilities(eloPrediction?.probabilities || eloPrediction?.prob);
+  const mlProbs = toProbabilities(mlPrediction?.probabilities || mlPrediction?.prob);
+
+  if (dynamicWeight && mlConfig.ensemble.dynamic.enabled) {
     const mlConf = Number(mlPrediction?.metadata?.confidence ?? 0.5);
     const probGap = Math.max(
-      Math.abs((eloPrediction?.probabilities?.homeWin ?? 0) - (mlPrediction?.probabilities?.homeWin ?? 0)),
-      Math.abs((eloPrediction?.probabilities?.draw ?? 0) - (mlPrediction?.probabilities?.draw ?? 0)),
-      Math.abs((eloPrediction?.probabilities?.awayWin ?? 0) - (mlPrediction?.probabilities?.awayWin ?? 0)),
+      Math.abs((eloProbs.homeWin) - (mlProbs.homeWin)),
+      Math.abs((eloProbs.draw) - (mlProbs.draw)),
+      Math.abs((eloProbs.awayWin) - (mlProbs.awayWin)),
     );
+    const { confidenceThreshold, disagreementThreshold, minMlWeight, maxMlWeight } = mlConfig.ensemble.dynamic;
 
-    // When ML confidence is low or Elo/ML strongly disagree, trust Elo more.
-    if (mlConf < 0.58 || probGap > 0.22) {
-      wML = Math.min(wML, 0.5);
+    // 置信度不足或分歧过大时降低 ML 权重
+    if (mlConf < confidenceThreshold || probGap > disagreementThreshold) {
+      wML = Math.max(minMlWeight, Math.min(wML, maxMlWeight));
       wElo = 1 - wML;
     }
   }
-
-  const eloProbs = extract1X2Probabilities(eloPrediction);
-  const mlProbs = extract1X2Probabilities(mlPrediction);
 
   return {
     engine: 'ensemble',
@@ -223,7 +233,7 @@ export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
       home: Math.round((wElo * (eloPrediction.expectedGoals?.home || 0) + wML * (mlPrediction.expectedGoals?.home || 0)) * 100) / 100,
       away: Math.round((wElo * (eloPrediction.expectedGoals?.away || 0) + wML * (mlPrediction.expectedGoals?.away || 0)) * 100) / 100,
     },
-    probabilities: normalizeAndRoundProbabilities({
+    probabilities: toProbabilities({
       homeWin: wElo * eloProbs.homeWin + wML * mlProbs.homeWin,
       draw: wElo * eloProbs.draw + wML * mlProbs.draw,
       awayWin: wElo * eloProbs.awayWin + wML * mlProbs.awayWin,
@@ -233,7 +243,8 @@ export function ensemblePrediction(eloPrediction, mlPrediction, options = {}) {
     risk: mlPrediction.risk || eloPrediction.risk,
     coverage: mlPrediction.coverage || eloPrediction.coverage,
     metadata: {
-      ensembleWeights: { elo: wElo, ml: wML },
+      ensembleWeights: { elo: Math.round(wElo * 100) / 100, ml: Math.round(wML * 100) / 100 },
+      dynamicAdjusted: dynamicWeight && mlConfig.ensemble.dynamic.enabled,
       eloVersion: eloPrediction.engine,
       mlVersion: mlPrediction.engine,
       calibrationVersion: mlPrediction?.metadata?.calibrationVersion || 'none',
