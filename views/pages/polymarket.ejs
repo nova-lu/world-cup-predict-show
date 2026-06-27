@@ -1,0 +1,219 @@
+<link rel="stylesheet" href="/css/app.css">
+<%- include('../partials/header') %>
+
+<main class="container main-content">
+  <div class="page-header">
+    <h1>🧠 Polymarket 预测市场</h1>
+    <p class="page-subtitle">去中心化预测市场的实时价格与模型对比</p>
+  </div>
+
+  <div class="pm-controls">
+    <div class="filter-group">
+      <label for="market-filter">市场类型</label>
+      <select id="market-filter" class="form-select" onchange="applyFilters()">
+        <option value="all">全部</option>
+        <option value="match">1X2 胜负</option>
+        <option value="champion">冠军</option>
+        <option value="group">小组出线</option>
+        <option value="special">特殊</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <button id="btn-upcoming" class="btn btn-sm btn-primary" onclick="switchScope('upcoming')">📅 近期 48h</button>
+      <button id="btn-historical" class="btn btn-sm btn-secondary" onclick="switchScope('historical')">📜 历史已结算</button>
+    </div>
+    <div class="pm-summary">
+      <span>事件: <strong id="pm-total">0</strong></span>
+      <span>有价格: <strong id="pm-priced">0</strong></span>
+    </div>
+  </div>
+
+  <div id="pm-loading" class="loading-large">加载 Polymarket 数据...</div>
+  <div id="pm-error" class="empty-state" style="display:none">
+    <p>⚠️ 无法加载 Polymarket 数据</p>
+    <p class="pm-error-detail" style="font-size:0.8rem;color:#64748b;margin-top:0.5rem"></p>
+    <button class="btn" onclick="loadPolymarketData()">重试</button>
+  </div>
+  <div id="pm-content" style="display:none">
+    <div class="pm-summary-bar">
+      <span class="pm-stat"><strong id="pm-total">0</strong> 活跃市场</span>
+      <span class="pm-stat"><strong id="pm-priced">0</strong> 含价格</span>
+      <span class="pm-stat pm-stat-hint">每次刷新自动从 CLOB 加载价格</span>
+    </div>
+    <div class="pm-grid" id="pm-grid"></div>
+  </div>
+</main>
+
+<style>
+.pm-summary-bar { display: flex; gap: 2rem; padding: 1rem 0; flex-wrap: wrap; align-items: center; }
+.pm-stat { font-size: 0.95rem; color: #94a3b8; }
+.pm-stat strong { color: #e2e8f0; }
+.pm-stat-hint { font-size: 0.75rem; color: #475569; }
+.pm-controls { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.filter-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.filter-group label { font-size: 0.75rem; color: #94a3b8; }
+.form-select { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+.pm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin: 1rem 0 2rem; }
+.pm-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 1rem; }
+.pm-card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: #e2e8f0; }
+.pm-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.pm-type-badge { display: inline-block; padding: 0.12rem 0.45rem; border-radius: 4px; font-size: 0.68rem; font-weight: 500; }
+.pm-status-tag { font-size: 0.72rem; color: #94a3b8; }
+.pm-card .pm-teams { font-size: 0.82rem; color: #94a3b8; margin-bottom: 0.8rem; }
+.pm-prob-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin: 0.3rem 0; }
+.pm-prob-label { color: #94a3b8; }
+.pm-prob-val { font-weight: 600; color: #e2e8f0; }
+.pm-dev-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.72rem; }
+.pm-dev-high { background: #7f1d1d; color: #fca5a5; }
+.pm-dev-med { background: #713f12; color: #fde68a; }
+.pm-dev-low { background: #14532d; color: #86efac; }
+.pm-volume { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; }
+.pm-card-footer { font-size: 0.72rem; color: #475569; margin-top: 0.5rem; border-top: 1px solid #1e293b; padding-top: 0.4rem; }
+.pm-unreachable { grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+.pm-unreachable-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+.pm-unreachable h3 { color: #e2e8f0; margin-bottom: 0.5rem; }
+.pm-unreachable p { color: #94a3b8; font-size: 0.85rem; margin: 0.3rem 0; }
+.pm-unreachable-hint { color: #64748b; font-size: 0.78rem; margin-top: 1rem; }
+.pm-error-detail { color: #ef4444; font-size: 0.75rem; word-break: break-all; }
+.pm-prob-bar { flex: 1; height: 6px; background: #1e293b; border-radius: 3px; margin: 0 0.5rem; align-self: center; overflow: hidden; }
+.pm-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.pm-bar-home { background: #3b82f6; }
+.pm-bar-draw { background: #8b5cf6; }
+.pm-bar-away { background: #ec4899; }
+.pm-no-price { color: #475569; font-size: 0.78rem; padding: 0.5rem 0; text-align: center; }
+.pm-empty { grid-column: 1 / -1; text-align: center; padding: 3rem; background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+.pm-empty p { color: #94a3b8; font-size: 1rem; }
+.pm-empty-hint { color: #64748b; font-size: 0.8rem; margin-top: 0.5rem; }
+.btn-sm { padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+.btn-primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+.btn-secondary { background: transparent; color: #94a3b8; border-color: #334155; }
+.btn-secondary:hover { background: #1e293b; color: #e2e8f0; }
+</style>
+
+<script>
+let currentScope = 'upcoming';
+
+async function loadPolymarketData() {
+  const $ = id => document.getElementById(id);
+  $('pm-loading').style.display = 'block';
+  $('pm-error').style.display = 'none';
+  $('pm-content').style.display = 'none';
+
+  try {
+    const r = await fetch('/api/odds/polymarket?scope=' + currentScope);
+    const data = await r.json();
+    if (!data.events) throw new Error(data.error || 'API 返回异常');
+    $('pm-total').textContent = data.total || 0;
+    $('pm-priced').textContent = data.priced || 0;
+    $('pm-loading').style.display = 'none';
+    $('pm-content').style.display = 'block';
+
+    if (!data.reachable) {
+      renderUnreachable(data.error);
+      return;
+    }
+    renderMarkets(data.events || []);
+  } catch (e) {
+    $('pm-loading').style.display = 'none';
+    $('pm-error').style.display = 'block';
+    $('pm-error').querySelector('.pm-error-detail').textContent = e.message;
+    console.error('Polymarket error:', e);
+  }
+}
+
+function switchScope(scope) {
+  currentScope = scope;
+  // 高亮按钮
+  document.getElementById('btn-upcoming').className = 'btn btn-sm ' + (scope === 'upcoming' ? 'btn-primary' : 'btn-secondary');
+  document.getElementById('btn-historical').className = 'btn btn-sm ' + (scope === 'historical' ? 'btn-primary' : 'btn-secondary');
+  // 重新加载数据（不用清缓存，后端独立缓存键）
+  loadPolymarketData();
+}
+
+function renderUnreachable(errorMsg) {
+  const grid = document.getElementById('pm-grid');
+  grid.innerHTML = `
+    <div class="pm-unreachable">
+      <div class="pm-unreachable-icon">🌐</div>
+      <h3>Polymarket API 不可达</h3>
+      <p>从当前网络无法连接 gamma-api.polymarket.com</p>
+      <p class="pm-error-detail">${errorMsg || ''}</p>
+    </div>
+  `;
+}
+
+function renderMarkets(events) {
+  const grid = document.getElementById('pm-grid');
+  grid.innerHTML = '';
+
+  if (!events.length) {
+    grid.innerHTML = '<div class="pm-empty"><p>📭 暂无活跃市场</p></div>';
+    return;
+  }
+
+  // 存入全局供 applyFilters 过滤
+  window._pmAllEvents = events;
+
+  const filter = document.getElementById('market-filter').value;
+  const filtered = filter === 'all' ? events : events.filter(e => e.marketType === filter);
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="pm-empty"><p>📭 该类型下暂无事件</p></div>';
+    return;
+  }
+
+  filtered.forEach(ev => {
+    const date = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '?';
+
+    const card = document.createElement('div');
+    card.className = 'pm-card';
+    if (ev.closed) card.style.borderColor = '#1f4a1f';
+
+    // 类型标签 + 状态
+    const typeInfo = {
+      match: ['⚽', '1X2 胜负', '#3b82f6'],
+      champion: ['🏆', '冠军', '#f59e0b'],
+      group: ['📊', '小组出线', '#10b981'],
+      special: ['🎯', '特殊', '#8b5cf6'],
+    };
+    const [icon, typeLabel, typeColor] = typeInfo[ev.marketType] || ['❓', '未知', '#64748b'];
+    const statusIcon = ev.closed ? ' 🔒已结算' : ' 🟢活跃';
+
+    let html = '<div class="pm-card-header">';
+    html += '<span class="pm-type-badge" style="background:' + typeColor + '22;color:' + typeColor + ';border:1px solid ' + typeColor + '44">' + icon + ' ' + typeLabel + '</span>';
+    html += '<span class="pm-status-tag">' + statusIcon + '</span>';
+    html += '</div>';
+    html += '<div class="pm-card-title">' + ev.title + '</div>';
+    html += '<div class="pm-teams">📅 ' + date + '</div>';
+
+    // 不同类型显示不同数据
+    if (ev.marketType === 'match' && ev.prices && ev.prices.home != null) {
+      const p = ev.prices;
+      const bar = (v) => 'width:' + Math.round(v * 100) + '%';
+      html += '<div class="pm-prob-row"><span class="pm-prob-label">主胜</span><div class="pm-prob-bar"><div class="pm-bar-fill pm-bar-home" style="' + bar(p.home) + '"></div></div><span class="pm-prob-val" style="color:#60a5fa">' + (p.home * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="pm-prob-row"><span class="pm-prob-label">平局</span><div class="pm-prob-bar"><div class="pm-bar-fill pm-bar-draw" style="' + bar(p.draw) + '"></div></div><span class="pm-prob-val" style="color:#a78bfa">' + (p.draw * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="pm-prob-row"><span class="pm-prob-label">客胜</span><div class="pm-prob-bar"><div class="pm-bar-fill pm-bar-away" style="' + bar(p.away) + '"></div></div><span class="pm-prob-val" style="color:#f472b6">' + (p.away * 100).toFixed(1) + '%</span></div>';
+      if (p.overround) {
+        html += '<div class="pm-card-footer">抽水: ' + ((p.overround - 1) * 100).toFixed(1) + '%</div>';
+      }
+    } else {
+      html += '<div class="pm-no-price">' + (ev.marketType === 'match' ? '⏳ 暂无1X2价格数据' : '📊 查看详情请点击事件链接') + '</div>';
+    }
+
+    // 添加数据来源链接
+    html += '<div class="pm-card-footer"><a href="https://gamma-api.polymarket.com/events?slug=' + ev.slug + '" target="_blank" style="color:#6366f1;font-size:0.72rem" rel="noopener">查看市场 →</a></div>';
+
+    card.innerHTML = html;
+    grid.appendChild(card);
+  });
+}
+
+function applyFilters() {
+  if (window._pmAllEvents) {
+    renderMarkets(window._pmAllEvents);
+  }
+}
+document.addEventListener('DOMContentLoaded', loadPolymarketData);
+</script>
+
+<%- include('../partials/footer') %>

@@ -11,7 +11,7 @@
 
   <main class="main-content">
     <div class="page-header">
-      <h1>今日赛事</h1>
+      <h1>48小时赛程</h1>
       <p class="subtitle" id="today-date"></p>
     </div>
     <div class="disclaimer-banner">
@@ -24,7 +24,7 @@
     <div id="loading-spinner" class="loading">加载中...</div>
     <div id="matches-list" class="matches-list" style="display:none"></div>
     <div id="empty-message" class="empty-state" style="display:none">
-      <p>📭 今日无赛事安排</p>
+      <p>📭 未来48小时无赛事安排</p>
       <p class="subtitle">请查看 <a href="/schedule">完整赛程</a></p>
     </div>
 
@@ -51,11 +51,12 @@
   <%- include('../partials/footer') %>
 
   <script>
-  fetch('/api/matches/today')
-    .then(r => r.json())
-    .then(data => {
+  async function loadTodayData(force) {
+    try {
+      if (force) document.getElementById('loading-spinner').style.display = 'block';
+      const data = await cachedFetch('/api/matches/today?hours=48', { force });
       document.getElementById('loading-spinner').style.display = 'none';
-      document.getElementById('today-date').textContent = data.date + ' · ' + data.matches.length + ' 场比赛';
+      document.getElementById('today-date').textContent = `${data.windowLabel || '未来48小时赛程'} · ${data.matches.length} 场比赛`;
 
       if (data.matches.length === 0) {
         document.getElementById('empty-message').style.display = 'block';
@@ -67,19 +68,20 @@
       const timed = data.matches.filter(m => m.status !== 'FT').length;
       document.getElementById('today-stats').style.display = 'flex';
       document.getElementById('today-stats').innerHTML = `
-        <div class="stat-badge">📊 今日 ${data.matches.length} 场</div>
+        <div class="stat-badge">📊 窗口内 ${data.matches.length} 场</div>
         <div class="stat-badge stat-finished">✅ ${ft} 场已完赛</div>
         <div class="stat-badge stat-upcoming">⏳ ${timed} 场未开赛</div>
       `;
 
       const container = document.getElementById('matches-list');
       container.style.display = 'block';
+      container.innerHTML = '';
 
       // 先显示未开赛，再显示已完赛
       const ordered = [...data.matches].sort((a, b) => {
         if (a.status !== 'FT' && b.status === 'FT') return -1;
         if (a.status === 'FT' && b.status !== 'FT') return 1;
-        return (a.time || '').localeCompare(b.time || '');
+        return (a.utcDate || '').localeCompare(b.utcDate || '');
       });
 
       ordered.forEach(m => {
@@ -90,7 +92,7 @@
         card.innerHTML = `
           <div class="match-card-header">
             <span class="match-group">${m.group || ''}</span>
-            ${m.time ? `<span class="match-time-badge">${m.time}</span>` : ''}
+            ${(m.kickoffLabel || m.time) ? `<span class="match-time-badge">${m.kickoffLabel || m.time}</span>` : ''}
             <span class="match-stage-badge">${({
               'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强',
               'QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛'
@@ -119,7 +121,10 @@
             <div class="odds-compare-row" id="odds-compare-${m.t1}-${m.t2}">
               <span class="odds-vs-model">加载赔率中...</span>
             </div>
-            <div class="match-xg-info">预期进球: ${pred.expectedGoals.home} - ${pred.expectedGoals.away}  · 点击查看详细预测</div>
+            <div class="odds-compare-row" id="pm-compare-${m.t1}-${m.t2}" style="margin-top:2px">
+              <span class="odds-vs-model" style="color:#6366f1">加载预测市场...</span>
+            </div>
+            <div class="match-xg-info">预期进球: ${pred.expectedGoals.home} - ${pred.expectedGoals.away}  · 点击查看详细预测 <span class="engine-chip">⚡ Elo/ML/集成</span></div>
             `.trim() : ''}
             ${isFinished ? '<div class="match-result-info">点击查看详情</div>' : ''}
           </div>
@@ -127,7 +132,7 @@
         container.appendChild(card);
       });
 
-      // 批量加载赔率（用于未开赛比赛）
+      // 批量加载传统赔率
       const oddsIds = [];
       ordered.forEach(m => {
         if (m.status !== 'FT' && m.t1 && m.t2) {
@@ -152,10 +157,39 @@
           `;
         }).catch(() => { el.innerHTML = ''; });
       });
-    })
-    .catch(err => {
+
+      // 批量加载 Polymarket 融合数据
+      fetch(`/api/odds/fusion/today`).then(r => r.json()).then(fd => {
+        if (!fd.fusion) return;
+        fd.fusion.forEach(f => {
+          const el = document.getElementById(`pm-compare-${f.t1}-${f.t2}`);
+          if (!el) return;
+          if (f.polymarket) {
+            const p = f.polymarket;
+            el.innerHTML = `
+              <span class="pm-badge" style="background:#6366f1;color:#fff;padding:1px 5px;border-radius:4px;font-size:0.65rem;white-space:nowrap">Poly</span>
+              <span class="odds-compare-item"><span class="odds-compare-label">主</span><span class="odds-compare-val" style="color:#6366f1">${(p.homeWin * 100).toFixed(1)}%</span></span>
+              <span class="odds-compare-item"><span class="odds-compare-label">平</span><span class="odds-compare-val" style="color:#6366f1">${(p.draw * 100).toFixed(1)}%</span></span>
+              <span class="odds-compare-item"><span class="odds-compare-label">客</span><span class="odds-compare-val" style="color:#6366f1">${(p.awayWin * 100).toFixed(1)}%</span></span>
+            `;
+          } else if (f.oddsApi) {
+            // 有传统赔率融合数据但没有 Polymarket
+            el.innerHTML = `<span class="pm-badge" style="background:#64748b;color:#fff;padding:1px 5px;border-radius:4px;font-size:0.65rem">融合</span><span style="color:#94a3b8;font-size:0.7rem"> ${(f.fusion.fused.homeWin * 100).toFixed(0)}% / ${(f.fusion.fused.draw * 100).toFixed(0)}% / ${(f.fusion.fused.awayWin * 100).toFixed(0)}%</span>`;
+          } else {
+            el.style.display = 'none';
+          }
+        });
+      }).catch(() => {});
+    } catch (err) {
       document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败，请刷新重试';
-    });
+    }
+  }
+
+  // 页面加载时首次加载
+  loadTodayData(false);
+
+  // 注册刷新回调
+  window.cacheUI.onRefresh('today', () => loadTodayData(true));
   </script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+import { get, set, del } from '../middleware/cache.js';
+
 const BASE = 'https://api.odds-api.io/v3';
 const WC_LEAGUE = 'international-fifa-world-cup';
 
@@ -48,10 +50,6 @@ const DEFAULT_BOOKMAKERS = [
   'Bwin ES', 'DafaBet', '10BET', 'Betfair ES'
 ];
 
-let cachedEvents = null;
-let cachedEventsAt = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 min
-
 /**
  * 获取 API Key
  */
@@ -85,7 +83,14 @@ async function request(path) {
   const sep = path.includes('?') ? '&' : '?';
   const url = `${BASE}${path}${sep}apiKey=${key}`;
 
-  const res = await fetch(url, { timeout: 10000 });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  let res;
+  try {
+    res = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
   
   // 处理 429 速率限制
   if (res.status === 429) {
@@ -102,13 +107,12 @@ async function request(path) {
 }
 
 /**
- * 获取所有世界杯事件（含缓存）
+ * 获取所有世界杯事件（使用统一缓存）
  */
 async function fetchWcEvents(force = false) {
-  const now = Date.now();
-  if (!force && cachedEvents && (now - cachedEventsAt) < CACHE_TTL) {
-    return cachedEvents;
-  }
+  const cacheKey = 'odds:events';
+  const cached = get(cacheKey, { force });
+  if (cached.hit) return cached.value;
   
   const events = await request(`/events?sport=football&league=${WC_LEAGUE}&limit=100`);
   // 筛选 pending 且有真实队名的赛事（排除占位符事件如 "W73 vs W75"）
@@ -127,8 +131,7 @@ async function fetchWcEvents(force = false) {
     e.awaySlug = teamToSlug(e.away);
   });
 
-  cachedEvents = realEvents;
-  cachedEventsAt = now;
+  set(cacheKey, realEvents, { source: 'api', ttlMs: 1800000 });
   return realEvents;
 }
 
@@ -337,11 +340,10 @@ function averageOdds(oddsList) {
 }
 
 /**
- * 清除缓存
+ * 清除缓存（使用统一缓存 del）
  */
 function clearCache() {
-  cachedEvents = null;
-  cachedEventsAt = 0;
+  del('odds:events');
 }
 
 export {

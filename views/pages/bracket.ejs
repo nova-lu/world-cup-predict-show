@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    /* ===== Bracket Container ===== */
+    #bracket-container {
+      display: flex;
+      gap: 20px;
+      position: relative;
+    }
+
+    /* ===== Sidebar ===== */
+    .bracket-sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      align-self: flex-start;
+      position: sticky;
+      top: 80px;
+    }
+    .bracket-sidebar h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .champ-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(48,54,61,0.4);
+      font-size: 0.82rem;
+      cursor: default;
+      transition: background 0.1s;
+    }
+    .champ-row:hover { background: var(--bg-hover); border-radius: 4px; padding-left: 4px; }
+    .champ-rank {
+      font-weight: 700;
+      color: var(--text-muted);
+      width: 20px;
+      text-align: right;
+      font-size: 0.78rem;
+    }
+    .champ-flag { font-size: 1.1rem; }
+    .champ-name { flex: 1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .champ-pct {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-green);
+      width: 48px;
+      text-align: right;
+    }
+    .champ-bar-cell { width: 60px; }
+    .champ-bar {
+      display: block;
+      height: 6px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent));
+      border-radius: 3px;
+      transition: width 0.5s;
+      min-width: 3px;
+    }
+
+    /* ===== Bracket Tree ===== */
+    .bracket-tree {
+      flex: 1;
+      min-width: 0;
+      overflow-x: auto;
+      padding: 10px 0 20px;
+    }
+    .bracket-grid {
+      display: grid;
+      grid-template-columns: 200px 200px 200px 200px 180px 120px;
+      gap: 0;
+      min-width: 900px;
+    }
+
+    /* Round column */
+    .bracket-round-col {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 0 8px;
+    }
+    .round-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 6px 0;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Match card */
+    .bracket-match {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      cursor: default;
+      transition: all 0.15s;
+      font-size: 0.78rem;
+      position: relative;
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .bracket-match:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+    .bracket-match .matchup {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .bracket-match .team-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .bracket-match .team-line .flag { font-size: 0.85rem; }
+    .bracket-match .team-line .name {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bracket-match .team-line .slot-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .bracket-match .team-line .prob-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      margin-left: auto;
+      flex-shrink: 0;
+      opacity: 0.5;
+    }
+    .bracket-match .match-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .bracket-match .prob-sub {
+      font-size: 0.62rem;
+      color: var(--text-muted);
+    }
+
+    /* Champion node */
+    .champion-node {
+      background: linear-gradient(135deg, rgba(35,134,54,0.2), rgba(56,139,253,0.15));
+      border: 2px solid var(--accent-green);
+      border-radius: var(--radius);
+      padding: 14px 10px;
+      text-align: center;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .champion-node .trophy { font-size: 1.6rem; }
+    .champion-node .champ-name { font-size: 0.95rem; font-weight: 700; }
+    .champion-node .champ-flag { font-size: 1.3rem; }
+    .champion-node .champ-prob { font-size: 0.78rem; color: var(--accent-green); font-weight: 600; }
+
+    /* Connecting lines via SVG overlay */
+    .bracket-round-col { position: relative; }
+    .bracket-round-col .connector-svg {
+      position: absolute;
+      top: 0;
+      right: -1px;
+      width: 16px;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Match spacing by round */
+    .r32 .bracket-match { margin-bottom: 8px; }
+    .r16 .bracket-match { margin-bottom: 40px; }
+    .qf .bracket-match { margin-bottom: 104px; }
+    .sf .bracket-match { margin-bottom: 232px; }
+    .final-col .bracket-match { margin-bottom: 0; }
+
+    /* Last match in each column removes margin */
+    .bracket-round-col .bracket-match:last-child { margin-bottom: 0; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px) {
+      #bracket-container { flex-direction: column-reverse; }
+      .bracket-sidebar {
+        width: 100%;
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+      }
+      .bracket-sidebar h3 { grid-column: 1 / -1; }
+      .champ-row { padding: 4px 6px; border-bottom: none; background: var(--bg); border-radius: var(--radius-sm); font-size: 0.78rem; }
+      .champ-bar-cell { width: 40px; }
+    }
+    @media (max-width: 600px) {
+      .bracket-sidebar { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+      .bracket-grid { grid-template-columns: 160px 160px 160px 160px 150px 100px; min-width: 600px; }
+      .bracket-match { font-size: 0.72rem; padding: 6px 8px; min-height: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>淘汰赛树</h1>
+      <p class="subtitle" id="bracket-summary">2026世界杯 · 加载中...</p>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ 淘汰赛对阵基于蒙特卡洛模拟的晋级概率分布，对阵双方为当前模拟中最可能晋级的球队
+    </div>
+    <div id="loading-spinner" class="loading">🏆 正在构建淘汰赛树...</div>
+
+    <div id="bracket-container" style="display:none">
+      <!-- Sidebar champion probabilities -->
+      <div class="bracket-sidebar" id="bracket-sidebar"></div>
+      <!-- Main bracket tree -->
+      <div class="bracket-tree" id="bracket-tree"></div>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+  const ROUND_NAMES = {
+    round32: '32强',
+    round16: '16强',
+    quarter: '8强',
+    semi: '4强',
+    final: '决赛',
+  };
+
+  const ROUND_LABELS = {
+    round32: 'R32',
+    round16: 'R16',
+    quarter: 'QF',
+    semi: 'SF',
+    final: 'FINAL',
+  };
+
+  const ROUND_ORDER = ['round32', 'round16', 'quarter', 'semi', 'final'];
+
+  // Render champion probabilities sidebar
+  function renderSidebar(teams) {
+    const sidebar = document.getElementById('bracket-sidebar');
+    const entries = Object.entries(teams)
+      .map(([slug, t]) => ({ slug, ...t }))
+      .filter(t => t.champion > 0)
+      .sort((a, b) => b.champion - a.champion)
+      .slice(0, 8);
+
+    let html = '<h3>🏆 夺冠概率 Top 8</h3>';
+    entries.forEach((t, i) => {
+      const pct = t.champion;
+      const barW = Math.max(pct, 2);
+      html += `
+        <div class="champ-row">
+          <span class="champ-rank">${i + 1}</span>
+          <span class="champ-flag">${t.flag || '⚽'}</span>
+          <span class="champ-name">${t.name || t.slug}</span>
+          <span class="champ-pct">${pct}%</span>
+          <span class="champ-bar-cell"><span class="champ-bar" style="width:${barW}%"></span></span>
+        </div>
+      `;
+    });
+    sidebar.innerHTML = html;
+  }
+
+  // Resolve a slot name to the most probable team
+  function resolveSlot(slot, teams, rounds) {
+    // Special case: CHAMPION
+    if (slot === 'CHAMPION') {
+      const entries = Object.entries(teams)
+        .map(([s, t]) => ({ slug: s, ...t }))
+        .filter(t => t.champion > 0)
+        .sort((a, b) => b.champion - a.champion);
+      return entries[0] || null;
+    }
+
+    // Slot like "1A", "2D", "3C/3D/3F/3G/3H"
+    // Check if it matches a team slug directly (USA, Mexico, Germany, Argentina)
+    if (teams[slot]) {
+      return { slug: slot, ...teams[slot] };
+    }
+
+    // Check if slot is a group position like "1A", "2D"
+    const groupPosMatch = slot.match(/^(\d+)([A-Z])$/);
+    if (groupPosMatch) {
+      // For group positions, we don't have specific team data yet
+      return null;
+    }
+
+    // Check if slot is a winner slot like "W73", "W89" etc.
+    // Look up which match produces this slot
+    for (const roundKey of ROUND_ORDER) {
+      const matchList = rounds[roundKey] || [];
+      for (const match of matchList) {
+        if (match.slot === slot) {
+          // Find the most probable team that reaches this round
+          const roundField = roundKey === 'round32' ? 'round32' :
+                            roundKey === 'round16' ? 'round16' :
+                            roundKey === 'quarter' ? 'quarter' :
+                            roundKey === 'semi' ? 'semi' : 'final';
+          const entries = Object.entries(teams)
+            .map(([s, t]) => ({ slug: s, ...t }))
+            .filter(t => (t[roundField] || 0) > 0)
+            .sort((a, b) => (b[roundField] || 0) - (a[roundField] || 0));
+          return entries[0] || null;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Try to find the most probable team for a given slot
+  function findTeamForSlot(slot, teams, rounds, roundKey) {
+    // Direct team slug match
+    if (teams[slot]) return teams[slot];
+
+    // Group position: "1A", "2D" etc
+    const groupPosMatch = slot.match(/^(\d+)([A-Z])$/);
+    if (groupPosMatch) {
+      // We can't resolve this without group-stage data
+      return null;
+    }
+
+    // Winner slot: "W73", "W89" etc - find the match that produces this slot
+    for (const rk of ROUND_ORDER) {
+      const ml = rounds[rk] || [];
+      for (const m of ml) {
+        if (m.slot === slot) {
+          const probField = rk === 'final' ? 'champion' : rk;
+          const entries = Object.entries(teams)
+            .map(([s, t]) => ({ slug: s, ...t }))
+            .filter(t => (t[probField] || 0) > 0)
+            .sort((a, b) => (b[probField] || 0) - (a[probField] || 0));
+          return entries[0] || null;
+        }
+      }
+    }
+
+    // Third-best group slot format like "3C/3D/3F/3G/3H"
+    const groupSlugs = slot.split('/').map(s => s.trim());
+    const knownSlug = groupSlugs.find(s => teams[s]);
+    if (knownSlug) return teams[knownSlug];
+
+    return null;
+  }
+
+  // Build bracket tree
+  function renderBracket(data) {
+    const { rounds, teams } = data;
+    const container = document.getElementById('bracket-tree');
+
+    // Determine spacing: each R32 match maps to a row group
+    // R32: 16 matches, R16: 8 matches, QF: 4, SF: 2, Final: 1
+    // We use flex-gap spacing controlled by CSS margin-bottom
+
+    let html = '<div class="bracket-grid">';
+
+    // Process each round left to right
+    ROUND_ORDER.forEach((roundKey, colIdx) => {
+      const matches = rounds[roundKey] || [];
+      const isFinal = roundKey === 'final';
+      const colClass = roundKey === 'round32' ? 'r32' :
+                       roundKey === 'round16' ? 'r16' :
+                       roundKey === 'quarter' ? 'qf' :
+                       roundKey === 'semi' ? 'sf' : 'final-col';
+
+      html += `<div class="bracket-round-col ${colClass}">`;
+      html += `<div class="round-label">${ROUND_LABELS[roundKey]} · ${ROUND_NAMES[roundKey]}</div>`;
+
+      matches.forEach((match, matchIdx) => {
+        // Home team
+        const homeTeam = findTeamForSlot(match.home, teams, rounds, roundKey);
+        // Away team
+        const awayTeam = findTeamForSlot(match.away, teams, rounds, roundKey);
+
+        // Probability field for this round
+        const probField = roundKey === 'final' ? 'champion' : roundKey;
+
+        html += `<div class="bracket-match" title="${match.home} vs ${match.away}">`;
+        if (isFinal) {
+          html += `<div class="match-label">${match.label}</div>`;
+        }
+        html += `<div class="matchup">`;
+        // Home
+        html += `<div class="team-line">`;
+        if (homeTeam) {
+          html += `<span class="flag">${homeTeam.flag || '⚽'}</span>`;
+          html += `<span class="name">${homeTeam.name || match.home}</span>`;
+        } else {
+          html += `<span class="slot-label">${match.home}</span>`;
+        }
+        html += `</div>`;
+        // Away
+        html += `<div class="team-line">`;
+        if (awayTeam) {
+          html += `<span class="flag">${awayTeam.flag || '⚽'}</span>`;
+          html += `<span class="name">${awayTeam.name || match.away}</span>`;
+        } else {
+          html += `<span class="slot-label">${match.away}</span>`;
+        }
+        html += `</div>`;
+        html += `</div>`; // .matchup
+        html += `</div>`; // .bracket-match
+      });
+
+      html += `</div>`; // .bracket-round-col
+    });
+
+    // Champion column
+    html += `<div class="bracket-round-col final-col">`;
+    html += `<div class="round-label">🏆 冠军</div>`;
+
+    // Find most probable champion
+    const champEntries = Object.entries(teams)
+      .map(([slug, t]) => ({ slug, ...t }))
+      .filter(t => t.champion > 0)
+      .sort((a, b) => b.champion - a.champion);
+    const champion = champEntries[0] || null;
+
+    html += `<div class="champion-node">`;
+    html += `<div class="trophy">🏆</div>`;
+    if (champion) {
+      html += `<div class="champ-flag">${champion.flag || '⚽'}</div>`;
+      html += `<div class="champ-name">${champion.name || '?'}</div>`;
+      html += `<div class="champ-prob">${champion.champion}%</div>`;
+    } else {
+      html += `<div class="champ-name">待定</div>`;
+    }
+    html += `</div>`; // .champion-node
+
+    html += `</div>`; // .bracket-round-col
+
+    html += '</div>'; // .bracket-grid
+
+    container.innerHTML = html;
+
+    // Summary
+    const totalTeams = Object.keys(teams).length;
+    const totalSims = data.simulations || '?';
+    document.getElementById('bracket-summary').textContent =
+      `2026世界杯 · ${totalTeams} 支球队 · 基于 ${totalSims.toLocaleString()} 次模拟`;
+  }
+
+  async function loadBracketData(force) {
+    if (force) {
+      document.getElementById('loading-spinner').style.display = 'flex';
+      document.getElementById('bracket-container').style.display = 'none';
+    }
+    try {
+      const data = await cachedFetch('/api/bracket', { force });
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('bracket-container').style.display = 'flex';
+      renderSidebar(data.teams || {});
+      renderBracket(data);
+    } catch (err) {
+      document.getElementById('loading-spinner').innerHTML = '⚠️ 淘汰赛数据加载失败: ' + err.message;
+    }
+  }
+
+  // Register refresh callback
+  window.cacheUI.onRefresh('bracket', () => loadBracketData(true));
+
+  // Load data on page load
+  loadBracketData(false);
+  </script>
+</body>
+</html>

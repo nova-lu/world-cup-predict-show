@@ -31,9 +31,18 @@
 
   <script>
   const slug = '<%= teamSlug %>';
-  fetch(`/api/teams/${slug}`)
-    .then(r => r.json())
-    .then(team => {
+  async function loadTeamData(force) {
+    if (force) {
+      document.getElementById('loading-spinner').style.display = 'block';
+      document.getElementById('team-detail').style.display = 'none';
+      document.getElementById('team-title').textContent = '加载中...';
+      document.getElementById('team-hero').innerHTML = '';
+      document.getElementById('team-elo').innerHTML = '';
+      document.getElementById('team-matches').innerHTML = '';
+      document.getElementById('team-matches-section').style.display = 'none';
+    }
+    try {
+      const team = await cachedFetch(`/api/teams/${slug}`, { force });
       document.getElementById('loading-spinner').style.display = 'none';
       document.getElementById('team-detail').style.display = 'block';
       document.getElementById('team-title').textContent = `${team.flag || ''} ${team.name || team.nameEn || slug}`;
@@ -50,31 +59,37 @@
       `;
       document.getElementById('team-elo').innerHTML = `<span class="elo-number">${team.elo || '-'}</span> <span class="elo-label">Elo 评分</span>`;
 
-      fetch('/api/matches/schedule')
-        .then(r => r.json())
-        .then(data => {
-          const teamMatches = data.matches.filter(m => m.t1 === slug || m.t2 === slug);
-          if (teamMatches.length === 0) return;
-          document.getElementById('team-matches-section').style.display = 'block';
-          const container = document.getElementById('team-matches');
-          teamMatches.sort((a, b) => b.date.localeCompare(a.date));
-          teamMatches.slice(0, 10).forEach(m => {
-            const isHome = m.t1 === slug;
-            const opponent = isHome ? m.t2 : m.t1;
-            const oInfo = isHome ? m.team2Info : m.team1Info;
-            const isFinished = m.g1 != null;
-            const div = document.createElement('div');
-            div.className = 'mini-match-row';
-            div.innerHTML = `
-              <span class="mini-date">${m.date}</span>
-              <span class="mini-teams">${isHome ? '<strong>' : ''}${m.team1Info?.flag || ''} ${m.team1Info?.name || m.t1}${isHome ? '</strong>' : ''} vs ${!isHome ? '<strong>' : ''}${m.team2Info?.flag || ''} ${m.team2Info?.name || m.t2}${!isHome ? '</strong>' : ''}</span>
-              <span class="mini-score">${isFinished ? (isHome ? m.g1 + '-' + m.g2 : m.g2 + '-' + m.g1) : '未赛'}</span>
-            `;
-            div.onclick = () => window.location = `/match/${m.t1}/${m.t2}`;
-            container.appendChild(div);
-          });
-        });
-    });
+      const data = await cachedFetch('/api/matches/schedule', { force });
+      const teamMatches = data.matches.filter(m => m.t1 === slug || m.t2 === slug);
+      if (teamMatches.length === 0) return;
+      document.getElementById('team-matches-section').style.display = 'block';
+      const container = document.getElementById('team-matches');
+      teamMatches.sort((a, b) => b.date.localeCompare(a.date));
+      teamMatches.slice(0, 10).forEach(m => {
+        const isHome = m.t1 === slug;
+        const opponent = isHome ? m.t2 : m.t1;
+        const oInfo = isHome ? m.team2Info : m.team1Info;
+        const isFinished = m.g1 != null;
+        const div = document.createElement('div');
+        div.className = 'mini-match-row';
+        div.innerHTML = `
+          <span class="mini-date">${m.date}</span>
+          <span class="mini-teams">${isHome ? '<strong>' : ''}${m.team1Info?.flag || ''} ${m.team1Info?.name || m.t1}${isHome ? '</strong>' : ''} vs ${!isHome ? '<strong>' : ''}${m.team2Info?.flag || ''} ${m.team2Info?.name || m.t2}${!isHome ? '</strong>' : ''}</span>
+          <span class="mini-score">${isFinished ? (isHome ? m.g1 + '-' + m.g2 : m.g2 + '-' + m.g1) : '未赛'}</span>
+        `;
+        div.onclick = () => window.location = `/match/${m.t1}/${m.t2}`;
+        container.appendChild(div);
+      });
+    } catch (err) {
+      console.error('Failed to load team data:', err);
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('team-detail').style.display = 'block';
+      document.getElementById('team-title').textContent = '加载失败';
+    }
+  }
+
+  loadTeamData(false);
+  window.cacheUI.onRefresh('team', () => loadTeamData(true));
   </script>
 </body>
 </html>

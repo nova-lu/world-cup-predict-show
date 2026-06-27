@@ -5,3 +5,4 @@ node_modules/
 test_files/
 debug_files/
 check_files/
+data/cache/*.json

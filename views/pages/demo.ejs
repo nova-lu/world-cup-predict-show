@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - 预测市场 Demo</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+/* ===== Prediction Market Demo Styles ===== */
+.demo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.demo-header h1 { font-size: 1.5rem; font-weight: 700; }
+.demo-header p { color: var(--text-muted); font-size: 0.85rem; }
+
+/* Wallet Card */
+.wallet-card {
+  background: linear-gradient(135deg, #1a2332, #0d1117);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.wallet-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; }
+.wallet-balance {
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.wallet-balance.positive { color: var(--accent-green); }
+.wallet-balance.negative { color: var(--prob-away); }
+.wallet-reset-btn {
+  padding: 6px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.12s;
+}
+.wallet-reset-btn:hover {
+  background: rgba(218,54,51,0.15);
+  border-color: var(--prob-away);
+  color: var(--prob-away);
+}
+.wallet-details {
+  display: flex;
+  gap: 20px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.wallet-detail-item { display: flex; flex-direction: column; align-items: center; }
+.wallet-detail-val { font-weight: 700; color: var(--text); font-size: 1rem; }
+
+/* Market Grid */
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.market-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: border-color 0.15s;
+}
+.market-card:hover { border-color: var(--accent); }
+
+.market-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.market-flag { font-size: 1.6rem; }
+.market-name { font-weight: 700; font-size: 1rem; flex: 1; }
+.market-rank { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+
+.market-prob-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+}
+.market-prob-label { font-size: 0.8rem; color: var(--text-muted); }
+.market-prob-val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.market-prices {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.price-box {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 0.82rem;
+}
+.price-box-yes {
+  background: rgba(63,185,80,0.1);
+  border: 1px solid rgba(63,185,80,0.3);
+  color: var(--accent-green);
+}
+.price-box-no {
+  background: rgba(218,54,51,0.1);
+  border: 1px solid rgba(218,54,51,0.3);
+  color: var(--prob-away);
+}
+.price-label { display: block; font-size: 0.7rem; opacity: 0.8; margin-bottom: 2px; }
+.price-value { display: block; font-weight: 700; font-size: 1rem; }
+
+.market-actions {
+  display: flex;
+  gap: 8px;
+}
+.market-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.12s;
+  color: #fff;
+}
+.btn-buy-yes {
+  background: var(--accent-green);
+}
+.btn-buy-yes:hover { background: #2ea043; }
+.btn-buy-yes:disabled { background: #1a4f2a; cursor: not-allowed; opacity: 0.5; }
+.btn-buy-no {
+  background: var(--prob-away);
+}
+.btn-buy-no:hover { background: #c1302e; }
+.btn-buy-no:disabled { background: #5c1a18; cursor: not-allowed; opacity: 0.5; }
+
+.market-msg {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  min-height: 1.2em;
+  transition: color 0.2s;
+}
+.market-msg.success { color: var(--accent-green); }
+.market-msg.error { color: var(--prob-away); }
+
+/* Portfolio */
+.portfolio-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.portfolio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.portfolio-header h2 { font-size: 1.1rem; font-weight: 700; }
+.portfolio-pnl {
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.portfolio-pnl.positive { color: var(--accent-green); }
+.portfolio-pnl.negative { color: var(--prob-away); }
+
+.portfolio-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.portfolio-table th {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.portfolio-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(48,54,61,0.4);
+}
+.portfolio-table tr:last-child td { border-bottom: none; }
+.portfolio-table tr:hover td { background: var(--bg-hover); }
+
+.pos-team-name { font-weight: 600; }
+.pos-side { font-weight: 700; }
+.pos-side.yes { color: var(--accent-green); }
+.pos-side.no { color: var(--prob-away); }
+.pos-qty { font-variant-numeric: tabular-nums; text-align: center; }
+.pos-cost { font-variant-numeric: tabular-nums; }
+.pos-value { font-variant-numeric: tabular-nums; font-weight: 600; }
+.pos-pnl { font-variant-numeric: tabular-nums; font-weight: 700; }
+.pos-pnl.positive { color: var(--accent-green); }
+.pos-pnl.negative { color: var(--prob-away); }
+.pos-close-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.12s;
+}
+.pos-close-btn:hover {
+  background: rgba(218,54,51,0.15);
+  border-color: var(--prob-away);
+  color: var(--prob-away);
+}
+
+.portfolio-empty {
+  text-align: center;
+  padding: 30px 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Market info bar */
+.market-info-bar {
+  display: flex;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+.market-info-item { color: var(--text-muted); }
+.market-info-item strong { color: var(--text); }
+
+/* Leaderboard mini */
+.leaderboard-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 16px 0 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .market-grid { grid-template-columns: 1fr; }
+  .portfolio-header { flex-direction: column; align-items: flex-start; }
+  .wallet-card { flex-direction: column; align-items: flex-start; }
+}
+  </style>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content">
+    <div class="demo-header">
+      <div>
+        <h1>🏛️ 预测市场 Demo</h1>
+        <p>模拟交易世界杯冠军预测合约 · 数据来自 Monte Carlo 模拟</p>
+      </div>
+    </div>
+
+    <div class="disclaimer-banner">
+      ⚠️ 纯概念演示，所有余额、合约、盈亏均为虚拟数据，不涉及真实资金
+    </div>
+
+    <!-- Wallet -->
+    <div class="wallet-card" id="wallet-card">
+      <div>
+        <div class="wallet-label">💰 钱包余额</div>
+        <div class="wallet-balance positive" id="wallet-balance">$1,000.00</div>
+        <div class="wallet-details">
+          <div class="wallet-detail-item">
+            <span class="wallet-detail-val" id="wallet-initial">$1,000</span>
+            <span style="font-size:0.7rem;color:var(--text-muted)">初始</span>
+          </div>
+          <div class="wallet-detail-item">
+            <span class="wallet-detail-val" id="wallet-invested">$0</span>
+            <span style="font-size:0.7rem;color:var(--text-muted)">投入</span>
+          </div>
+          <div class="wallet-detail-item">
+            <span class="wallet-detail-val" id="wallet-positions">0</span>
+            <span style="font-size:0.7rem;color:var(--text-muted)">持仓</span>
+          </div>
+        </div>
+      </div>
+      <button class="wallet-reset-btn" onclick="resetWallet()">↻ 重置钱包</button>
+    </div>
+
+    <!-- Market Info -->
+    <div class="market-info-bar" id="market-info-bar">
+      <div class="market-info-item">📊 模拟次数: <strong id="sim-count">-</strong></div>
+      <div class="market-info-item">⏱ 生成时间: <strong id="gen-time">-</strong></div>
+      <div class="market-info-item">🏆 显示: <strong id="top-count">12</strong> 支球队</div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-spinner" class="loading">加载预测市场数据中...</div>
+
+    <!-- Market Grid -->
+    <div id="market-grid" class="market-grid" style="display:none"></div>
+
+    <!-- Portfolio -->
+    <div class="portfolio-section" id="portfolio-section" style="display:none">
+      <div class="portfolio-header">
+        <h2>📋 我的投资组合</h2>
+        <div>
+          <span style="font-size:0.82rem;color:var(--text-muted)">总盈亏: </span>
+          <span class="portfolio-pnl" id="portfolio-pnl">$0.00</span>
+        </div>
+      </div>
+      <div id="portfolio-body">
+        <div class="portfolio-empty">暂无持仓 — 点击上方市场的 Buy YES / Buy NO 开始交易</div>
+      </div>
+    </div>
+
+    <div class="leaderboard-note">
+      💡 YES 合约到期价值 $1（如果该队夺冠），NO 合约到期价值 $1（如果该队未夺冠）
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+  // ===== State =====
+  const WALLET_KEY = 'demo_wallet';
+  const PORTFOLIO_KEY = 'demo_portfolio';
+  let marketData = [];
+  let currentPrices = {};
+  let wallet = { balance: 1000, initial: 1000 };
+
+  // ===== Persistence =====
+  function loadWallet() {
+    try {
+      const saved = localStorage.getItem(WALLET_KEY);
+      if (saved) {
+        wallet = JSON.parse(saved);
+        if (typeof wallet.initial !== 'number') wallet.initial = 1000;
+      }
+    } catch { wallet = { balance: 1000, initial: 1000 }; }
+  }
+
+  function saveWallet() {
+    localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
+  }
+
+  function loadPortfolio() {
+    try {
+      const saved = localStorage.getItem(PORTFOLIO_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  }
+
+  function savePortfolio(p) {
+    localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(p));
+  }
+
+  function resetWallet() {
+    if (!confirm('重置钱包将清除所有持仓和余额，确认？')) return;
+    wallet = { balance: 1000, initial: 1000 };
+    saveWallet();
+    savePortfolio([]);
+    renderWallet();
+    renderPortfolio();
+    updateMarketButtons();
+  }
+
+  // ===== Wallet UI =====
+  function renderWallet() {
+    const el = document.getElementById('wallet-balance');
+    el.textContent = '$' + wallet.balance.toFixed(2);
+    el.className = 'wallet-balance ' + (wallet.balance >= 0 ? 'positive' : 'negative');
+
+    const portfolio = loadPortfolio();
+    const invested = portfolio.reduce((sum, p) => sum + p.cost, 0);
+    document.getElementById('wallet-initial').textContent = '$' + wallet.initial.toFixed(0);
+    document.getElementById('wallet-invested').textContent = '$' + invested.toFixed(2);
+    document.getElementById('wallet-positions').textContent = portfolio.length;
+  }
+
+  // ===== Portfolio UI =====
+  function renderPortfolio() {
+    const portfolio = loadPortfolio();
+    const section = document.getElementById('portfolio-section');
+    const body = document.getElementById('portfolio-body');
+
+    if (portfolio.length === 0) {
+      section.style.display = 'block';
+      body.innerHTML = '<div class="portfolio-empty">暂无持仓 — 点击上方市场的 Buy YES / Buy NO 开始交易</div>';
+      document.getElementById('portfolio-pnl').textContent = '$0.00';
+      document.getElementById('portfolio-pnl').className = 'portfolio-pnl';
+      return;
+    }
+
+    section.style.display = 'block';
+
+    let totalPnl = 0;
+    let html = '<table class="portfolio-table"><thead><tr>' +
+      '<th>球队</th><th>方向</th><th>数量</th><th>均价</th><th>成本</th><th>当前价</th><th>市值</th><th>盈亏</th><th></th>' +
+      '</tr></thead><tbody>';
+
+    portfolio.forEach((pos, idx) => {
+      const priceInfo = currentPrices[pos.slug] || { yes: 0.5, no: 0.5, pct: 50 };
+      const currentPrice = pos.side === 'yes' ? priceInfo.yes : priceInfo.no;
+      const marketValue = pos.qty * currentPrice;
+      const pnl = marketValue - pos.cost;
+      totalPnl += pnl;
+
+      const team = marketData.find(t => t.slug === pos.slug);
+      const name = team ? (team.flag || '') + ' ' + (team.name || pos.slug) : pos.slug;
+      const sideLabel = pos.side === 'yes' ? 'YES' : 'NO';
+      const sideClass = pos.side === 'yes' ? 'yes' : 'no';
+
+      html += '<tr>' +
+        `<td class="pos-team-name">${name}</td>` +
+        `<td class="pos-side ${sideClass}">${sideLabel}</td>` +
+        `<td class="pos-qty">${pos.qty}</td>` +
+        `<td class="pos-cost">$${pos.avgPrice.toFixed(2)}</td>` +
+        `<td class="pos-cost">$${pos.cost.toFixed(2)}</td>` +
+        `<td class="pos-value">$${currentPrice.toFixed(3)}</td>` +
+        `<td class="pos-value">$${marketValue.toFixed(2)}</td>` +
+        `<td class="pos-pnl ${pnl >= 0 ? 'positive' : 'negative'}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</td>` +
+        `<td><button class="pos-close-btn" onclick="closePosition(${idx})">平仓</button></td>` +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    body.innerHTML = html;
+
+    const pnlEl = document.getElementById('portfolio-pnl');
+    pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(2);
+    pnlEl.className = 'portfolio-pnl ' + (totalPnl >= 0 ? 'positive' : 'negative');
+  }
+
+  // ===== Trading =====
+  function buyContract(slug, side) {
+    loadWallet();
+    const portfolio = loadPortfolio();
+    const priceInfo = currentPrices[slug];
+    if (!priceInfo) return;
+
+    const price = side === 'yes' ? priceInfo.yes : priceInfo.no;
+    const cost = price; // 1 contract
+
+    if (wallet.balance < cost) {
+      showMarketMsg(slug, '余额不足！需要 $' + cost.toFixed(2), 'error');
+      return;
+    }
+
+    // Deduct
+    wallet.balance -= cost;
+    saveWallet();
+
+    // Add position
+    const existing = portfolio.findIndex(p => p.slug === slug && p.side === side);
+    if (existing >= 0) {
+      const pos = portfolio[existing];
+      const totalCost = pos.cost + cost;
+      const totalQty = pos.qty + 1;
+      pos.avgPrice = totalCost / totalQty;
+      pos.cost = totalCost;
+      pos.qty = totalQty;
+    } else {
+      portfolio.push({
+        slug,
+        side,
+        qty: 1,
+        avgPrice: price,
+        cost: price,
+      });
+    }
+    savePortfolio(portfolio);
+
+    renderWallet();
+    renderPortfolio();
+    updateMarketButtons();
+    showMarketMsg(slug, `✅ 买入 1 份 ${side === 'yes' ? 'YES' : 'NO'} @ $${price.toFixed(3)}`, 'success');
+  }
+
+  function closePosition(idx) {
+    const portfolio = loadPortfolio();
+    if (idx < 0 || idx >= portfolio.length) return;
+    const pos = portfolio[idx];
+
+    const priceInfo = currentPrices[pos.slug];
+    if (!priceInfo) return;
+
+    const currentPrice = pos.side === 'yes' ? priceInfo.yes : priceInfo.no;
+    const proceeds = pos.qty * currentPrice;
+
+    // Add back to wallet
+    loadWallet();
+    wallet.balance += proceeds;
+    saveWallet();
+
+    // Remove position
+    portfolio.splice(idx, 1);
+    savePortfolio(portfolio);
+
+    renderWallet();
+    renderPortfolio();
+    updateMarketButtons();
+  }
+
+  function showMarketMsg(slug, msg, type) {
+    const el = document.getElementById('msg-' + slug);
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'market-msg ' + (type || '');
+    setTimeout(() => {
+      if (el.textContent === msg) {
+        el.textContent = '';
+        el.className = 'market-msg';
+      }
+    }, 3000);
+  }
+
+  function updateMarketButtons() {
+    const portfolio = loadPortfolio();
+    loadWallet();
+
+    // Nothing to update on buttons here - they check balance dynamically
+    // We could disable buttons when balance is low
+    document.querySelectorAll('.market-btn').forEach(btn => {
+      const slug = btn.dataset.slug;
+      const priceInfo = currentPrices[slug];
+      if (!priceInfo) return;
+      const side = btn.dataset.side;
+      const price = side === 'yes' ? priceInfo.yes : priceInfo.no;
+      btn.disabled = wallet.balance < price;
+    });
+  }
+
+  // ===== Main fetch =====
+  fetch('/api/standings/advancement?sims=5000')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('market-grid').style.display = 'grid';
+
+      // Info bar
+      document.getElementById('sim-count').textContent = data.simulations || '5000';
+      document.getElementById('gen-time').textContent = data.generatedAt
+        ? new Date(data.generatedAt).toLocaleString('zh-CN') : '-';
+
+      // Top 12 by champion probability
+      const sorted = (data.teams || []).sort((a, b) => b.prob.champion - a.prob.champion);
+      marketData = sorted;
+      const top12 = sorted.slice(0, 12);
+
+      // Build price map
+      top12.forEach(t => {
+        const pct = t.prob.champion;
+        const yesPrice = Math.max(0.01, pct / 100);
+        const noPrice = Math.max(0.01, (100 - pct) / 100);
+        currentPrices[t.slug] = { yes: yesPrice, no: noPrice, pct };
+      });
+
+      // Render market cards
+      const grid = document.getElementById('market-grid');
+      grid.innerHTML = '';
+
+      top12.forEach((t, i) => {
+        const pct = t.prob.champion;
+        const yesPrice = currentPrices[t.slug].yes;
+        const noPrice = currentPrices[t.slug].no;
+
+        const card = document.createElement('div');
+        card.className = 'market-card';
+        card.innerHTML = `
+          <div class="market-team">
+            <span class="market-rank">#${i + 1}</span>
+            <span class="market-flag">${t.flag || '⚽'}</span>
+            <span class="market-name">${t.name || t.slug}</span>
+          </div>
+          <div class="market-prob-row">
+            <span class="market-prob-label">🏆 夺冠概率</span>
+            <span class="market-prob-val">${pct}%</span>
+          </div>
+          <div class="market-prices">
+            <div class="price-box price-box-yes">
+              <span class="price-label">YES 价格</span>
+              <span class="price-value">$${yesPrice.toFixed(3)}</span>
+            </div>
+            <div class="price-box price-box-no">
+              <span class="price-label">NO 价格</span>
+              <span class="price-value">$${noPrice.toFixed(3)}</span>
+            </div>
+          </div>
+          <div class="market-actions">
+            <button class="market-btn btn-buy-yes" data-slug="${t.slug}" data-side="yes"
+              onclick="buyContract('${t.slug}', 'yes')">
+              Buy YES
+            </button>
+            <button class="market-btn btn-buy-no" data-slug="${t.slug}" data-side="no"
+              onclick="buyContract('${t.slug}', 'no')">
+              Buy NO
+            </button>
+          </div>
+          <div class="market-msg" id="msg-${t.slug}"></div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // Render wallet & portfolio
+      renderWallet();
+      renderPortfolio();
+      updateMarketButtons();
+    })
+    .catch(err => {
+      document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败，请刷新重试';
+      console.error(err);
+    });
+
+  // ===== Periodically update prices (simulate market movement) =====
+  // Prices are static based on simulation data — no real-time update needed
+  // But we re-render portfolio when prices change (they don't here)
+  </script>
+</body>
+</html>

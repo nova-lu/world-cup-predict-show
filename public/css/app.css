@@ -499,6 +499,17 @@ a:hover { text-decoration: underline; }
 }
 .winner-score { color: var(--accent-green); }
 .match-xg-info { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; text-align: right; }
+.engine-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  background: #1a3a6c;
+  color: #88bbff;
+  border: 1px solid #2a5a8c;
+  vertical-align: middle;
+  margin-left: 4px;
+}
 .match-result-info { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; text-align: right; }
 
 /* ===== Quick Nav ===== */
@@ -605,7 +616,20 @@ a:hover { text-decoration: underline; }
   display: inline-block; padding: 2px 8px; border-radius: 4px;
   font-size: 0.7rem; font-weight: 600; margin-left: 8px;
 }
-.api-source-live { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+.api-source-live { background: #059669; color: #fff; }
+.api-source-ml { background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; }
+
+/* ============ Phase 7: 赔率融合面板 ============ */
+.fusion-compare { margin: 0.5rem 0; }
+.fusion-row { display: grid; grid-template-columns: 140px 1fr 1fr 1fr; gap: 0.5rem; padding: 0.4rem 0.5rem; font-size: 0.82rem; border-bottom: 1px solid #1e293b; align-items: center; }
+.fusion-header { font-weight: 600; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+.fusion-label { color: #94a3b8; }
+.fusion-p { text-align: right; font-weight: 500; color: #cbd5e1; }
+.fusion-result { background: rgba(59,130,246,0.08); border-radius: 6px; font-weight: 600; }
+.fusion-result .fusion-label { color: #60a5fa; }
+.fusion-result .fusion-p { color: #93c5fd; }
+.fusion-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.8rem; padding: 0.6rem; background: #0f172a; border-radius: 6px; font-size: 0.75rem; color: #64748b; }
+.fusion-meta span { white-space: nowrap; }
 .api-source-degraded { background: rgba(240,136,62,0.15); color: var(--warning); }
 
 @media (max-width: 768px) {
@@ -647,3 +671,278 @@ a:hover { text-decoration: underline; }
 .odds-compare-label { color: var(--text-muted); font-size: 0.72rem; }
 .odds-compare-val { font-weight: 600; }
 .odds-vs-model { color: rgba(140,160,200,0.6); font-size: 0.72rem; }
+
+/* ════════════════════════════════════════════
+   ML 引擎 UI
+   ════════════════════════════════════════════ */
+
+/* 引擎选择器 */
+.engine-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 16px 0;
+}
+.engine-tab {
+  padding: 8px 20px;
+  border: 1.5px solid #2a3a5c;
+  border-radius: 20px;
+  background: transparent;
+  color: #8899bb;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.engine-tab:hover {
+  border-color: #3b82f6;
+  color: #bbb;
+}
+.engine-tab.active {
+  background: linear-gradient(135deg, #1a3a6c, #2a5a9c);
+  border-color: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(59,130,246,0.3);
+}
+
+/* ML 详情网格 */
+.ml-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+.ml-card {
+  background: #1a1f2e;
+  border: 1px solid #2a3a5c;
+  border-radius: 10px;
+  padding: 12px;
+}
+.ml-card-title {
+  font-size: 0.78rem;
+  color: #6688aa;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ml-card-wide {
+  grid-column: 1 / -1;
+}
+
+/* TOP 5 比分 (ML) */
+.ml-scores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ml-score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.ml-score-result {
+  min-width: 42px;
+  font-weight: 600;
+  color: #ddd;
+}
+.ml-score-prob-bar {
+  flex: 1;
+  height: 12px;
+  background: #0d1117;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ml-score-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #22d3ee);
+  border-radius: 6px;
+  transition: width 0.3s;
+}
+.ml-score-prob {
+  min-width: 50px;
+  text-align: right;
+  color: #88aacc;
+  font-size: 0.82rem;
+}
+
+/* 大小球 */
+.ml-ou-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+.ou-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 3px 0;
+}
+.ou-item.ou-total {
+  grid-column: 1 / -1;
+  border-top: 1px solid #2a3a5c;
+  margin-top: 4px;
+  padding-top: 6px;
+  font-weight: 600;
+}
+.ou-label { color: #6688aa; }
+.ou-val { color: #ddd; font-weight: 500; }
+
+/* BTTS */
+.btts-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.btts-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.btts-row span:first-child {
+  min-width: 20px;
+  color: #8899bb;
+}
+.btts-track {
+  flex: 1;
+  height: 14px;
+  background: #0d1117;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.btts-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.3s;
+}
+.btts-yes { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.btts-no { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.btts-pct {
+  min-width: 50px;
+  text-align: right;
+  color: #ddd;
+}
+
+/* 风险评估 */
+.risk-display {
+  text-align: center;
+}
+.risk-badge {
+  display: inline-block;
+  padding: 4px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+.risk-low { background: #16a34a22; color: #22c55e; border: 1px solid #22c55e; }
+.risk-medium { background: #eab30822; color: #eab308; border: 1px solid #eab308; }
+.risk-high { background: #ef444422; color: #ef4444; border: 1px solid #ef4444; }
+.risk-score {
+  display: block;
+  font-size: 0.82rem;
+  color: #8899bb;
+  margin-bottom: 4px;
+}
+.risk-desc {
+  font-size: 0.78rem;
+  color: #667788;
+  margin: 0;
+}
+
+/* 覆盖度 */
+.cov-display {
+  text-align: center;
+}
+.cov-pct {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b82f6;
+  line-height: 1.2;
+}
+.cov-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #667788;
+  margin: 4px 0;
+}
+.cov-pct.cov-small {
+  font-size: 1.1rem;
+  color: #22d3ee;
+}
+
+/* 引擎版本徽章 */
+.engine-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  background: linear-gradient(135deg, #3b82f6, #22d3ee);
+  color: #fff;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* 模型元数据 */
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
+}
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.83rem;
+  padding: 3px 0;
+}
+.meta-label { color: #6688aa; }
+.meta-val { color: #ddd; font-weight: 500; }
+
+/* ===== Cache Status Bar ===== */
+#cache-status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.cache-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.cache-indicator.cache-fresh { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.cache-indicator.cache-expiring { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+.cache-indicator.cache-stale { background: var(--win-away); box-shadow: 0 0 6px var(--win-away); }
+.cache-indicator.cache-degraded { background: #f0883e; box-shadow: 0 0 6px #f0883e; }
+.cache-indicator.cache-unknown { background: var(--text-muted); }
+.cache-refresh-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  line-height: 1.5;
+}
+.cache-refresh-btn:hover { opacity: 0.85; }
+.cache-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (max-width: 600px) {
+  #cache-status-bar { gap: 6px; padding: 6px 10px; font-size: 0.72rem; flex-wrap: wrap; }
+  .cache-refresh-btn { padding: 3px 10px; font-size: 0.7rem; }
+}

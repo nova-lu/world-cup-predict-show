@@ -1,0 +1,345 @@
+{
+  "run_id": "20260626_024440",
+  "timestamp": "2026-06-26T02:44:50.332041Z",
+  "data_info": {
+    "total_rows": 46383,
+    "feature_count": 23,
+    "features": [
+      "team_rank",
+      "team_points",
+      "opponent_rank",
+      "opponent_points",
+      "rank_diff",
+      "points_diff",
+      "is_home",
+      "is_host",
+      "is_knockout",
+      "same_confed",
+      "host_points_diff",
+      "elo_rating_team",
+      "elo_rating_opponent",
+      "elo_diff",
+      "team_recent_goals",
+      "opponent_recent_goals",
+      "team_recent_conceded",
+      "opponent_recent_conceded",
+      "team_recent_form",
+      "opponent_recent_form",
+      "tournament_weight",
+      "days_since_last_match_team",
+      "days_since_last_match_opponent"
+    ],
+    "train_rows": 39144,
+    "val_rows": 3589,
+    "test_rows": 3650,
+    "train_years": "1950-2018",
+    "val_years": "2019-2022",
+    "test_years": "2023-2026"
+  },
+  "model_config": {
+    "xgb_home": {
+      "type": "regressor",
+      "target": "home_score",
+      "file": "xgb_home.pkl"
+    },
+    "xgb_away": {
+      "type": "regressor",
+      "target": "away_score",
+      "file": "xgb_away.pkl"
+    },
+    "rf_1x2": {
+      "type": "classifier",
+      "target": "result",
+      "file": "rf_1x2.pkl"
+    },
+    "xgb_btts": {
+      "type": "classifier",
+      "target": "both_scored",
+      "file": "xgb_btts.pkl"
+    },
+    "xgb_over_under": {
+      "type": "classifier",
+      "target": "total_goals_binary",
+      "file": "xgb_over_under.pkl"
+    }
+  },
+  "calibration": {
+    "enabled": true,
+    "version": "platt-v1",
+    "method": "sigmoid",
+    "target": "rf_1x2"
+  },
+  "metrics": {
+    "xgb_home": {
+      "train": {
+        "dataset": "Train",
+        "rmse": 1.3836,
+        "mae": 1.0443,
+        "mean_actual": 1.7226,
+        "mean_pred": 1.7212
+      },
+      "val": {
+        "dataset": "Val",
+        "rmse": 1.3938,
+        "mae": 1.0461,
+        "mean_actual": 1.613,
+        "mean_pred": 1.7028
+      },
+      "test": {
+        "dataset": "Test",
+        "rmse": 1.4015,
+        "mae": 1.0736,
+        "mean_actual": 1.6337,
+        "mean_pred": 1.7219
+      }
+    },
+    "xgb_away": {
+      "train": {
+        "dataset": "Train",
+        "rmse": 1.114,
+        "mae": 0.8404,
+        "mean_actual": 1.1434,
+        "mean_pred": 1.143
+      },
+      "val": {
+        "dataset": "Val",
+        "rmse": 1.1249,
+        "mae": 0.8279,
+        "mean_actual": 1.095,
+        "mean_pred": 1.0762
+      },
+      "test": {
+        "dataset": "Test",
+        "rmse": 1.1546,
+        "mae": 0.857,
+        "mean_actual": 1.1422,
+        "mean_pred": 1.0868
+      }
+    },
+    "rf_1x2": {
+      "train": {
+        "dataset": "Train",
+        "accuracy": 0.6419,
+        "n_samples": 39144,
+        "log_loss": 0.8637,
+        "confusion_matrix": [
+          [
+            5636,
+            1844,
+            1629
+          ],
+          [
+            1904,
+            7366,
+            1588
+          ],
+          [
+            3960,
+            3092,
+            12125
+          ]
+        ]
+      },
+      "val": {
+        "dataset": "Val",
+        "accuracy": 0.5709,
+        "n_samples": 3589,
+        "log_loss": 0.907,
+        "confusion_matrix": [
+          [
+            285,
+            231,
+            293
+          ],
+          [
+            271,
+            615,
+            149
+          ],
+          [
+            393,
+            203,
+            1149
+          ]
+        ]
+      },
+      "test": {
+        "dataset": "Test",
+        "accuracy": 0.5534,
+        "n_samples": 3650,
+        "log_loss": 0.9221,
+        "confusion_matrix": [
+          [
+            241,
+            259,
+            341
+          ],
+          [
+            222,
+            650,
+            210
+          ],
+          [
+            355,
+            243,
+            1129
+          ]
+        ]
+      }
+    },
+    "xgb_btts": {
+      "train": {
+        "dataset": "Train",
+        "accuracy": 0.617,
+        "n_samples": 39144,
+        "log_loss": 0.651,
+        "brier_score": 0.2298,
+        "confusion_matrix": [
+          [
+            17622,
+            3587
+          ],
+          [
+            11407,
+            6528
+          ]
+        ]
+      },
+      "val": {
+        "dataset": "Val",
+        "accuracy": 0.5857,
+        "n_samples": 3589,
+        "log_loss": 0.6704,
+        "brier_score": 0.239,
+        "confusion_matrix": [
+          [
+            1825,
+            270
+          ],
+          [
+            1217,
+            277
+          ]
+        ]
+      },
+      "test": {
+        "dataset": "Test",
+        "accuracy": 0.5614,
+        "n_samples": 3650,
+        "log_loss": 0.68,
+        "brier_score": 0.2434,
+        "confusion_matrix": [
+          [
+            1756,
+            287
+          ],
+          [
+            1314,
+            293
+          ]
+        ]
+      }
+    },
+    "xgb_over_under": {
+      "train": {
+        "dataset": "Train",
+        "accuracy": 0.6333,
+        "n_samples": 39144,
+        "log_loss": 0.6359,
+        "brier_score": 0.2233,
+        "confusion_matrix": [
+          [
+            13514,
+            5615
+          ],
+          [
+            8740,
+            11275
+          ]
+        ]
+      },
+      "val": {
+        "dataset": "Val",
+        "accuracy": 0.5729,
+        "n_samples": 3589,
+        "log_loss": 0.6713,
+        "brier_score": 0.2396,
+        "confusion_matrix": [
+          [
+            1261,
+            591
+          ],
+          [
+            942,
+            795
+          ]
+        ]
+      },
+      "test": {
+        "dataset": "Test",
+        "accuracy": 0.58,
+        "n_samples": 3650,
+        "log_loss": 0.6717,
+        "brier_score": 0.2396,
+        "confusion_matrix": [
+          [
+            1162,
+            640
+          ],
+          [
+            893,
+            955
+          ]
+        ]
+      }
+    },
+    "rf_1x2_calibrated": {
+      "val": {
+        "dataset": "Val",
+        "accuracy": 0.7314,
+        "n_samples": 3589,
+        "log_loss": 0.7044,
+        "confusion_matrix": [
+          [
+            248,
+            166,
+            395
+          ],
+          [
+            8,
+            782,
+            245
+          ],
+          [
+            7,
+            143,
+            1595
+          ]
+        ]
+      },
+      "test": {
+        "dataset": "Test",
+        "accuracy": 0.5844,
+        "n_samples": 3650,
+        "log_loss": 0.9063,
+        "confusion_matrix": [
+          [
+            27,
+            288,
+            526
+          ],
+          [
+            32,
+            643,
+            407
+          ],
+          [
+            34,
+            230,
+            1463
+          ]
+        ]
+      }
+    }
+  }
+}

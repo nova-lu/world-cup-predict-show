@@ -19,10 +19,10 @@ function computeHomeBonus(homeSlug, awaySlug, homeOverride) {
 }
 
 // 单场比赛完整预测
-export function predictMatch(homeSlug, awaySlug, homeOverride = null) {
+export function predictMatch(homeSlug, awaySlug, homeOverride = null, force = false) {
   const cacheKey = `pred:${homeSlug}:${awaySlug}:${homeOverride || ''}`;
-  const cached = get(cacheKey);
-  if (cached) return cached;
+  const cached = get(cacheKey, { force });
+  if (cached.hit) return cached.value;
 
   const rHome = getRating(homeSlug);
   const rAway = getRating(awaySlug);
@@ -44,7 +44,7 @@ export function predictMatch(homeSlug, awaySlug, homeOverride = null) {
     },
   };
 
-  set(cacheKey, prediction, 60_000);
+  set(cacheKey, prediction, { source: 'computed', ttlMs: 1800000 });
   return prediction;
 }
 
@@ -73,10 +73,10 @@ export function compareTeams(slugA, slugB) {
 }
 
 // Top N 最可能比分分布
-export function getScoreDistribution(homeSlug, awaySlug, homeOverride = null, topN = 10) {
+export function getScoreDistribution(homeSlug, awaySlug, homeOverride = null, topN = 10, force = false) {
   const cacheKey = `scores:${homeSlug}:${awaySlug}:${homeOverride || ''}:${topN}`;
-  const cached = get(cacheKey);
-  if (cached) return cached;
+  const cached = get(cacheKey, { force });
+  if (cached.hit) return cached.value;
 
   const rHome = getRating(homeSlug);
   const rAway = getRating(awaySlug);
@@ -98,6 +98,6 @@ export function getScoreDistribution(homeSlug, awaySlug, homeOverride = null, to
   scores.sort((a, b) => b.prob - a.prob);
 
   const result = scores.slice(0, topN);
-  set(cacheKey, result, 60_000);
+  set(cacheKey, result, { source: 'computed', ttlMs: 1800000 });
   return result;
 }

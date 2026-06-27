@@ -2,13 +2,14 @@ import { Router } from 'express';
 import { getTeamInfo, getRatings } from '../services/dataService.js';
 import { fetchStandings, fetchAllMatches } from '../services/footballApi.js';
 import { runMonteCarlo } from '../services/monteCarloService.js';
+import { buildCacheMeta } from '../middleware/cache.js';
 
 const router = Router();
 
 // ===== 实时小组积分榜（来自 API） =====
 router.get('/groups', async (req, res) => {
   try {
-    const apiGroups = await fetchStandings();
+    const apiGroups = await fetchStandings(req.forceRefresh);
     const groups = {};
 
     for (const [groupName, table] of Object.entries(apiGroups)) {
@@ -31,7 +32,7 @@ router.get('/groups', async (req, res) => {
       };
     }
 
-    res.json({ groups, updatedAt: new Date().toISOString(), source: 'api' });
+    res.json({ groups, updatedAt: new Date().toISOString(), source: 'api', _cache: buildCacheMeta('api:standings', true, null) });
   } catch (e) {
     console.error('[standings/groups] API 失败:', e.message);
     // 降级到静态数据
@@ -70,10 +71,11 @@ router.get('/groups', async (req, res) => {
 router.get('/advancement', (req, res) => {
   const sims = Math.min(parseInt(req.query.sims) || 5000, 20000);
   console.log(`[standings/advancement] 开始 ${sims} 次模拟...`);
-  const result = runMonteCarlo(sims);
+  const result = runMonteCarlo(sims, req.forceRefresh);
   res.json({
     ...result,
     note: '数学模型预测，仅供娱乐参考',
+    _cache: buildCacheMeta(`mc:full:${sims}`, true, null),
   });
 });
 

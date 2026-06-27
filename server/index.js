@@ -4,7 +4,9 @@ import { fileURLToPath } from 'node:url';
 import matchesRouter from './routes/matches.js';
 import standingsRouter from './routes/standings.js';
 import teamsRouter from './routes/teams.js';
-import oddsRouter from './routes/odds.js';
+import oddsRouter from './routes/odds.js';  // Phase 7: 含 Polymarket + Fusion 路由
+import bracketRouter from './routes/bracket.js';
+import { parseForceParam } from './middleware/parseForce.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -17,15 +19,86 @@ app.set('views', path.join(__dirname, '..', 'views'));
 // 静态文件
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// 全局解析 force=1 参数（仅 /api 路由）
+app.use('/api', parseForceParam);
+
 // JSON API
 app.use('/api/matches', matchesRouter);
 app.use('/api/standings', standingsRouter);
 app.use('/api/teams', teamsRouter);
 app.use(oddsRouter);
+app.use('/api/bracket', bracketRouter);
 
-// 缓存统计
+// ML 引擎状态
+app.get('/api/ml/status', async (req, res) => {
+  try {
+    const mlConfig = await import('./ml/config.js').then(m => m.default);
+    let modelsReady = false;
+    let modelInfo = null;
+    let error = null;
+
+    try {
+      const predictor = await import('./ml/inference/predictor.js');
+      modelsReady = await predictor.checkModels();
+      if (modelsReady) {
+        const manifest = await import('./ml/manifests/v1.json', { with: { type: 'json' } }).then(m => m.default).catch(() => null);
+        modelInfo = manifest || { version: 'v1', status: 'manifest not found' };
+      }
+    } catch (e) {
+      error = e.message;
+    }
+
+    // Phase 6.5c: 降级统计
+    let degradeStats = null;
+    try {
+      const { getDegradeStats } = await import('./routes/matches.js');
+      degradeStats = getDegradeStats();
+    } catch {}
+
+    res.json({
+      enabled: mlConfig.enabled,
+      engine: mlConfig.engine,
+      version: mlConfig.version,
+      modelsReady,
+      modelInfo,
+      // Phase 6.5a: 扩展字段
+      ensemble: {
+        base: { elo: mlConfig.ensemble.eloWeight, ml: mlConfig.ensemble.mlWeight },
+        dynamic: mlConfig.ensemble.dynamic,
+      },
+      calibration: {
+        version: modelInfo?.calibration?.version || 'platt-v1',
+        calibrated: modelInfo?.calibration?.calibrated || true,
+      },
+      degrade: degradeStats || { degradeCount: 0 },
+      error,
+    });
+  } catch (e) {
+    res.json({ enabled: false, error: e.message });
+  }
+});
+
+// ML 回测结果
+app.get('/api/ml/backtest', async (req, res) => {
+  try {
+    const { runBacktest } = await import('./ml/backtest/engine.js');
+    const results = await runBacktest(req.forceRefresh);
+    res.json(results);
+  } catch (e) {
+    res.json({ status: 'error', engine: 'ml', message: e.message });
+  }
+});
 app.get('/api/cache/stats', (req, res) => {
-  import('./middleware/cache.js').then(mod => res.json(mod.stats()));
+  import('./middleware/cache.js').then(mod => {
+    const s = mod.stats();
+    if (req.forceRefresh) {
+      // force=1 时刷新缓存统计（清空后重新加载）
+      mod.flush();
+      mod.initCache().then(() => res.json(mod.stats()));
+    } else {
+      res.json(s);
+    }
+  });
 });
 
 // ---------- 页面路由 ----------
@@ -33,7 +106,7 @@ app.get('/api/cache/stats', (req, res) => {
 // 首页：今日赛事
 app.get('/', (req, res) => {
   res.render('pages/index', {
-    title: '2026世界杯 · 今日赛事',
+    title: '2026世界杯 · 48小时赛程（北京时间）',
     page: 'today',
     disclaimer: '所有预测数据基于数学模型计算，仅供娱乐参考，不构成任何决策建议。',
   });
@@ -92,9 +165,73 @@ app.get('/methodology', (req, res) => {
   });
 });
 
+// 淘汰赛树
+app.get('/bracket', (req, res) => {
+  res.render('pages/bracket', {
+    title: '2026世界杯 · 淘汰赛树',
+    page: 'bracket',
+  });
+});
+
+// 交互式模拟器
+app.get('/simulator', (req, res) => {
+  res.render('pages/simulator', {
+    title: '2026世界杯 · 数据模拟器',
+    page: 'simulator',
+  });
+});
+
+// 模型回测
+app.get('/backtest', (req, res) => {
+  res.render('pages/backtest', {
+    title: '2026世界杯 · 模型回测',
+    page: 'backtest',
+  });
+});
+
+// 分析文章
+app.get('/blog', (req, res) => {
+  res.render('pages/blog', {
+    title: '2026世界杯 · 分析文章',
+    page: 'blog',
+  });
+});
+
+app.get('/blog/:slug', (req, res) => {
+  res.render('pages/blog-article', {
+    title: '文章 · 2026世界杯分析',
+    page: 'blog',
+    articleSlug: req.params.slug,
+  });
+});
+
+// 预测市场 Demo
+app.get('/demo', (req, res) => {
+  res.render('pages/demo', {
+    title: '2026世界杯 · 预测市场模拟',
+    page: 'demo',
+  });
+});
+
+// Phase 7: Polymarket 市场看板
+app.get('/polymarket', (req, res) => {
+  res.render('pages/polymarket', {
+    title: '2026世界杯 · Polymarket 预测市场',
+    page: 'polymarket',
+  });
+});
+
+// Phase 7: 在线学习看板
+app.get('/online-learning', (req, res) => {
+  res.render('pages/online-learning', {
+    title: '2026世界杯 · 在线学习看板',
+    page: 'online-learning',
+  });
+});
+
 // 404
 app.use((req, res) => {
-  res.status(404).render('pages/404', { title: '404 · 页面未找到' });
+  res.status(404).render('pages/404', { title: '404 · 页面未找到', page: '404' });
 });
 
 // 错误处理

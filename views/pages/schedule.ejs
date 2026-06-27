@@ -58,49 +58,60 @@
   let allMatches = [];
   let currentFilters = { stage: 'all', group: 'all', status: 'all' };
 
-  // 加载数据
-  Promise.all([
-    fetch('/api/matches/schedule').then(r => r.json()),
-    fetch('/api/standings/groups').then(r => r.json()),
-  ]).then(([schedule, standings]) => {
-    allMatches = schedule.matches || [];
-    document.getElementById('loading-spinner').style.display = 'none';
-    document.getElementById('schedule-list').style.display = 'block';
+  async function loadScheduleData(force) {
+    if (force) {
+      document.getElementById('loading-spinner').style.display = 'block';
+      document.getElementById('schedule-list').style.display = 'none';
+    }
 
-    // 赛程统计
-    const ft = allMatches.filter(m => m.status === 'FT').length;
-    const timed = allMatches.filter(m => m.status === 'TIMED').length;
-    document.getElementById('schedule-summary').textContent = 
-      `全部 ${allMatches.length} 场 · 已完赛 ${ft} 场 · 未开赛 ${timed} 场`;
+    try {
+      const [schedule, standings] = await Promise.all([
+        cachedFetch('/api/matches/schedule', { force }),
+        cachedFetch('/api/standings/groups', { force }),
+      ]);
 
-    // 填充组筛选
-    const groups = [...new Set(allMatches.filter(m => m.group).map(m => m.group))].sort();
-    const groupBtns = document.getElementById('group-filter');
-    groups.forEach(g => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-btn';
-      btn.dataset.value = g;
-      btn.textContent = g + '组';
-      groupBtns.appendChild(btn);
-    });
+      allMatches = schedule.matches || [];
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('schedule-list').style.display = 'block';
 
-    // 绑定筛选事件
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const parent = this.parentElement;
-        parent.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
+      // 赛程统计
+      const ft = allMatches.filter(m => m.status === 'FT').length;
+      const timed = allMatches.filter(m => m.status === 'TIMED').length;
+      document.getElementById('schedule-summary').textContent = 
+        `全部 ${allMatches.length} 场 · 已完赛 ${ft} 场 · 未开赛 ${timed} 场`;
 
-        const filterType = parent.id.replace('-filter', '');
-        currentFilters[filterType] = this.dataset.value;
-        renderSchedule();
+      // 填充组筛选
+      const groups = [...new Set(allMatches.filter(m => m.group).map(m => m.group))].sort();
+      const groupBtns = document.getElementById('group-filter');
+      groups.forEach(g => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.dataset.value = g;
+        btn.textContent = g + '组';
+        groupBtns.appendChild(btn);
       });
-    });
 
-    renderSchedule();
-  }).catch(err => {
-    document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败: ' + err.message;
-  });
+      // 绑定筛选事件
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const parent = this.parentElement;
+          parent.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+
+          const filterType = parent.id.replace('-filter', '');
+          currentFilters[filterType] = this.dataset.value;
+          renderSchedule();
+        });
+      });
+
+      renderSchedule();
+      window.cacheUI.onRefresh('schedule', () => loadScheduleData(true));
+    } catch(err) {
+      document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败: ' + err.message;
+    }
+  }
+
+  loadScheduleData(false);
 
   // 渲染赛程
   function renderSchedule() {

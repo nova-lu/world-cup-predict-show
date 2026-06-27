@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content backtest-page">
+    <div class="page-header">
+      <h1>模型回测</h1>
+      <p class="subtitle">基于赛程数据统计模型预测表现 · 对比随机基线</p>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ 以下回测结果基于已完赛比赛的模型预测与实际赛果的对比分析，仅供评估模型参考
+    </div>
+
+    <!-- 概览统计卡片 -->
+    <div id="backtest-overview" class="backtest-summary" style="display:none"></div>
+
+    <!-- 准确率卡片 -->
+    <div id="backtest-accuracy" class="backtest-cards" style="display:none"></div>
+
+    <!-- 校准曲线描述 -->
+    <div id="backtest-calibration" style="display:none"></div>
+
+    <!-- 阶段细分表格 -->
+    <div id="backtest-stage-breakdown" style="display:none"></div>
+
+    <div id="loading-spinner" class="loading">正在加载赛程数据并计算回测指标...</div>
+    <div id="no-data-message" class="empty-state" style="display:none">
+      <p>📭 暂无已完赛比赛数据</p>
+      <p class="subtitle">赛程开始后自动显示回测结果</p>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+  (function() {
+    const STAGE_LABELS = {
+      'GROUP_STAGE': '小组赛',
+      'LAST_32': '32强',
+      'LAST_16': '16强',
+      'QUARTER_FINALS': '8强',
+      'SEMI_FINALS': '4强',
+      'THIRD_PLACE': '季军赛',
+      'FINAL': '决赛'
+    };
+
+    // ---------- helpers ----------
+    function actualOutcome(m) {
+      if (m.g1 == null || m.g2 == null) return null;
+      if (m.g1 > m.g2) return 'HOME';
+      if (m.g1 < m.g2) return 'AWAY';
+      return 'DRAW';
+    }
+
+    function predictedOutcome(m) {
+      if (!m.prediction || !m.prediction.prob) return null;
+      const p = m.prediction.prob;
+      const max = Math.max(p.winHome || 0, p.draw || 0, p.winAway || 0);
+      if (max === (p.winHome || 0)) return 'HOME';
+      if (max === (p.draw || 0)) return 'DRAW';
+      return 'AWAY';
+    }
+
+    function predictedProbForActual(m) {
+      const actual = actualOutcome(m);
+      if (!actual || !m.prediction || !m.prediction.prob) return null;
+      const p = m.prediction.prob;
+      if (actual === 'HOME') return (p.winHome || 0) / 100;
+      if (actual === 'DRAW') return (p.draw || 0) / 100;
+      return (p.winAway || 0) / 100;
+    }
+
+    // Brier score for a 3-outcome match
+    function brierScore(m) {
+      if (!m.prediction || !m.prediction.prob) return null;
+      const p = m.prediction.prob;
+      const homeP = (p.winHome || 0) / 100;
+      const drawP = (p.draw || 0) / 100;
+      const awayP = (p.winAway || 0) / 100;
+      const actual = actualOutcome(m);
+      const oHome = actual === 'HOME' ? 1 : 0;
+      const oDraw = actual === 'DRAW' ? 1 : 0;
+      const oAway = actual === 'AWAY' ? 1 : 0;
+      return (homeP - oHome) ** 2 + (drawP - oDraw) ** 2 + (awayP - oAway) ** 2;
+    }
+
+    // ---------- main ----------
+    fetch('/api/matches/schedule')
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(data => {
+        const all = data.matches || [];
+        const finished = all.filter(m => m.status === 'FT' && m.g1 != null && m.g2 != null && m.prediction && m.prediction.prob);
+        const total = all.length;
+
+        document.getElementById('loading-spinner').style.display = 'none';
+
+        if (finished.length === 0) {
+          document.getElementById('no-data-message').style.display = 'block';
+          return;
+        }
+
+        // --- overview ---
+        document.getElementById('backtest-overview').style.display = 'block';
+        document.getElementById('backtest-overview').innerHTML = `
+          <div class="stat-card">
+            <span class="stat-label">总比赛数</span>
+            <span class="stat-value">${total}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">已完赛</span>
+            <span class="stat-value">${finished.length}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">未开赛</span>
+            <span class="stat-value">${total - finished.length}</span>
+          </div>
+        `;
+
+        // --- per-match analysis ---
+        let correct = 0;
+        let totalBrier = 0;
+        let brierCount = 0;
+        let randomCorrect = 0;  // baseline: random guess (33.3% expected)
+        let stageData = {};
+
+        finished.forEach(m => {
+          const pred = predictedOutcome(m);
+          const actual = actualOutcome(m);
+          if (pred === actual) correct++;
+
+          const bs = brierScore(m);
+          if (bs !== null) {
+            totalBrier += bs;
+            brierCount++;
+          }
+
+          // random baseline: always incorrect in expectation for 3 outcomes
+          // but per match we use a simulated random guess: pick uniformly
+          const randPick = ['HOME','DRAW','AWAY'][Math.floor(Math.random() * 3)];
+          if (randPick === actual) randomCorrect++;
+
+          // stage breakdown
+          const stage = m.stage || 'UNKNOWN';
+          if (!stageData[stage]) {
+            stageData[stage] = { total: 0, correct: 0, brierSum: 0, brierN: 0 };
+          }
+          stageData[stage].total++;
+          if (pred === actual) stageData[stage].correct++;
+          if (bs !== null) {
+            stageData[stage].brierSum += bs;
+            stageData[stage].brierN++;
+          }
+        });
+
+        const accuracy = finished.length > 0 ? (correct / finished.length * 100) : 0;
+        const avgBrier = brierCount > 0 ? (totalBrier / brierCount) : 0;
+        const randAccuracy = finished.length > 0 ? (randomCorrect / finished.length * 100) : 0;
+        // Theoretical random baseline for 3 outcomes = 33.33%
+        const theoreticalRandom = 33.33;
+
+        // --- accuracy cards ---
+        document.getElementById('backtest-accuracy').style.display = 'block';
+        document.getElementById('backtest-accuracy').innerHTML = `
+          <div class="metric-card metric-primary">
+            <span class="metric-label">模型准确率</span>
+            <span class="metric-value ${accuracy >= 50 ? 'good' : accuracy >= 33 ? 'ok' : 'bad'}">${accuracy.toFixed(1)}%</span>
+            <span class="metric-sub">${correct} / ${finished.length} 场正确预测</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">平均 Brier 评分</span>
+            <span class="metric-value">${avgBrier.toFixed(4)}</span>
+            <span class="metric-sub">越小越好（完美=0, 随机≈0.667）</span>
+          </div>
+          <div class="metric-card metric-baseline">
+            <span class="metric-label">随机基线（模拟）</span>
+            <span class="metric-value">${randAccuracy.toFixed(1)}%</span>
+            <span class="metric-sub">理论随机 ≈ ${theoreticalRandom.toFixed(1)}%</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">模型提升 vs 随机</span>
+            <span class="metric-value ${accuracy - theoreticalRandom > 15 ? 'good' : accuracy - theoreticalRandom > 5 ? 'ok' : 'bad'}">+${(accuracy - theoreticalRandom).toFixed(1)}%</span>
+            <span class="metric-sub">超出随机基线的百分点</span>
+          </div>
+        `;
+
+        // --- calibration description ---
+        document.getElementById('backtest-calibration').style.display = 'block';
+
+        // Calibration: group predictions by confidence deciles
+        let bins = {};
+        for (let d = 0; d <= 9; d++) {
+          const key = (d * 10) + '-' + ((d + 1) * 10);
+          bins[key] = { count: 0, correct: 0 };
+        }
+
+        finished.forEach(m => {
+          const prob = predictedProbForActual(m);
+          if (prob === null) return;
+          const decile = Math.min(Math.floor(prob * 10), 9);
+          const key = (decile * 10) + '-' + ((decile + 1) * 10);
+          if (!bins[key]) return;
+          bins[key].count++;
+          const pred = predictedOutcome(m);
+          const actual = actualOutcome(m);
+          if (pred === actual) bins[key].correct++;
+        });
+
+        let calibHtml = '<div class="info-section"><h2>📊 校准分析</h2><p>校准衡量模型预测概率与实际观测频率之间的一致性。理想情况下，当模型预测某结果概率为 X% 时，该结果实际发生的比例也接近 X%。</p>';
+        calibHtml += '<div class="calibration-table-wrap"><table class="standings-table"><thead><tr><th>置信区间</th><th>比赛数</th><th>实际频率</th><th>校准偏差</th></tr></thead><tbody>';
+
+        let totalEce = 0;
+        let eceCount = 0;
+        for (let d = 0; d <= 9; d++) {
+          const key = (d * 10) + '-' + ((d + 1) * 10);
+          const bin = bins[key];
+          if (!bin || bin.count === 0) {
+            calibHtml += `<tr><td>${key}%</td><td>0</td><td>—</td><td>—</td></tr>`;
+            continue;
+          }
+          const mid = (d * 10 + 5); // midpoint of bin, eg 5, 15, 25...
+          const freq = bin.correct / bin.count * 100;
+          const diff = Math.abs(freq - mid);
+          totalEce += diff / 100 * (bin.count / finished.length);
+          eceCount++;
+          const color = diff <= 5 ? 'var(--accent-green)' : diff <= 15 ? 'var(--warning)' : 'var(--win-away)';
+          calibHtml += `<tr><td>${key}%</td><td>${bin.count}</td><td>${freq.toFixed(1)}%</td><td style="color:${color};font-weight:600;">${diff <= 1 ? '✓' : diff.toFixed(1) + '%'}</td></tr>`;
+        }
+        calibHtml += '</tbody></table></div>';
+
+        const ece = totalEce; // Expected Calibration Error
+        calibHtml += `<p style="margin-top:12px;font-size:0.9rem;color:var(--text-muted);">预期校准误差 (ECE)：<strong>${(ece * 100).toFixed(1)}%</strong> — ${ece < 0.05 ? '校准良好，模型置信度与实际情况基本一致' : ece < 0.15 ? '校准中等，高置信度预测可能存在轻微偏差' : '校准较差，模型存在过自信或欠自信倾向'}</p>`;
+        calibHtml += '</div>';
+
+        document.getElementById('backtest-calibration').innerHTML = calibHtml;
+
+        // --- stage breakdown ---
+        document.getElementById('backtest-stage-breakdown').style.display = 'block';
+        const stageOrder = ['GROUP_STAGE', 'LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL'];
+        let stageHtml = '<div class="info-section"><h2>🏟️ 阶段细分</h2>';
+        stageHtml += '<div class="adv-table"><div class="adv-header"><span>阶段</span><span>比赛数</span><span>正确</span><span>准确率</span><span>Brier</span><span>对比随机</span></div>';
+
+        let stageTotal = 0, stageCorrectTotal = 0;
+        stageOrder.forEach(s => {
+          const sd = stageData[s];
+          if (!sd || sd.total === 0) return;
+          const acc = sd.correct / sd.total * 100;
+          const brier = sd.brierN > 0 ? (sd.brierSum / sd.brierN) : 0;
+          stageTotal += sd.total;
+          stageCorrectTotal += sd.correct;
+          const stageRand = sd.total > 0 ? (sd.total / 3) : 0; // expected random correct
+          const vsRand = sd.total > 0 ? ((sd.correct - stageRand) / sd.total * 100) : 0;
+
+          stageHtml += `
+            <div class="adv-row">
+              <span style="font-weight:600;">${STAGE_LABELS[s] || s}</span>
+              <span>${sd.total}</span>
+              <span>${sd.correct}</span>
+              <span style="font-weight:700;color:${acc >= 50 ? 'var(--accent-green)' : acc >= 33 ? 'var(--warning)' : 'var(--win-away)'};">${acc.toFixed(1)}%</span>
+              <span style="font-variant-numeric:tabular-nums;">${brier.toFixed(4)}</span>
+              <span style="color:${vsRand > 0 ? 'var(--accent-green)' : 'var(--win-away)'};">${vsRand > 0 ? '+' : ''}${vsRand.toFixed(1)}%</span>
+            </div>
+          `;
+        });
+
+        // total row
+        const totalAcc = stageTotal > 0 ? (stageCorrectTotal / stageTotal * 100) : 0;
+        stageHtml += `
+          <div class="adv-row" style="background:rgba(255,255,255,0.03);font-weight:700;">
+            <span>合计</span>
+            <span>${stageTotal}</span>
+            <span>${stageCorrectTotal}</span>
+            <span style="color:${totalAcc >= 50 ? 'var(--accent-green)' : totalAcc >= 33 ? 'var(--warning)' : 'var(--win-away)'};">${totalAcc.toFixed(1)}%</span>
+            <span>${avgBrier.toFixed(4)}</span>
+            <span style="color:var(--accent-green);">+${(totalAcc - theoreticalRandom).toFixed(1)}%</span>
+          </div>
+        `;
+
+        stageHtml += '</div></div>';
+        document.getElementById('backtest-stage-breakdown').innerHTML = stageHtml;
+
+      })
+      .catch(err => {
+        document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败: ' + err.message;
+      });
+  })();
+  </script>
+
+  <style>
+  .backtest-summary {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .stat-label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .backtest-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .metric-primary {
+    border-color: var(--accent);
+    background: rgba(88,166,255,0.06);
+  }
+  .metric-baseline {
+    border-color: rgba(139,148,158,0.4);
+    background: rgba(139,148,158,0.06);
+  }
+  .metric-label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .metric-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric-value.good { color: var(--accent-green); }
+  .metric-value.ok { color: var(--warning); }
+  .metric-value.bad { color: var(--win-away); }
+  .metric-sub {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .calibration-table-wrap {
+    margin-top: 16px;
+    overflow-x: auto;
+  }
+  </style>
+</body>
+</html>
