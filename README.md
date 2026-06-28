@@ -217,28 +217,20 @@ worldcup_new_2026/
 
 ## 最近更新
 
-### Phase 9 — CI/CD 自动化部署（最新）
-- GitHub Actions CI 管线（lint + 冒烟测试）
-- Docker 容器化（python:3.13-slim + Node.js 24 双层构建）
-- Railway / Render / VPS 三种部署方案
-- 回滚管线（workflow_dispatch 手动触发）
-- 健康检查端点 `GET /api/health`
-- 环境变量模板 `.env.template`
-
-### Phase 8 — 淘汰赛完整管线
+### 淘汰赛完整管线
 - 确定性淘汰赛对阵（基于实时小组赛结果）
 - 淘汰赛预测引擎（加时 / 点球 / 压力因子）
 - 晋级路径分析（单队从小组→冠军的逐轮概率）
 - 晋级树可视化升级（CSS Grid + SVG 连线）
 - SVG 国旗 + ELO 徽章 + 中文队名
 
-### Phase 7 — 赔率融合与在线学习
+### 赔率融合与在线学习
 - Polymarket 市场数据接入
 - Elo + ML + Polymarket 三源融合
 - 在线学习仪表盘（动态权重 + 误差反馈）
 - 加时 / 点球预测
 
-### Phase 6 — 双引擎与 MC 模拟
+### 双引擎与 MC 模拟
 - Elo + ML 双引擎独立预测
 - Ensemble 集成学习（动态权重分配）
 - 蒙特卡洛模拟（5000-20000 次）
