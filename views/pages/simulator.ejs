@@ -485,7 +485,7 @@
         const top3Class = rank <= 3 ? 'champ-top3' : '';
         html += `<tr class="${top3Class}">
           <td class="champ-rank">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</td>
-          <td class="champ-team"><span class="flag">${t.flag || '⚽'}</span> ${t.name || t.slug}</td>
+          <td class="champ-team">${window.flagHtml(t, 'sm')} ${t.name || t.slug}</td>
           <td class="champ-elo">${t.elo || '-'}</td>
           <td style="color:var(--text-muted);font-size:0.8rem">${t.group || '-'}</td>
           <td class="champ-pct">${pct.toFixed(1)}%</td>
@@ -506,7 +506,7 @@
 
       teams.forEach(t => {
         html += `<tr class="team-row">`;
-        html += `<td><span class="flag">${t.flag || '⚽'}</span> ${t.name || t.slug}</td>`;
+        html += `<td>${window.flagHtml(t, 'sm')} ${t.name || t.slug}</td>`;
         STAGES.forEach(s => {
           const val = t.prob[s.key] || 0;
           const cls = cellClass(val);

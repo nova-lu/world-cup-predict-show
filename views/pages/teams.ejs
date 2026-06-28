@@ -46,7 +46,7 @@
           card.href = `/teams/${t.slug}`;
           card.className = 'team-card';
           card.innerHTML = `
-            <span class="team-flag">${t.flag || '⚽'}</span>
+            <span class="team-flag">${window.flagHtml(t, 'md')}</span>
             <span class="team-cn-name">${t.name || t.slug}</span>
             <span class="team-en-name">${t.nameEn || ''}</span>
             <span class="team-elo">Elo ${t.elo || '-'}</span>

@@ -28,6 +28,15 @@
       <p class="subtitle">请查看 <a href="/schedule">完整赛程</a></p>
     </div>
 
+    <!-- 淘汰赛高亮：如果有淘汰赛，显示在快速导航前 -->
+    <div id="knockout-highlight" class="ko-highlight" style="display:none">
+      <div class="ko-highlight-header">
+        <h2>🏆 淘汰赛阶段</h2>
+        <a href="/knockout" class="ko-highlight-link">查看完整仪表盘 →</a>
+      </div>
+      <div class="ko-highlight-grid" id="ko-highlight-grid"></div>
+    </div>
+
     <!-- 快速导航 -->
     <div class="quick-nav">
       <a href="/schedule" class="quick-nav-card">
@@ -73,6 +82,38 @@
         <div class="stat-badge stat-upcoming">⏳ ${timed} 场未开赛</div>
       `;
 
+      // 淘汰赛高亮
+      var koMatches = data.matches.filter(function(m) {
+        return m.stage && m.stage !== 'GROUP_STAGE';
+      });
+      var koHighlight = document.getElementById('knockout-highlight');
+      var koGrid = document.getElementById('ko-highlight-grid');
+      if (koMatches.length > 0) {
+        koHighlight.style.display = 'block';
+        koGrid.innerHTML = '';
+        koMatches.forEach(function(m) {
+          var isFinished = m.status === 'FT';
+          var stageLabels = {'LAST_32':'32强','LAST_16':'16强','QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛'};
+          var stageLabel = stageLabels[m.stage] || m.stage || '';
+          var pred = m.prediction;
+          var card = document.createElement('div');
+          card.className = 'match-card' + (isFinished ? ' finished' : ' upcomng');
+          card.innerHTML = '<div class="match-card-header">' +
+            '<span class="match-stage-badge" style="background:rgba(250,204,21,0.2);color:#facc15">' + stageLabel + '</span>' +
+            (m.time ? '<span class="match-time-badge">' + m.time + '</span>' : '') +
+            '<span class="match-status ' + (isFinished ? 'status-finished' : 'status-upcoming') + '">' +
+            (isFinished ? '已结束' : '未开赛') + '</span></div>' +
+            '<div class="match-card-body" onclick="window.location=\'/match/' + m.t1 + '/' + m.t2 + '\'">' +
+            '<div class="team-row"><span class="team-name">' + window.flagHtml(m.team1Info, 'sm') + ' ' + (m.team1Info?.name || m.t1) + '</span>' +
+            '<span class="team-score ' + (isFinished && m.g1 > m.g2 ? 'winner-score' : '') + '">' + (isFinished ? m.g1 : (pred ? pred.expectedGoals.home.toFixed(1) : '-')) + '</span></div>' +
+            '<div class="team-row"><span class="team-name">' + window.flagHtml(m.team2Info, 'sm') + ' ' + (m.team2Info?.name || m.t2) + '</span>' +
+            '<span class="team-score ' + (isFinished && m.g2 > m.g1 ? 'winner-score' : '') + '">' + (isFinished ? m.g2 : (pred ? pred.expectedGoals.away.toFixed(1) : '-')) + '</span></div>' +
+            (!isFinished && pred ? '<div class="prob-bar-container"><div class="prob-bar"><div class="prob-segment prob-home" style="width:' + pred.prob.winHome + '%">' + pred.prob.winHome + '%</div><div class="prob-segment prob-draw" style="width:' + pred.prob.draw + '%">' + pred.prob.draw + '%</div><div class="prob-segment prob-away" style="width:' + pred.prob.winAway + '%">' + pred.prob.winAway + '%</div></div></div>' : '') +
+            '</div>';
+          koGrid.appendChild(card);
+        });
+      }
+
       const container = document.getElementById('matches-list');
       container.style.display = 'block';
       container.innerHTML = '';
@@ -103,7 +144,7 @@
           </div>
           <div class="match-card-body" onclick="window.location='/match/${m.t1}/${m.t2}'">
             <div class="team-row">
-              <span class="team-name">${m.team1Info?.flag || ''} ${m.team1Info?.name || m.team1}</span>
+              <span class="team-name">${window.flagHtml(m.team1Info, 'sm')} ${m.team1Info?.name || m.team1}</span>
               <span class="team-score ${isFinished && m.g1 > m.g2 ? 'winner-score' : ''}">${isFinished ? m.g1 : (pred ? pred.expectedGoals.home.toFixed(1) : '-')}</span>
             </div>
             <div class="team-row">

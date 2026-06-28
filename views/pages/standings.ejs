@@ -89,7 +89,7 @@
         html += `
           <div class="adv-row" onclick="window.location='/teams/${t.slug}'">
             <span class="adv-rank">${i + 1}</span>
-            <span class="adv-team">${t.flag || '⚽'} ${t.name || t.slug}</span>
+            <span class="adv-team">${window.flagHtml(t, 'sm')} ${t.name || t.slug}</span>
             <span class="adv-elo">${t.elo || '-'}</span>
             <span class="adv-group">${t.group || '-'}</span>
             <span class="adv-pct">${pct}%</span>
@@ -120,10 +120,19 @@
       const groupData = groupsData.groups[g];
       if (!groupData || !groupData.standings || groupData.standings.length === 0) return;
       html += `<div class="group-standings-block"><h3>${g}组</h3><table class="standings-table">`;
-      html += '<thead><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>进</th><th>失</th><th>净</th><th>分</th></tr></thead><tbody>';
+      html += '<thead><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>进</th><th>失</th><th>净</th><th>分</th><th>出线</th></tr></thead><tbody>';
       groupData.standings.forEach((t, i) => {
         const highlight = i < 2 ? ' class="qualify-row"' : '';
-        html += `<tr${highlight}><td>${i+1}</td><td>${t.info?.flag || ''} ${t.info?.name || t.slug}</td><td>${t.played}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd > 0 ? '+' : ''}${t.gd}</td><td><strong>${t.pts}</strong></td></tr>`;
+        // 检查是否已确定出线或淘汰 — 从 advData 获取
+        const advTeam = advData.teams.find(at => at.slug === t.slug);
+        const r16pct = advTeam ? advTeam.prob.round16 : 0;
+        const r32pct = advTeam ? advTeam.prob.round32 : 0;
+        let statusHTML = '';
+        if (r32pct >= 100) statusHTML = '<span style="color:#4ade80;font-size:0.75rem">✅ 出线</span>';
+        else if (r16pct <= 0 && t.played >= 4) statusHTML = '<span style="color:#f87171;font-size:0.75rem">❌ 淘汰</span>';
+        else if (r16pct >= 95) statusHTML = '<span style="color:#4ade80;font-size:0.75rem">✅ 基本出线</span>';
+        else statusHTML = '<span style="color:#facc15;font-size:0.75rem">⏳ ' + r16pct + '%</span>';
+        html += `<tr${highlight}><td>${i+1}</td><td>${window.flagHtml(t.info, 'sm')} ${t.info?.name || t.slug}</td><td>${t.played}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd > 0 ? '+' : ''}${t.gd}</td><td><strong>${t.pts}</strong></td><td>${statusHTML}</td></tr>`;
       });
       html += '</tbody></table></div>';
     });

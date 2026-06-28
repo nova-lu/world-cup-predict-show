@@ -288,6 +288,12 @@ router.get('/match/:t1/:t2', async (req, res) => {
     prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
   }
 
+  // 注入 team info（ML/Ensemble 引擎没有 home/away 对象，国旗需要 flagPath）
+  if (prediction && !prediction.home) {
+    prediction.home = { ...getTeamInfo(t1), slug: t1 };
+    prediction.away = { ...getTeamInfo(t2), slug: t2 };
+  }
+
   // Phase 6.1: 统一概率协议 — 确保 Elo 与 ML 输出格式一致
   if (!prediction.engine || prediction.engine === 'elo') {
     normalizePrediction(prediction, 'elo');
@@ -322,6 +328,23 @@ router.get('/compare/:t1/:t2', async (req, res) => {
   const comparison = compareTeams(req.params.t1, req.params.t2);
   const scores = req.query.scores !== 'false' ? getScoreDistribution(req.params.t1, req.params.t2) : null;
   res.json({ ...comparison, topScores: scores });
+});
+
+// Phase 8.1: 淘汰赛加时/点球预测
+router.get('/knockout-pred/:t1/:t2', async (req, res) => {
+  try {
+    const { t1, t2 } = req.params;
+    const stage = req.query.stage || 'round32';
+    const { knockoutMatchProb } = await import('../services/knockoutEngine.js');
+    const ratings = getRatings();
+    const rA = ratings[t1] || 1500;
+    const rB = ratings[t2] || 1500;
+    const hb = (t1 === 'mexico' || t1 === 'usa' || t1 === 'canada') ? 75 / 2 : 0;
+    const prob = knockoutMatchProb(rA, rB, hb, stage);
+    res.json({ t1, t2, stage, ...prob });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 export default router;

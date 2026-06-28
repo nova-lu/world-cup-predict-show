@@ -2,6 +2,17 @@
 // References: World Football Elo; Maher (1982); Dixon & Coles (1997).
 export const K_FACTOR_WC = 60;
 
+// Phase 8.1: 淘汰赛专用 K-因子映射
+// 淘汰赛阶段 K-因子更高，因为大赛对 Elo 排名影响更大
+import { KNOCKOUT_K_FACTOR } from '../ml/features/knockout.js';
+
+// 获取适合当前阶段的 K-因子
+// group: 小组赛用 K_FACTOR_WC, knockout: 根据轮次使用不同值
+export function getElokFactor(stage = 'group') {
+  if (stage === 'group' || !stage) return K_FACTOR_WC;
+  return KNOCKOUT_K_FACTOR[stage] || K_FACTOR_WC;
+}
+
 // Dixon-Coles ρ — corrects vanilla Poisson's under-count of 0-0 / 1-1 draws. ~ -0.13 empirically.
 export const DC_RHO = -0.13;
 

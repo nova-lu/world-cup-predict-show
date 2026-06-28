@@ -182,13 +182,13 @@
         <div class="smc-body">
           <div class="smc-teams">
             <span class="smc-team ${isFinished && m.g1 > m.g2 ? 'winner' : ''}">
-              ${m.team1Info?.flag || ''} ${m.team1Info?.name || m.team1}
+              ${window.flagHtml(m.team1Info, 'sm')} ${m.team1Info?.name || m.team1}
             </span>
             <span class="smc-score">
               ${isFinished ? `<strong>${m.g1} : ${m.g2}</strong>` : 'vs'}
             </span>
             <span class="smc-team ${isFinished && m.g2 > m.g1 ? 'winner' : ''}">
-              ${m.team2Info?.flag || ''} ${m.team2Info?.name || m.team2}
+              ${window.flagHtml(m.team2Info, 'sm')} ${m.team2Info?.name || m.team2}
             </span>
           </div>
           ${!isFinished && m.prediction ? `

@@ -5,7 +5,57 @@ import path from 'node:path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, '../../data');
 
-// ---------- 世界杯 48 支球队元信息 ----------
+// ---------- 球队专属颜色 ----------
+const TEAM_COLORS = {
+  'mexico':            { primary:'#006847', secondary:'#ce1126', text:'#ffffff' },
+  'south-africa':      { primary:'#007a4d', secondary:'#ffb612', text:'#ffffff' },
+  'south-korea':       { primary:'#e60000', secondary:'#003478', text:'#ffffff' },
+  'czech-republic':    { primary:'#11457e', secondary:'#d7141a', text:'#ffffff' },
+  'canada':            { primary:'#e00000', secondary:'#ffffff', text:'#ffffff' },
+  'bosnia-and-herzegovina': { primary:'#002395', secondary:'#fedb00', text:'#ffffff' },
+  'qatar':             { primary:'#8c1b1b', secondary:'#ffffff', text:'#ffffff' },
+  'switzerland':       { primary:'#da291c', secondary:'#ffffff', text:'#ffffff' },
+  'brazil':            { primary:'#f7c622', secondary:'#009739', text:'#003f87' },
+  'morocco':           { primary:'#c1272d', secondary:'#006233', text:'#ffffff' },
+  'haiti':             { primary:'#00209f', secondary:'#d21034', text:'#ffffff' },
+  'scotland':          { primary:'#003876', secondary:'#ffffff', text:'#ffffff' },
+  'usa':               { primary:'#ffffff', secondary:'#002868', text:'#bf0a30' },
+  'paraguay':          { primary:'#003f87', secondary:'#d52b1e', text:'#ffffff' },
+  'australia':         { primary:'#fcd116', secondary:'#008751', text:'#003f87' },
+  'turkey':            { primary:'#e30a17', secondary:'#ffffff', text:'#ffffff' },
+  'germany':           { primary:'#ffffff', secondary:'#dd0000', text:'#000000' },
+  'curacao':           { primary:'#003ca3', secondary:'#ffd100', text:'#ffffff' },
+  'ivory-coast':       { primary:'#f77f00', secondary:'#009e60', text:'#ffffff' },
+  'ecuador':           { primary:'#fcd116', secondary:'#003893', text:'#ed1c24' },
+  'netherlands':       { primary:'#ff6600', secondary:'#ffffff', text:'#ffffff' },
+  'japan':             { primary:'#bc002d', secondary:'#ffffff', text:'#ffffff' },
+  'sweden':            { primary:'#fecd00', secondary:'#005b9f', text:'#005b9f' },
+  'tunisia':           { primary:'#e70013', secondary:'#ffffff', text:'#ffffff' },
+  'belgium':           { primary:'#e00000', secondary:'#ffcd00', text:'#000000' },
+  'egypt':             { primary:'#ce1126', secondary:'#ffffff', text:'#000000' },
+  'iran':              { primary:'#da0000', secondary:'#239f40', text:'#ffffff' },
+  'new-zealand':       { primary:'#00247d', secondary:'#cc142b', text:'#ffffff' },
+  'spain':             { primary:'#c60b1e', secondary:'#ffc400', text:'#ffffff' },
+  'cape-verde':        { primary:'#003893', secondary:'#ce1126', text:'#ffffff' },
+  'saudi-arabia':      { primary:'#006c35', secondary:'#ffffff', text:'#ffffff' },
+  'uruguay':           { primary:'#003da5', secondary:'#ffffff', text:'#fcd116' },
+  'france':            { primary:'#002395', secondary:'#ffffff', text:'#ed2939' },
+  'senegal':           { primary:'#00853f', secondary:'#fdce12', text:'#e31b23' },
+  'iraq':              { primary:'#ce1126', secondary:'#000000', text:'#007a3d' },
+  'norway':            { primary:'#ba0c2f', secondary:'#ffffff', text:'#003087' },
+  'argentina':         { primary:'#75aadb', secondary:'#ffffff', text:'#fcbf49' },
+  'algeria':           { primary:'#006233', secondary:'#ffffff', text:'#d21034' },
+  'jordan':            { primary:'#ce1126', secondary:'#000000', text:'#ffffff' },
+  'austria':           { primary:'#ed2939', secondary:'#ffffff', text:'#ffffff' },
+  'england':           { primary:'#ffffff', secondary:'#ce1124', text:'#1d2b64' },
+  'croatia':           { primary:'#171796', secondary:'#ffffff', text:'#ed1c24' },
+  'uzbekistan':        { primary:'#0099b5', secondary:'#1eb53a', text:'#ffffff' },
+  'ghana':             { primary:'#ce1126', secondary:'#fcd116', text:'#006b3f' },
+  'portugal':          { primary:'#006600', secondary:'#ff0000', text:'#ffffff' },
+  'dr-congo':          { primary:'#007fff', secondary:'#f7d618', text:'#ce1021' },
+  'colombia':          { primary:'#fcd116', secondary:'#003893', text:'#ce1126' },
+  'panama':            { primary:'#005293', secondary:'#d21034', text:'#ffffff' },
+};
 const TEAM_INFO = {
   'mexico':            { name: '墨西哥', nameEn: 'Mexico', slug: 'mexico', flag: '🇲🇽', group: 'A', confederation: 'CONCACAF' },
   'south-africa':      { name: '南非', nameEn: 'South Africa', slug: 'south-africa', flag: '🇿🇦', group: 'A', confederation: 'CAF' },
@@ -80,20 +130,33 @@ const SLUG_TO_NAME = {
 export function getTeamInfo(slug) {
   if (!slug) return null;
   const info = TEAM_INFO[slug];
-  if (info) return info;
+  if (info) {
+    const colors = TEAM_COLORS[slug] || { primary:'#333', secondary:'#555', text:'#fff' };
+    return {
+      ...info,
+      flagPath: `/images/flags/${slug}.svg`,
+      color: colors,
+    };
+  }
   // 如果 slug 不在 TEAM_INFO 中，用自动生成的基本信息
   return {
     name: SLUG_TO_NAME[slug] || slug,
     nameEn: SLUG_TO_NAME[slug] || slug,
     slug,
     flag: '⚽',
+    flagPath: null,
+    color: { primary:'#333', secondary:'#555', text:'#fff' },
     group: null,
     confederation: null,
   };
 }
 
 export function getAllTeams() {
-  return Object.entries(TEAM_INFO).map(([slug, info]) => ({ ...info, nameEn: SLUG_TO_NAME[slug] || info.nameEn }));
+  return Object.entries(TEAM_INFO).map(([slug]) => {
+    const info = getTeamInfo(slug);
+    const rating = (getRatings())[slug] || 1500;
+    return { ...info, elo: rating };
+  });
 }
 
 export function getTeamsByGroup(group) {

@@ -193,8 +193,27 @@ a:hover { text-decoration: underline; }
 .prediction-summary {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
+
+/* 淘汰赛容器 - 侧栏 + 树形图布局 */
+#bracket-container {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  overflow-x: auto;
+  max-width: 100%;
+}
+@media (max-width: 900px) {
+  #bracket-container {
+    flex-direction: column;
+  }
+}
+
+/* Phase 8.1: 淘汰赛概率分解 */
+.kb-item { display: flex; flex-direction: column; align-items: center; min-width: 80px; padding: 4px 12px; border-radius: 6px; background: rgba(255,255,255,0.03); }
+.kb-label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 2px; }
+.kb-value { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
 .prob-card {
   flex: 1;
   padding: 20px 12px;
@@ -945,4 +964,328 @@ a:hover { text-decoration: underline; }
 @media (max-width: 600px) {
   #cache-status-bar { gap: 6px; padding: 6px 10px; font-size: 0.72rem; flex-wrap: wrap; }
   .cache-refresh-btn { padding: 3px 10px; font-size: 0.7rem; }
+}
+
+/* ===== Phase 8.5: 旗帜与球队可视化体系 ===== */
+
+/* SVG 旗帜 — 支持三种尺寸 */
+.team-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+.team-flag img,
+.team-flag svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 3px;
+}
+.team-flag.flag-sm { width: 18px; height: 12px; }
+.team-flag.flag-md { width: 24px; height: 16px; }
+.team-flag.flag-lg { width: 36px; height: 24px; }
+.team-flag.flag-xl { width: 52px; height: 34px; }
+.team-flag .flag-fallback {
+  font-size: inherit;
+  line-height: 1;
+}
+
+/* 球队颜色标识 — 小圆点 */
+.team-color-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.team-color-dot.md { width: 10px; height: 10px; }
+
+/* 球队颜色标识 — 色条 */
+.team-color-bar {
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.team-color-bar.md { height: 18px; }
+
+/* 球队名称颜色 */
+.team-name-colored {
+  font-weight: 600;
+}
+
+/* 球队卡片边框色 */
+.match-card-teamborder {
+  border-left: 3px solid;
+  padding-left: 6px;
+}
+
+/* SVG 旗帜加载状态 */
+.team-flag img[src] {
+  min-width: 18px;
+  min-height: 12px;
+}
+.team-flag img[src]:not([src*=".svg"]):not([src*=".png"]) {
+  /* fallback emoji when SVG not available */
+}
+
+/* 淘汰赛卡片专用旗帜 */
+.bracket-match .team-line .team-flag svg,
+.bracket-match .team-line .team-flag img {
+  border-radius: 2px;
+}
+
+/* 小组积分榜旗帜样式 */
+.standings-flag .team-flag {
+  margin-right: 6px;
+}
+
+/* 首页赛程卡片旗帜 */
+.match-card .team-flag {
+  margin-right: 4px;
+}
+
+/* ===== Phase 8.6: 前端淘汰赛仪表盘 ===== */
+
+/* 淘汰赛高亮（首页） */
+.ko-highlight {
+  margin-top: 20px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, rgba(250,204,21,0.05), transparent);
+  border: 1px solid rgba(250,204,21,0.15);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.ko-highlight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.ko-highlight-header h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #facc15;
+}
+.ko-highlight-link {
+  font-size: 0.82rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+.ko-highlight-link:hover { text-decoration: underline; }
+.ko-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+/* 淘汰赛仪表盘面板通用 */
+.ko-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.ko-section h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.ko-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.ko-tab {
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  cursor: pointer;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  transition: all 0.12s;
+}
+.ko-tab:hover { background: var(--bg-hover); }
+.ko-tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.ko-panel { display: none; }
+.ko-panel.active { display: block; }
+.ko-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* 比赛列表行 */
+.ko-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ko-match-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ko-match-row:hover { background: var(--bg-hover); }
+
+/* 32强网格 */
+.qualified-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.qualified-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  cursor: default;
+  transition: background 0.12s;
+}
+.qualified-team:hover { background: var(--bg-hover); }
+
+/* 第三名表格 */
+.third-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.third-table th { text-align: left; padding: 5px 8px; color: var(--text-muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.third-table td { padding: 5px 8px; border-bottom: 1px solid rgba(48,54,61,0.3); }
+.third-table .qualify-row td { background: rgba(35, 134, 54, 0.08); }
+
+/* 淘汰赛树网格（仪表盘版） */
+.ko-bracket-wrap { overflow-x: auto; }
+.ko-bracket-grid {
+  display: grid;
+  grid-template-rows: auto repeat(16, 1fr);
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr) 100px;
+  gap: 5px 10px;
+  min-width: 950px;
+}
+.ko-bracket-grid .round-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); text-align: center; padding: 3px 0; }
+
+/* 成功/提示横幅 */
+.success-banner {
+  background: rgba(35, 134, 54, 0.12);
+  border: 1px solid rgba(35, 134, 54, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: #5ad47a;
+  margin-bottom: 16px;
+}
+.disclaimer-banner {
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: #facc15;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .ko-grid-2 { grid-template-columns: 1fr; }
+  .qualified-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
+
+/* 模拟/数据模式标签 */
+.sim-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(250,204,21,0.15);
+  color: #facc15;
+  padding: 2px 8px;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.real-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(35,134,54,0.15);
+  color: #4ade80;
+  padding: 2px 8px;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.slug-name {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.sim-tag {
+  display: inline-block;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: rgba(250,204,21,0.2);
+  color: #facc15;
+  padding: 0 4px;
+  border-radius: 2px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* 淘汰赛路径（球队详情页） */
+.ko-path-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ko-path-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+.ko-path-row .path-stage {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: center;
+}
+.ko-path-row .path-vs {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+.ko-path-row .path-opponent {
+  flex: 1;
+  font-weight: 500;
+}
+.ko-path-row .path-prob {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+  text-align: right;
+}
+.ko-path-row .path-bar-cell { width: 56px; }
+.ko-path-row .path-bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-green), var(--accent));
+  min-width: 3px;
 }

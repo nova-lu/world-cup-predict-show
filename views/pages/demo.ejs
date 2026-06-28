@@ -437,7 +437,7 @@
       totalPnl += pnl;
 
       const team = marketData.find(t => t.slug === pos.slug);
-      const name = team ? (team.flag || '') + ' ' + (team.name || pos.slug) : pos.slug;
+      const name = team ? window.flagHtml(team, 'sm') + ' ' + (team.name || pos.slug) : pos.slug;
       const sideLabel = pos.side === 'yes' ? 'YES' : 'NO';
       const sideClass = pos.side === 'yes' ? 'yes' : 'no';
 
@@ -600,7 +600,7 @@
         card.innerHTML = `
           <div class="market-team">
             <span class="market-rank">#${i + 1}</span>
-            <span class="market-flag">${t.flag || '⚽'}</span>
+            <span class="market-flag">${window.flagHtml(t, 'sm')}</span>
             <span class="market-name">${t.name || t.slug}</span>
           </div>
           <div class="market-prob-row">

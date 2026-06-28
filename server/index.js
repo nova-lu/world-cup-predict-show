@@ -6,6 +6,7 @@ import standingsRouter from './routes/standings.js';
 import teamsRouter from './routes/teams.js';
 import oddsRouter from './routes/odds.js';  // Phase 7: 含 Polymarket + Fusion 路由
 import bracketRouter from './routes/bracket.js';
+import knockoutRouter from './routes/knockout.js'; // Phase 8.2
 import { parseForceParam } from './middleware/parseForce.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,9 @@ app.use('/api/standings', standingsRouter);
 app.use('/api/teams', teamsRouter);
 app.use(oddsRouter);
 app.use('/api/bracket', bracketRouter);
+
+// Phase 8.2: 淘汰赛过渡管线
+app.use('/api/knockout', knockoutRouter);
 
 // ML 引擎状态
 app.get('/api/ml/status', async (req, res) => {
@@ -173,6 +177,14 @@ app.get('/bracket', (req, res) => {
   });
 });
 
+// Phase 8.6: 淘汰赛仪表盘
+app.get('/knockout', (req, res) => {
+  res.render('pages/knockout', {
+    title: '2026世界杯 · 淘汰赛仪表盘',
+    page: 'knockout',
+  });
+});
+
 // 交互式模拟器
 app.get('/simulator', (req, res) => {
   res.render('pages/simulator', {
@@ -248,6 +260,12 @@ app.listen(PORT, () => {
   console.log(`   GET /api/matches/upcoming      即将开赛`);
   console.log(`   GET /api/matches/match/:t1/:t2 单场预测`);
   console.log(`   GET /api/matches/compare/:t1/:t2 两队对比`);
+  console.log(`   GET /api/matches/knockout-pred/:t1/:t2 淘汰赛加时/点球预测`);
+  console.log(`   GET /api/knockout/qualifiers  出线球队(确定性)`);
+  console.log(`   GET /api/knockout/third-rank  第三名竞争势态`);
+  console.log(`   GET /api/knockout/bracket     确定性淘汰赛对阵`);
+  console.log(`   GET /api/knockout/path/:slug  单队晋级路径分析`);
+  console.log(`   GET /api/knockout/opponent-matrix 对手分布矩阵`);
   console.log(`   GET /api/standings/groups      小组积分榜`);
   console.log(`   GET /api/standings/advancement 晋级概率榜`);
   console.log(`   GET /api/teams                 球队列表`);

@@ -6,14 +6,14 @@
   <title><%= title %></title>
   <link rel="stylesheet" href="/css/app.css">
   <style>
-    /* ===== Bracket Container ===== */
+    /* ===== Bracket Layout ===== */
     #bracket-container {
       display: flex;
       gap: 20px;
       position: relative;
     }
 
-    /* ===== Sidebar ===== */
+    /* ===== Sidebar (champion probabilities) ===== */
     .bracket-sidebar {
       width: 240px;
       flex-shrink: 0;
@@ -36,8 +36,8 @@
     .champ-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 0;
+      gap: 6px;
+      padding: 5px 0;
       border-bottom: 1px solid rgba(48,54,61,0.4);
       font-size: 0.82rem;
       cursor: default;
@@ -45,10 +45,10 @@
     }
     .champ-row:hover { background: var(--bg-hover); border-radius: 4px; padding-left: 4px; }
     .champ-rank { font-weight: 700; color: var(--text-muted); width: 20px; text-align: right; font-size: 0.78rem; }
-    .champ-flag { font-size: 1.1rem; }
+    .champ-flag { font-size: 1.05rem; line-height: 1; }
     .champ-name { flex: 1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .champ-pct { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent-green); width: 48px; text-align: right; }
-    .champ-bar-cell { width: 60px; }
+    .champ-pct { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent-green); width: 44px; text-align: right; }
+    .champ-bar-cell { width: 56px; }
     .champ-bar {
       display: block;
       height: 6px;
@@ -58,25 +58,23 @@
       min-width: 3px;
     }
 
-    /* ===== Bracket Tree — CSS Grid 精确布局 ===== */
+    /* ===== Bracket Tree ===== */
     .bracket-tree {
       flex: 1;
       min-width: 0;
       overflow-x: auto;
+      overflow-y: visible;
       padding: 10px 0 20px;
     }
     .bracket-grid {
       display: grid;
-      grid-template-rows: repeat(16, auto);
-      grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr) 100px;
-      gap: 6px 12px;
-      min-width: 1000px;
+      grid-template-rows: auto repeat(16, 1fr);
+      grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) 110px;
+      gap: 6px 14px;
+      min-width: 1050px;
     }
 
-    /* Round column headers — each spans all 16 rows via a single header placeholder */
-    .bracket-round-col {
-      display: contents; /* children are placed directly in the grid */
-    }
+    /* Round labels */
     .round-label {
       font-size: 0.65rem;
       font-weight: 600;
@@ -87,46 +85,87 @@
       padding: 4px 0;
       background: rgba(255,255,255,0.03);
       border-radius: var(--radius-sm);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
-    /* Match card */
+    /* ===== Match Card ===== */
     .bracket-match {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 6px 10px;
-      cursor: default;
+      padding: 5px 8px;
+      cursor: pointer;
       transition: all 0.15s;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      min-height: 48px;
+      min-height: 42px;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
     }
     .bracket-match:hover {
       border-color: var(--accent);
       background: var(--bg-hover);
+      transform: translateX(2px);
     }
-    .bracket-match .matchup {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+    /* Clickable link overlay */
+    .bracket-match a.match-link {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
     }
+    /* Finished match - green border */
+    .bracket-match.finished {
+      border-color: var(--accent-green);
+      border-width: 1.5px;
+    }
+    .bracket-match.finished .team-line.winner {
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+    .bracket-match.finished .score-badge {
+      display: inline-block;
+      background: var(--accent-green);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.65rem;
+      padding: 0 4px;
+      border-radius: 3px;
+      margin-left: auto;
+    }
+
+    /* Team line */
     .bracket-match .team-line {
       display: flex;
       align-items: center;
       gap: 4px;
+      padding: 1px 0;
+      min-height: 18px;
     }
-    .bracket-match .team-line .flag { font-size: 0.8rem; }
+    .bracket-match .team-line .flag {
+      font-size: 0.85rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
     .bracket-match .team-line .name {
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex: 1;
+      font-size: 0.72rem;
+    }
+    .bracket-match .team-line .elo-badge {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-left: 2px;
     }
     .bracket-match .team-line .slot-label {
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       color: var(--text-muted);
       font-weight: 400;
       padding: 1px 4px;
@@ -134,41 +173,80 @@
       border-radius: 3px;
     }
     .bracket-match .match-label {
-      font-size: 0.6rem;
+      font-size: 0.58rem;
       color: var(--text-muted);
       margin-bottom: 1px;
     }
-    .bracket-match .prob-sub {
-      font-size: 0.6rem;
+    /* Probability bar */
+    .bracket-match .prob-bar-track {
+      height: 3px;
+      background: rgba(148,163,184,0.15);
+      border-radius: 2px;
+      margin-top: 2px;
+      overflow: hidden;
+    }
+    .bracket-match .prob-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s;
+    }
+    .bracket-match .prob-text {
+      font-size: 0.58rem;
       color: var(--text-muted);
+      text-align: right;
+      margin-top: 1px;
     }
 
-    /* Champion node */
+    /* ===== Champion Node ===== */
     .champion-node {
       background: linear-gradient(135deg, rgba(35,134,54,0.2), rgba(56,139,253,0.15));
       border: 2px solid var(--accent-green);
       border-radius: var(--radius);
-      padding: 10px 6px;
+      padding: 14px 6px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 4px;
     }
-    .champion-node .trophy { font-size: 1.3rem; }
+    .champion-node .trophy { font-size: 1.4rem; }
     .champion-node .champ-name { font-size: 0.85rem; font-weight: 700; }
-    .champion-node .champ-flag { font-size: 1.1rem; }
+    .champion-node .champ-flag { font-size: 1.2rem; }
     .champion-node .champ-prob { font-size: 0.72rem; color: var(--accent-green); font-weight: 600; }
 
     /* ===== Responsive ===== */
     @media (max-width: 1024px) {
       #bracket-container { flex-direction: column; }
       .bracket-sidebar { width: 100%; position: static; }
+      .bracket-sidebar .champ-rows { display: flex; flex-wrap: wrap; gap: 4px; }
+      .bracket-sidebar .champ-row { flex: 0 0 calc(50% - 4px); }
     }
     @media (max-width: 700px) {
       .bracket-tree { padding: 8px 0; }
-      .bracket-grid { min-width: 860px; }
+      .bracket-grid { min-width: 920px; gap: 4px 10px; }
+      .bracket-match { padding: 4px 6px; min-height: 36px; font-size: 0.68rem; }
+      .bracket-match .team-line .flag { font-size: 0.75rem; }
+      .bracket-match .team-line .name { font-size: 0.65rem; }
+    }
+    .success-banner {
+      background: rgba(35, 134, 54, 0.12);
+      border: 1px solid rgba(35, 134, 54, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #5ad47a;
+      margin-bottom: 16px;
+    }
+    /* Source info */
+    .bracket-meta {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
     }
   </style>
 </head>
@@ -177,13 +255,11 @@
 
   <main class="main-content">
     <div class="page-header">
-      <h1>淘汰赛树</h1>
+      <h1>🏆 淘汰赛模拟器 <span class="sim-badge">蒙特卡洛</span></h1>
       <p class="subtitle" id="bracket-summary">2026世界杯 · 加载中...</p>
     </div>
-    <div class="disclaimer-banner">
-      ⚠️ 淘汰赛对阵基于蒙特卡洛模拟的晋级概率分布，对阵双方为当前模拟中最可能晋级的球队
-    </div>
-    <div id="loading-spinner" class="loading">🏆 正在构建淘汰赛树...</div>
+    <div id="source-banner" class="disclaimer-banner" style="display:none"></div>
+    <div id="loading-spinner" class="loading">🏆 正在蒙特卡洛模拟淘汰赛...</div>
 
     <div id="bracket-container" style="display:none">
       <!-- Sidebar champion probabilities -->
@@ -194,206 +270,268 @@
   </main>
 
   <%- include('../partials/footer') %>
-
+  <script src="/js/bracket-lines.js"></script>
   <script>
-  // Render champion probabilities sidebar
+  // ===== 渲染夺冠概率侧栏 =====
   function renderSidebar(teams) {
     const sidebar = document.getElementById('bracket-sidebar');
     const entries = Object.entries(teams)
-      .map(([slug, t]) => ({ slug: slug, ...t }))
-      .filter(t => t.champion > 0)
-      .sort((a, b) => b.champion - a.champion)
-      .slice(0, 8);
+      .map(([slug, t]) => ({ slug, ...t }))
+      .filter(t => (t.champion || 0) > 0)
+      .sort((a, b) => (b.champion || 0) - (a.champion || 0))
+      .slice(0, 10);
 
-    let html = '<h3>\uD83C\uDFC6 夺冠概率 Top 8</h3>';
+    let html = '<h3>🏆 夺冠概率 Top 10</h3><div class="champ-rows">';
     entries.forEach((t, i) => {
-      const pct = t.champion;
-      const barW = Math.max(pct, 2);
+      const pct = (t.champion || 0).toFixed(1);
+      const barW = Math.max(parseFloat(pct), 2);
+      const teamInfo = { flagPath: t.flagPath, flag: t.flag, name: t.name };
       html += '<div class="champ-row">' +
         '<span class="champ-rank">' + (i + 1) + '</span>' +
-        '<span class="champ-flag">' + (t.flag || '\u26BD') + '</span>' +
+        flagHtml(teamInfo, 'sm') +
         '<span class="champ-name">' + (t.name || t.slug) + '</span>' +
         '<span class="champ-pct">' + pct + '%</span>' +
         '<span class="champ-bar-cell"><span class="champ-bar" style="width:' + barW + '%"></span></span>' +
         '</div>';
     });
+    html += '</div>';
     sidebar.innerHTML = html;
   }
 
-  // Try to find the most probable team for a given slot
-  function findTeamForSlot(slot, teams, rounds, roundKey) {
-    // Direct team slug match
-    if (teams[slot]) return teams[slot];
+  // ===== SVG 旗帜渲染 =====
+  function flagHtml(info, size) {
+    size = size || 'sm';
+    if (!info) return '<span class="team-flag flag-' + size + '"><span class="flag-fallback">⚽</span></span>';
+    const svgPath = info.flagPath || '';
+    const emoji = info.flag || '⚽';
+    if (svgPath) {
+      return '<span class="team-flag flag-' + size + '"><img src="' + svgPath + '" alt="' + (info.name || '') + '" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><span class="flag-fallback" style="display:none">' + emoji + '</span></span>';
+    }
+    return '<span class="team-flag flag-' + size + '"><span class="flag-fallback">' + emoji + '</span></span>';
+  }
 
-    // Group position: "1A", "2D" etc
-    const groupPosMatch = slot.match(/^(\d+)([A-Z])$/);
-    if (groupPosMatch) {
-      // We can't resolve this without group-stage data
-      return null;
+  // ===== 渲染比赛卡片 =====
+  function matchCard(match, rowStart, col, rowSpan) {
+    const home = match.homeInfo;
+    const away = match.awayInfo;
+    const finished = match.finished;
+    const hasTeams = !!(home && away) || !!(match.home && match.away && !match.home.startsWith('W') && !match.away.startsWith('W'));
+
+    // 已完赛 - 判断胜者
+    const winnerSlug = match.winner;
+    const isHomeWinner = winnerSlug && match.home === winnerSlug;
+    const isAwayWinner = winnerSlug && match.away === winnerSlug;
+
+    // 球队主色
+    const homeColor = home?.color?.primary || '';
+    const awayColor = away?.color?.primary || '';
+
+    let html = '<div class="bracket-match' + (finished ? ' finished' : '') + '" style="grid-row:' + rowStart + '/span ' + rowSpan + ';grid-column:' + col + (homeColor ? ';border-left:3px solid ' + homeColor : '') + '" data-slot="' + match.slot + '">';
+
+    // Match label + 模拟标签
+    if (match.label) {
+      html += '<div class="match-label">' + match.label + (match.simulated ? ' <span class="sim-tag">MCS</span>' : '') + '</div>';
     }
 
-    // Winner slot: "W73", "W89" etc — find the match that produces this slot
-    // and pick the more likely team from its home/away participants
-    const allRoundKeys = ['round32', 'round16', 'quarter', 'semi', 'final'];
-    for (const rk of allRoundKeys) {
-      const ml = rounds[rk] || [];
-      for (const m of ml) {
-        if (m.slot === slot) {
-          // Resolve both participants — if they're also winner slots, recurse
-          const resolveSlot = (s) => {
-            if (teams[s]) return teams[s]; // direct team slug
-            return findTeamForSlot(s, teams, rounds, rk); // recurse for nested winner slots
-          };
-          const homeTeam = m.home ? resolveSlot(m.home) : null;
-          const awayTeam = m.away ? resolveSlot(m.away) : null;
-          if (homeTeam && awayTeam) {
-            const field = rk === 'round32' ? 'round32' : rk === 'round16' ? 'round16' : rk === 'quarter' ? 'quarter' : rk === 'semi' ? 'semi' : 'champion';
-            return (homeTeam[field] || 0) >= (awayTeam[field] || 0) ? homeTeam : awayTeam;
-          }
-          return homeTeam || awayTeam || null;
-        }
+    // Home team
+    html += '<div class="team-line' + (isHomeWinner ? ' winner' : '') + '">';
+    if (home && home.name) {
+      html += flagHtml(home, 'sm');
+      html += '<span class="name">' + (home.name || match.home) + '</span>';
+      if (home.elo) html += '<span class="elo-badge">' + home.elo + '</span>';
+    } else {
+      // 从 mcTeams 查找
+      const ti = window._mcTeams?.[match.home];
+      if (ti && ti.name) {
+        html += flagHtml({ flagPath: ti.flagPath, flag: ti.flag, name: ti.name }, 'sm');
+        html += '<span class="name">' + ti.name + '</span>';
+      } else if (match.home && !match.home.startsWith('W')) {
+        html += '<span class="name slug-name">' + match.home + '</span>';
+      } else {
+        html += '<span class="slot-label">' + match.home + '</span>';
       }
     }
+    html += '</div>';
 
-    // Third-best group slot format like "3C/3D/3F/3G/3H"
-    const groupSlugs = slot.split('/').map(s => s.trim());
-    const knownSlug = groupSlugs.find(s => teams[s]);
-    if (knownSlug) return teams[knownSlug];
-
-    return null;
-  }
-
-  // Build bracket tree with CSS Grid explicit row/col placement
-  function renderBracket(data) {
-    const { rounds, teams } = data;
-    const container = document.getElementById('bracket-tree');
-
-    // Grid: 17 rows (1 header + 16 data), 6 columns
-    let html = '<div class="bracket-grid" style="grid-template-rows:auto repeat(16,auto)">';
-
-    const cols = ['round32', 'round16', 'quarter', 'semi', 'final', 'champion'];
-    const colLabels = ['<span class="round-label">R32 · 32强</span>', '<span class="round-label">R16 · 16强</span>',
-      '<span class="round-label">QF · 8强</span>', '<span class="round-label">SF · 4强</span>',
-      '<span class="round-label">FINAL · 决赛</span>', '<span class="round-label">🏆 冠军</span>'];
-
-    // Column 1: R32 — 16 matches at rows 2..17, col 1
-    const r32 = rounds.round32 || [];
-    r32.forEach((match, j) => {
-      const homeTeam = findTeamForSlot(match.home, teams, rounds, 'round32');
-      const awayTeam = findTeamForSlot(match.away, teams, rounds, 'round32');
-      html += matchCard(match, homeTeam, awayTeam, j + 2, 1, 1);
-    });
-
-    // Column 2: R16 — 8 matches, each spanning 2 rows
-    const r16 = rounds.round16 || [];
-    r16.forEach((match, i) => {
-      const homeTeam = findTeamForSlot(match.home, teams, rounds, 'round16');
-      const awayTeam = findTeamForSlot(match.away, teams, rounds, 'round16');
-      html += matchCard(match, homeTeam, awayTeam, 2 * i + 2, 2, 2);
-    });
-
-    // Column 3: QF — 4 matches, each spanning 4 rows
-    const qf = rounds.quarter || [];
-    qf.forEach((match, i) => {
-      const homeTeam = findTeamForSlot(match.home, teams, rounds, 'quarter');
-      const awayTeam = findTeamForSlot(match.away, teams, rounds, 'quarter');
-      html += matchCard(match, homeTeam, awayTeam, 4 * i + 2, 3, 4);
-    });
-
-    // Column 4: SF — 2 matches, each spanning 8 rows
-    const sf = rounds.semi || [];
-    sf.forEach((match, i) => {
-      const homeTeam = findTeamForSlot(match.home, teams, rounds, 'semi');
-      const awayTeam = findTeamForSlot(match.away, teams, rounds, 'semi');
-      html += matchCard(match, homeTeam, awayTeam, 8 * i + 2, 4, 8);
-    });
-
-    // Column 5: Final — 1 match, spanning 16 rows
-    const finalMatch = (rounds.final || [])[0];
-    if (finalMatch) {
-      const homeTeam = findTeamForSlot(finalMatch.home, teams, rounds, 'final');
-      const awayTeam = findTeamForSlot(finalMatch.away, teams, rounds, 'final');
-      html += matchCard(finalMatch, homeTeam, awayTeam, 2, 5, 16);
-    }
-
-    // Column 6: Champion
-    const champEntries = Object.entries(teams)
-      .map(([slug, t]) => ({ slug, ...t }))
-      .filter(t => t.champion > 0)
-      .sort((a, b) => b.champion - a.champion);
-    const champion = champEntries[0] || null;
-    html += '<div class="champion-node" style="grid-row:2/span 16;grid-column:6">';
-    html += '<div class="trophy">🏆</div>';
-    if (champion) {
-      html += '<div class="champ-flag">' + (champion.flag || '⚽') + '</div>';
-      html += '<div class="champ-name">' + (champion.name || '?') + '</div>';
-      html += '<div class="champ-prob">' + champion.champion + '%</div>';
+    // Away team
+    html += '<div class="team-line' + (isAwayWinner ? ' winner' : '') + '">';
+    if (away && away.name) {
+      html += flagHtml(away, 'sm');
+      html += '<span class="name">' + (away.name || match.away) + '</span>';
+      if (away.elo) html += '<span class="elo-badge">' + away.elo + '</span>';
     } else {
-      html += '<div class="champ-name">待定</div>';
+      const ti = window._mcTeams?.[match.away];
+      if (ti && ti.name) {
+        html += flagHtml({ flagPath: ti.flagPath, flag: ti.flag, name: ti.name }, 'sm');
+        html += '<span class="name">' + ti.name + '</span>';
+      } else if (match.away && !match.away.startsWith('W')) {
+        html += '<span class="name slug-name">' + match.away + '</span>';
+      } else {
+        html += '<span class="slot-label">' + match.away + '</span>';
+      }
     }
     html += '</div>';
 
-    // Column labels (row 1, each col)
-    colLabels.forEach((label, ci) => {
-      html += '<div style="grid-row:1;grid-column:' + (ci + 1) + '">' + label + '</div>';
-    });
-
-    html += '</div>'; // .bracket-grid
-    container.innerHTML = html;
-
-    // Summary
-    const totalTeams = Object.keys(teams).length;
-    document.getElementById('bracket-summary').textContent =
-      '2026世界杯 · ' + totalTeams + ' 支球队 · 基于 ' + (data.simulations || '?').toLocaleString() + ' 次模拟';
-  }
-
-  // Generate a match card HTML with explicit grid position
-  function matchCard(match, homeTeam, awayTeam, rowStart, col, rowSpan) {
-    let html = '<div class="bracket-match" style="grid-row:' + rowStart + '/span ' + rowSpan + ';grid-column:' + col + '" title="' + match.home + ' vs ' + match.away + '">';
-    html += '<div class="matchup">';
-    // Home
-    html += '<div class="team-line">';
-    if (homeTeam) {
-      html += '<span class="flag">' + (homeTeam.flag || '⚽') + '</span>';
-      html += '<span class="name">' + (homeTeam.name || match.home) + '</span>';
-    } else {
-      html += '<span class="slot-label">' + match.home + '</span>';
+    // 概率条（未完赛且有双方球队时显示）
+    if (!finished && hasTeams && match._advanceProb) {
+      const pct = match._advanceProb;
+      const barColor = pct >= 70 ? 'var(--accent-green)' : pct >= 45 ? '#facc15' : '#f87171';
+      html += '<div class="prob-bar-track"><div class="prob-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>';
+      html += '<div class="prob-text">晋级 ' + pct + '%</div>';
     }
-    html += '</div>';
-    // Away
-    html += '<div class="team-line">';
-    if (awayTeam) {
-      html += '<span class="flag">' + (awayTeam.flag || '⚽') + '</span>';
-      html += '<span class="name">' + (awayTeam.name || match.away) + '</span>';
-    } else {
-      html += '<span class="slot-label">' + match.away + '</span>';
+
+    // Click link
+    if (hasTeams) {
+      const slug1 = match.home.replace(/[^a-z0-9-]/g, '');
+      const slug2 = match.away.replace(/[^a-z0-9-]/g, '');
+      html += '<a class="match-link" href="/match/' + slug1 + '/' + slug2 + '" title="查看预测详情"></a>';
     }
-    html += '</div>';
-    html += '</div>';
+
     html += '</div>';
     return html;
   }
 
+  // ===== 渲染主树 =====
+  function renderBracket(knockoutData, mcTeams) {
+    const rounds = knockoutData.rounds;
+    const container = document.getElementById('bracket-tree');
+
+    const cols = ['round32', 'round16', 'quarter', 'semi', 'final', 'champion'];
+    const colLabels = [
+      '<span class="round-label">R32 · 32强</span>',
+      '<span class="round-label">R16 · 16强</span>',
+      '<span class="round-label">QF · 8强</span>',
+      '<span class="round-label">SF · 4强</span>',
+      '<span class="round-label">FINAL · 决赛</span>',
+      '<span class="round-label">🏆 冠军</span>'
+    ];
+
+    // 增强 match 数据：从 MC 注入晋级概率
+    function enrichWithMcProb(m, stage) {
+      const result = { ...m };
+      const stageMap = { round32: 'round16', round16: 'quarter', quarter: 'semi', semi: 'final', final: 'champion' };
+      const sk = stageMap[stage] || 'round16';
+      // 用 winnerProb（如果有）或比较两队的下一轮概率
+      if (result.winnerProb != null) {
+        result._advanceProb = Math.round(result.winnerProb);
+      } else if (result.home && result.away && !result.home.startsWith('W') && !result.away.startsWith('W')) {
+        const homePct = mcTeams[matchHomeSlug(result)] ? (mcTeams[matchHomeSlug(result)][sk] || 0) : 0;
+        const awayPct = mcTeams[matchAwaySlug(result)] ? (mcTeams[matchAwaySlug(result)][sk] || 0) : 0;
+        result._advanceProb = Math.round(Math.max(homePct, awayPct));
+      }
+      return result;
+    }
+    // 提取 home/away slug（兼容 homeInfo 和 raw slug）
+    function matchHomeSlug(m) { return m.homeInfo ? m.home : m.home; }
+    function matchAwaySlug(m) { return m.awayInfo ? m.away : m.away; }
+
+    let html = '<div class="bracket-grid" style="grid-template-rows:auto repeat(16,1fr)">';
+
+    // Column 1: R32 — 16 matches at rows 2..17
+    const r32 = (rounds.round32 || []).map(m => enrichWithMcProb(m, 'round32'));
+    r32.forEach((match, j) => {
+      html += matchCard(match, j + 2, 1, 1);
+    });
+
+    // Column 2: R16 — 8 matches, each spanning 2 rows
+    const r16 = (rounds.round16 || []).map(m => enrichWithMcProb(m, 'round16'));
+    r16.forEach((match, i) => {
+      html += matchCard(match, 2 * i + 2, 2, 2);
+    });
+
+    // Column 3: QF — 4 matches, each spanning 4 rows
+    const qf = (rounds.quarter || []).map(m => enrichWithMcProb(m, 'quarter'));
+    qf.forEach((match, i) => {
+      html += matchCard(match, 4 * i + 2, 3, 4);
+    });
+
+    // Column 4: SF — 2 matches, each spanning 8 rows
+    const sf = (rounds.semi || []).map(m => enrichWithMcProb(m, 'semi'));
+    sf.forEach((match, i) => {
+      html += matchCard(match, 8 * i + 2, 4, 8);
+    });
+
+    // Column 5: Final — 1 match, spanning 16 rows
+    const finalMatch = enrichWithMcProb((rounds.final || [])[0], 'final');
+    if (finalMatch) {
+      html += matchCard(finalMatch, 2, 5, 16);
+    }
+
+    // Column 6: Champion node
+    const champEntries = Object.entries(mcTeams)
+      .map(([slug, t]) => ({ slug, ...t }))
+      .filter(t => (t.champion || 0) > 0)
+      .sort((a, b) => (b.champion || 0) - (a.champion || 0));
+    const champ = champEntries[0] || null;
+    html += '<div class="champion-node" style="grid-row:2/span 16;grid-column:6">';
+    html += '<div class="trophy">🏆</div>';
+    if (champ) {
+      html += flagHtml({ flagPath: champ.flagPath, flag: champ.flag, name: champ.name }, 'md');
+      html += '<div class="champ-name">' + (champ.name || '?') + '</div>';
+      html += '<div class="champ-prob">' + (champ.champion || 0).toFixed(1) + '%</div>';
+    } else {
+      html += '<div class="champ-name">待定</div>';
+    }
+    // Click link for final match champion
+    if (finalMatch && finalMatch.homeInfo && finalMatch.awayInfo) {
+      html += '<a class="match-link" href="/match/' + finalMatch.home + '/' + finalMatch.away + '" title="查看决赛预测"></a>';
+    }
+    html += '</div>';
+
+    // Column labels (row 1)
+    colLabels.forEach((label, ci) => {
+      html += '<div style="grid-row:1;grid-column:' + (ci + 1) + '">' + label + '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Draw SVG lines
+    if (window.drawBracketLines) {
+      window.drawBracketLines(rounds, mcTeams);
+    }
+  }
+
+  // ===== 加载数据 =====
   async function loadBracketData(force) {
     if (force) {
       document.getElementById('loading-spinner').style.display = 'flex';
       document.getElementById('bracket-container').style.display = 'none';
     }
     try {
-      const data = await cachedFetch('/api/bracket', { force });
+      // 加载蒙特卡洛模拟数据（含完整淘汰赛模拟）
+      const bracketRes = await cachedFetch('/api/bracket', { force }).catch(() => null);
+
       document.getElementById('loading-spinner').style.display = 'none';
       document.getElementById('bracket-container').style.display = 'flex';
-      renderSidebar(data.teams || {});
-      renderBracket(data);
+
+      if (!bracketRes || !bracketRes.rounds) {
+        document.getElementById('loading-spinner').innerHTML = '⚠️ 模拟数据加载失败';
+        return;
+      }
+
+      const mcTeams = bracketRes.teams || {};
+      window._mcTeams = mcTeams; // 供 matchCard 使用
+
+      // Source indicator
+      const banner = document.getElementById('source-banner');
+      banner.innerHTML = '🔮 ' + (bracketRes.message || '蒙特卡洛模拟数据');
+      banner.style.display = 'block';
+
+      // Update summary
+      const teamCount = Object.keys(mcTeams).length || 0;
+      document.getElementById('bracket-summary').textContent =
+        '2026世界杯 · ' + teamCount + ' 支球队 · 🎲 ' + (bracketRes.simulations || 10000) + '次MCS模拟';
+
+      // Render
+      renderSidebar(mcTeams);
+      renderBracket({ rounds: bracketRes.rounds, source: bracketRes.source }, mcTeams);
     } catch (err) {
       document.getElementById('loading-spinner').innerHTML = '⚠️ 淘汰赛数据加载失败: ' + err.message;
     }
   }
 
-  // Register refresh callback
   window.cacheUI.onRefresh('bracket', () => loadBracketData(true));
-
-  // Load data on page load
   loadBracketData(false);
   </script>
 </body>
