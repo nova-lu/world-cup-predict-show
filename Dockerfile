@@ -43,8 +43,8 @@ COPY public/ ./public/
 COPY views/ ./views/
 COPY data/ ./data/
 
-# Copy model files (if any)
-COPY models/ ./models/
+# Create models directory (populated at runtime, not committed to git)
+RUN mkdir -p ./models/
 
 # Exclude .env — must be injected via environment variables at runtime
 # (not copying .env; if present locally, it won't be in the image)
