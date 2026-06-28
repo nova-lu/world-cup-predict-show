@@ -21,8 +21,9 @@ export function resolveGroupStandings(apiGroups) {
     const sorted = teams
       .map(t => ({
         slug: t.slug,
-        name: t.teamName || getTeamInfo(t.slug)?.name || t.slug,
+        name: getTeamInfo(t.slug)?.name || t.teamName || t.slug,
         flag: getTeamInfo(t.slug)?.flag || '⚽',
+        flagPath: getTeamInfo(t.slug)?.flagPath || '',
         pts: t.pts || 0,
         gd: t.gd || 0,
         gf: t.gf || 0,

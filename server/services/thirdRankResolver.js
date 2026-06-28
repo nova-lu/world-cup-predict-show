@@ -63,6 +63,7 @@ export function analyzeThirdRank(groupStandings) {
       slug: t.slug,
       name: t.name,
       flag: t.flag,
+      flagPath: t.flagPath || '',
       group: t.group,
       pts: t.pts,
       gd: t.gd,

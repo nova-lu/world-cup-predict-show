@@ -521,8 +521,8 @@
       renderMatchList(roundData);
 
       // Qualified teams
-      if (qualifiersRes && qualifiersRes.qualifiers) {
-        renderQualified(qualifiersRes.qualifiers);
+      if (qualifiersRes && qualifiersRes.qualifiers && qualifiersRes.qualifiers.allTeams) {
+        renderQualified(qualifiersRes.qualifiers.allTeams);
       } else {
         // Derive from bracket data
         var slugs = [];
@@ -539,8 +539,8 @@
       }
 
       // Third-rank
-      if (thirdRes && thirdRes.thirdPlaces) {
-        renderThirdRank(thirdRes.thirdPlaces);
+      if (thirdRes && thirdRes.spots) {
+        renderThirdRank(thirdRes.spots);
       } else {
         document.getElementById('ko-third-table-container').innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">第三名数据待各小组完赛后可用</div>';
       }

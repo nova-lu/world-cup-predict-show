@@ -6,6 +6,7 @@ import {
   findEventId,
   DEFAULT_BOOKMAKERS,
 } from '../services/oddsApi.js';
+import { getTeamInfo } from '../services/dataService.js';
 
 const router = express.Router();
 
@@ -70,6 +71,36 @@ export default router;
 
 // ===== Phase 7: Polymarket & 赔率融合 =====
 
+// 将 Polymarket 英文比赛标题转为中文
+// e.g. "Mexico vs South Africa" → "墨西哥 vs 南非"
+function _slugFallback(name) {
+  // Polymarket 特殊队名 → 内部 slug 映射
+  var map = {
+    'south korea': 'korea-republic',
+    'korea republic': 'korea-republic',
+    'czech republic': 'czech-republic',
+    'czechia': 'czech-republic',
+    'bosnia and herzegovina': 'bosnia-and-herzegovina',
+    'united states': 'usa',
+    'saudi arabia': 'saudi-arabia',
+    'costa rica': 'costa-rica',
+    'south africa': 'south-africa',
+    'el salvador': 'el-salvador',
+  };
+  var key = name.toLowerCase().replace(/\s+/g, ' ');
+  return map[key] || key.replace(/\s+/g, '-');
+}
+
+function translateTitle(title) {
+  var parts = (title || '').split(/\s+vs\.?\s+/i);
+  if (parts.length < 2) return title;
+  var home = parts[0].trim();
+  var away = parts[1].trim();
+  var infoHome = getTeamInfo(_slugFallback(home));
+  var infoAway = getTeamInfo(_slugFallback(away));
+  return (infoHome ? infoHome.name : home) + ' vs ' + (infoAway ? infoAway.name : away);
+}
+
 // Polymarket 市场列表 (含批处理价格，支持 scope=upcoming|historical)
 router.get('/api/odds/polymarket', async (req, res) => {
   try {
@@ -108,7 +139,7 @@ router.get('/api/odds/polymarket', async (req, res) => {
       reachable: true, total: events.length, priced: prices.length,
       typeCount,
       events: events.map(e => ({
-        slug: e.slug, title: e.title, kickoff: e.kickoff, closed: e.closed,
+        slug: e.slug, title: translateTitle(e.title), kickoff: e.kickoff, closed: e.closed,
         marketType: e.marketType,
         prices: e.marketType === 'match' ? (priceMap[e.slug] || null) : null,
       })),
