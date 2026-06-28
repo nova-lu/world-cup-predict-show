@@ -16,7 +16,7 @@ const ENDPOINTS = [
   { path: '/standings',   desc: '积分榜' },
   { path: '/knockout',    desc: '淘汰赛' },
   { path: '/bracket',     desc: '晋级树' },
-  { path: '/simulation',  desc: '模拟' },
+  { path: '/simulator',   desc: '模拟' },
   { path: '/api/teams',   desc: '球队 API' },
   { path: '/api/standings/groups',  desc: '小组积分 API' },
   { path: '/api/knockout/qualifiers', desc: '出线球队 API' },
