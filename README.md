@@ -269,6 +269,11 @@ worldcup_new_2026/
 
 ---
 
+## 参考网站路径地址
+
+My website: `worldcup-predictor-production-2e12.up.railway.app`
+
+
 ## 许可证
 
 MIT © 2026
