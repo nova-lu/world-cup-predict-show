@@ -263,7 +263,7 @@ worldcup_new_2026/
 
 ## 参考网站路径地址
 
-My website: `https://worldcup-predictor-production-2e12.up.railway.app`
+My website: [https://worldcup-predictor-production-2e12.up.railway.app](https://worldcup-predictor-production-2e12.up.railway.app)
 
 
 ---
