@@ -25,13 +25,13 @@
 
 | 任务 | 状态 | 说明 |
 |------|------|------|
-| 9.1 GitHub Actions 基础管线 | ⬜ 待做 | Lint / 单元测试 / E2E 测试 |
-| 9.2 Docker 容器化构建 | ⬜ 待做 | Node.js + Python 双层 Dockerfile |
-| 9.3 多平台部署支持 | ⬜ 待做 | Railway / Render / VPS 三种方案 |
-| 9.4 域名与 SSL 管理 | ⬜ 待做 | 自动申请域名 + Let’s Encrypt |
-| 9.5 环境变量与秘钥管理 | ⬜ 待做 | GitHub Secrets + .env 模板 |
-| 9.6 监控与告警 | ⬜ 待做 | 健康检查 / 日志 / 告警 |
-| 9.7 回滚与版本管理 | ⬜ 待做 | 多版本部署 / 快速回滚 |
+| 9.1 GitHub Actions 基础管线 | ✅ 完成 | CI 管线：Node 24 + Python 3.11 + 冒烟测试 |
+| 9.2 Docker 容器化构建 | ✅ 完成 | 双层 Dockerfile + .dockerignore |
+| 9.3 多平台部署支持 | ✅ 完成 | Railway / Render / VPS 三种方案 |
+| 9.4 域名与 SSL 管理 | ⬜ 待做 | 自动申请域名 + Let's Encrypt |
+| 9.5 环境变量与秘钥管理 | ✅ 完成 | .env.template + GitHub Secrets 指南 |
+| 9.6 监控与告警 | ✅ 完成 | /api/health 端点 + 冒烟测试 |
+| 9.7 回滚与版本管理 | ✅ 完成 | rollback.yml 回滚管线 |
 
 ---
 

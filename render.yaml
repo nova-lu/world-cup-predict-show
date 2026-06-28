@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: worldcup-predictor
+    runtime: python
+    region: ohio
+    plan: free
+    buildCommand: pip install -r requirements.txt && npm ci
+    startCommand: node server/index.js
+    healthCheckPath: /
+    envVars:
+      - key: FOOTBALL_API_KEY
+        sync: false
+      - key: ODDS_API_KEY
+        sync: false
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production

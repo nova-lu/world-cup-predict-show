@@ -1,0 +1,66 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_version:
+        description: "Target version (Docker image tag) to roll back to, e.g. abc1234"
+        required: true
+        type: string
+
+env:
+  REGISTRY: ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}
+  IMAGE_NAME: worldcup-2026-data-assistant
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy rollback version via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            TAG="${{ github.event.inputs.target_version }}"
+            IMAGE_URI="${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${TAG}"
+
+            echo "=== Rolling back to ${IMAGE_URI} ==="
+
+            # Verify the image exists locally; if not, pull it
+            if ! docker image inspect ${IMAGE_URI} > /dev/null 2>&1; then
+              echo "Image not found locally, attempting to pull..."
+              docker pull ${IMAGE_URI} || {
+                echo "ERROR: Image ${IMAGE_URI} not found in registry. Rollback aborted."
+                exit 1
+              }
+            fi
+
+            echo "Tagging rollback version as current..."
+            CURRENT_TAG="${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:rollback-current"
+
+            # Re-tag the current running image so we can revert again if needed
+            RUNNING_IMAGE=$(docker inspect --format='{{.Config.Image}}' worldcup-app 2>/dev/null || echo "")
+            if [ -n "${RUNNING_IMAGE}" ]; then
+              docker tag ${RUNNING_IMAGE} ${CURRENT_TAG} || true
+            fi
+
+            echo "Stopping and removing current container..."
+            docker stop worldcup-app || true
+            docker rm worldcup-app || true
+
+            echo "Starting container with rollback version..."
+            docker run -d \
+              --name worldcup-app \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -v worldcup-data:/app/data \
+              ${IMAGE_URI}
+
+            echo "=== Rollback to ${TAG} complete ==="

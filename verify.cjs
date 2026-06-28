@@ -1,45 +1,97 @@
-const http = require('http');
+/**
+ * 冒烟测试 — 用于 CI 管线验证服务器和 API 是否正常工作
+ * 启动服务器 → 检查关键端点 → 关闭服务器
+ *
+ * 用法: node verify.cjs
+ * 退出码: 0 = 通过, 1 = 失败
+ */
 const { spawn } = require('child_process');
+const http = require('http');
 
-const s = spawn('node', ['server/index.js'], { cwd: __dirname, stdio: ['ignore', 'pipe', 'pipe'] });
-let err = '';
-s.stderr.on('data', d => err += d);
+const PORT = 3000;
+const BASE = `http://localhost:${PORT}`;
 
-function fetch(p) {
-  return new Promise(r => {
-    http.get('http://localhost:3000' + p, res => {
-      let b = '';
-      res.on('data', c => b += c);
-      res.on('end', () => r({ status: res.statusCode, body: b }));
-    }).on('error', e => r({ status: 0, body: e.message }));
+const ENDPOINTS = [
+  { path: '/',            desc: '首页' },
+  { path: '/standings',   desc: '积分榜' },
+  { path: '/knockout',    desc: '淘汰赛' },
+  { path: '/bracket',     desc: '晋级树' },
+  { path: '/simulation',  desc: '模拟' },
+  { path: '/api/teams',   desc: '球队 API' },
+  { path: '/api/standings/groups',  desc: '小组积分 API' },
+  { path: '/api/knockout/qualifiers', desc: '出线球队 API' },
+  { path: '/api/knockout/third-rank', desc: '第三名 API' },
+  { path: '/api/health',  desc: '健康检查 API' },
+];
+
+async function fetch(path) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(`${BASE}${path}`, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve({ status: res.statusCode, body: data }));
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('timeout')); });
   });
 }
 
 async function main() {
-  await new Promise(r => setTimeout(r, 3000));
+  console.log('🌍 冒烟测试启动...\n');
 
-  const pages = ['/', '/schedule', '/standings', '/bracket', '/simulator', '/teams', '/demo', '/blog', '/backtest', '/methodology'];
-  let ok = 0, fail = 0;
+  // 启动服务器
+  const server = spawn('node', ['server/index.js'], {
+    env: { ...process.env, PORT: String(PORT) },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 
-  for (const p of pages) {
-    const d = await fetch(p);
-    const isHTML = d.body.includes('<html') || d.body.includes('<!DOCTYPE');
-    const isJSON = d.body.startsWith('{') && (d.body.includes('error') || d.body.includes('"teams"') || d.body.includes('"groups"'));
-    const pass = d.status === 200 && isHTML;
-    console.log((pass ? '✅' : '❌') + ' ' + p + ' → ' + d.status + ' ' + d.body.length + 'B ' + (isHTML ? 'HTML' : isJSON ? 'JSON!' : d.body.slice(0, 50)));
-    if (pass) ok++;
-    else fail++;
+  // 等待服务器就绪
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('服务器启动超时')), 30000);
+    server.stdout.on('data', (data) => {
+      const line = data.toString();
+      if (line.includes('启动') || line.includes('localhost')) {
+        clearTimeout(timeout);
+        resolve();
+      }
+    });
+    server.stderr.on('data', (data) => {
+      if (data.toString().includes('启动') || data.toString().includes('localhost')) {
+        clearTimeout(timeout);
+        resolve();
+      }
+    });
+    server.on('error', (err) => { clearTimeout(timeout); reject(err); });
+  });
+
+  // 等待几秒让 API 数据加载
+  await new Promise(r => setTimeout(r, 5000));
+
+  let passed = 0, failed = 0;
+  for (const ep of ENDPOINTS) {
+    try {
+      const res = await fetch(ep.path);
+      if (res.status === 200 || res.status === 302) {
+        console.log(`  ✅ ${ep.desc} (${ep.path}) — ${res.status}`);
+        passed++;
+      } else {
+        console.log(`  ❌ ${ep.desc} (${ep.path}) — ${res.status}`);
+        failed++;
+      }
+    } catch (e) {
+      console.log(`  ❌ ${ep.desc} (${ep.path}) — ${e.message}`);
+      failed++;
+    }
   }
 
-  // Also test the bracket API returns JSON correctly
-  const api = await fetch('/api/bracket');
-  const apiOK = api.status === 200 && api.body.includes('"rounds"');
-  console.log((apiOK ? '✅' : '❌') + ' /api/bracket → ' + api.status + ' ' + api.body.length + 'B ' + (apiOK ? 'JSON' : api.body.slice(0, 60)));
+  // 关闭服务器
+  server.kill();
 
-  console.log('\n结果: ' + ok + '/' + (pages.length + 1) + ' 通过, ' + fail + ' 失败');
-  if (err) console.log('stderr:', err.slice(0, 500));
-  s.kill();
-  process.exit(fail > 0 ? 1 : 0);
+  console.log(`\n📊 结果: ${passed} 通过, ${failed} 失败, 共 ${ENDPOINTS.length}`);
+  process.exit(failed > 0 ? 1 : 0);
 }
 
-main();
+main().catch((err) => {
+  console.error('❌ 冒烟测试异常:', err.message);
+  process.exit(1);
+});

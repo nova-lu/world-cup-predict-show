@@ -105,6 +105,31 @@ app.get('/api/cache/stats', (req, res) => {
   });
 });
 
+// ===== Health check endpoint =====
+app.get('/api/health', (req, res) => {
+  const memory = process.memoryUsage();
+  const uptime = process.uptime();
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(uptime),
+    uptimeHuman: `${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+    memory: {
+      rss: Math.round(memory.rss / 1024 / 1024) + 'MB',
+      heapUsed: Math.round(memory.heapUsed / 1024 / 1024) + 'MB',
+      heapTotal: Math.round(memory.heapTotal / 1024 / 1024) + 'MB',
+    },
+    node: process.version,
+    platform: process.platform,
+    env: {
+      port: PORT,
+      nodeEnv: process.env.NODE_ENV || 'development',
+      footballApi: !!process.env.FOOTBALL_API_KEY,
+      oddsApi: !!process.env.ODDS_API_KEY,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ---------- 页面路由 ----------
 
 // 首页：今日赛事
