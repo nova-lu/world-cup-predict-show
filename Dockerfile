@@ -37,6 +37,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy Python site-packages from builder stage
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 
+# Install Node.js dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
 # Copy application files
 COPY server/ ./server/
 COPY public/ ./public/
