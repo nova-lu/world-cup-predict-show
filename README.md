@@ -269,6 +269,32 @@ worldcup_new_2026/
 
 ---
 
+## 参考网站路径地址
+
+My website: `https://worldcup-predictor-production-2e12.up.railway.app`
+
+
+---
+
+## ☕ 赞助作者
+
+如果对你有帮助，那请作者喝杯咖啡好啦 🙏
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="./images/payment/微信收钱码.png" width="200" alt="微信收钱码"><br>
+      <strong>微信</strong>
+    </td>
+    <td align="center">
+      <img src="./images/payment/支付宝收钱码.jpg" width="200" alt="支付宝收钱码"><br>
+      <strong>支付宝</strong>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## 许可证
 
 MIT © 2026
