@@ -25,7 +25,48 @@ router.get('/qualifiers', async (req, res) => {
     });
   } catch (e) {
     console.error('[knockout] qualifiers error:', e.message);
-    res.status(500).json({ error: e.message });
+    // 降级到静态数据
+    try {
+      const { getMatches, getGroupTeams, GROUPS, getTeamInfo } = await import('../services/dataService.js');
+      const { resolveGroupStandings, rankThirdPlaces, getQualifiedTeams } = await import('../services/groupResolver.js');
+      const { default: seedData } = await import('../../data/wc2026-results.json', { with: { type: 'json' } });
+      const matches = seedData.matches || getMatches().filter(m => m.status === 'FT' || (m.g1 != null && m.g2 != null));
+      const groups = {};
+      for (const g of GROUPS || 'ABCDEFGHIJKL'.split('')) {
+        const standings = {};
+        const groupTeams = (getGroupTeams ? getGroupTeams()[g] : null) ||
+          [...new Set(matches.filter(m => (m.group || '').replace(/^Group\s+/i, '') === g).flatMap(m => [m.t1, m.t2]))];
+        for (const slug of groupTeams) {
+          standings[slug] = { slug, pts: 0, gd: 0, gf: 0, ga: 0, played: 0, w: 0, d: 0, l: 0, name: getTeamInfo(slug)?.name || slug };
+        }
+        for (const m of matches.filter(m => (m.group || '').replace(/^Group\s+/i, '') === g)) {
+          const s1 = standings[m.t1], s2 = standings[m.t2];
+          if (!s1 || !s2) continue;
+          s1.gf += m.g1; s1.ga += m.g2; s1.gd += (m.g1 - m.g2);
+          s2.gf += m.g2; s2.ga += m.g1; s2.gd += (m.g2 - m.g1);
+          s1.played++; s2.played++;
+          if (m.g1 > m.g2) { s1.pts += 3; s1.w++; s2.l++; }
+          else if (m.g1 < m.g2) { s2.pts += 3; s2.w++; s1.l++; }
+          else { s1.pts += 1; s2.pts += 1; s1.d++; s2.d++; }
+        }
+        groups[g] = Object.values(standings).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf).map((r, i) => ({ ...r, rank: i + 1 }));
+      }
+      const groupStandings = resolveGroupStandings(groups);
+      const thirdPlaces = rankThirdPlaces(groupStandings);
+      const qualified = getQualifiedTeams(groupStandings, thirdPlaces);
+      res.json({
+        generatedAt: new Date().toISOString(),
+        source: 'static',
+        groups: groupStandings,
+        thirdPlaces,
+        qualifiers: qualified,
+        totalQualified: qualified.allTeams.length,
+        _degraded: true,
+        _cache: buildCacheMeta('knockout:qualifiers', false, null),
+      });
+    } catch (fallbackErr) {
+      res.status(500).json({ error: 'API 不可用且降级失败: ' + e.message + ' / ' + fallbackErr.message });
+    }
   }
 });
 
@@ -40,7 +81,39 @@ router.get('/third-rank', async (req, res) => {
     });
   } catch (e) {
     console.error('[knockout] third-rank error:', e.message);
-    res.status(500).json({ error: e.message });
+    // 降级到静态数据
+    try {
+      const { getMatches, getGroupTeams, GROUPS, getTeamInfo } = await import('../services/dataService.js');
+      const { resolveGroupStandings, rankThirdPlaces } = await import('../services/groupResolver.js');
+      const { analyzeThirdRank } = await import('../services/thirdRankResolver.js');
+      const { default: seedData } = await import('../../data/wc2026-results.json', { with: { type: 'json' } });
+      const matches = seedData.matches || getMatches().filter(m => m.status === 'FT' || (m.g1 != null && m.g2 != null));
+      const groups = {};
+      for (const g of GROUPS || 'ABCDEFGHIJKL'.split('')) {
+        const standings = {};
+        const groupTeams = (getGroupTeams ? getGroupTeams()[g] : null) ||
+          [...new Set(matches.filter(m => (m.group || '').replace(/^Group\s+/i, '') === g).flatMap(m => [m.t1, m.t2]))];
+        for (const slug of groupTeams) {
+          standings[slug] = { slug, pts: 0, gd: 0, gf: 0, ga: 0, played: 0, w: 0, d: 0, l: 0, name: getTeamInfo(slug)?.name || slug };
+        }
+        for (const m of matches.filter(m => (m.group || '').replace(/^Group\s+/i, '') === g)) {
+          const s1 = standings[m.t1], s2 = standings[m.t2];
+          if (!s1 || !s2) continue;
+          s1.gf += m.g1; s1.ga += m.g2; s1.gd += (m.g1 - m.g2);
+          s2.gf += m.g2; s2.ga += m.g1; s2.gd += (m.g2 - m.g1);
+          s1.played++; s2.played++;
+          if (m.g1 > m.g2) { s1.pts += 3; s1.w++; s2.l++; }
+          else if (m.g1 < m.g2) { s2.pts += 3; s2.w++; s1.l++; }
+          else { s1.pts += 1; s2.pts += 1; s1.d++; s2.d++; }
+        }
+        groups[g] = Object.values(standings).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf).map((r, i) => ({ ...r, rank: i + 1 }));
+      }
+      const groupStandings = resolveGroupStandings(groups);
+      const thirdRankData = analyzeThirdRank(groupStandings);
+      res.json({ ...thirdRankData, _degraded: true });
+    } catch (fallbackErr) {
+      res.status(500).json({ error: 'API 不可用且降级失败: ' + e.message + ' / ' + fallbackErr.message });
+    }
   }
 });
 
