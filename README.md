@@ -1,272 +1,274 @@
-# 🏆 2026 世界杯观赛数据助手 (World Cup 2026 Data Assistant)
+# 🏆 2026 世界杯预测分析平台
 
-基于 **Elo + Dixon-Coles 双变量泊松**与 **XGBoost/Random Forest 机器学习双引擎**的赛事数据分析工具，为球迷提供赛前预测、晋级概率与球队数据对比功能。
+**双引擎预测 · 实时数据 · 淘汰赛仪表盘 · 赔率融合 · 在线学习**
 
-> ⚠️ **合规声明：** 本站所有预测数据均基于公开数学模型计算，仅供娱乐与数据分析科普参考，**不构成任何投注建议或决策指导**。根据中国法律法规，境内任何网络体育博彩均属于非法活动。
+实时世界杯预测平台，基于 Elo 评分系统和机器学习（XGBoost + 随机森林）双引擎，整合 Polymarket 预测市场赔率，提供完整的淘汰赛追踪和晋级概率分析。
+
+⏳ **2026 世界杯已进入淘汰赛阶段！** 系统使用实时赛果更新预测，支持蒙特卡洛模拟生成晋级概率。
+
+---
+
+## 功能一览
+
+| 功能 | 说明 |
+|------|------|
+| **📊 小组积分榜** | 实时积分 / 净胜球 / 晋级概率，中文队名 + SVG 国旗 |
+| **🏆 淘汰赛仪表盘** | 晋级树 / 32 强队伍 / 第三名竞争势态 / 比赛列表 |
+| **🤖 双引擎预测** | Elo 评分系统 + ML 模型（XGBoost / RF 校准）+ 集成学习 |
+| **📈 蒙特卡洛模拟** | 5000-20000 次模拟，逐轮计算晋级概率 |
+| **🧬 Polymarket 融合** | 预测市场赔率接入，加时/点球预测 |
+| **🎯 球队详情** | 单队晋级路径分析 + 对手矩阵 |
+| **📚 在线学习** | 动态权重 + 误差反馈 + 回测系统 |
+| **✅ CI/CD 管线** | GitHub Actions + Docker 容器化 + 一键部署 |
+| **🏥 健康检查** | `GET /api/health` 端点，监控服务器状态 |
 
 ---
 
 ## 技术栈
 
 | 层 | 技术 |
-|---|---|
-| 后端框架 | Node.js + Express (ESM, v24.16.0) |
-| 模板引擎 | EJS (服务端渲染) |
-| 预测引擎 A | Elo 评分 → Dixon-Coles 双变量泊松 → 蒙特卡洛模拟 |
-| 预测引擎 B | XGBoost 回归 + Random Forest 分类 → 泊松比分矩阵 |
-| 集成引擎 | Elo 30% + ML 70% 加权融合 |
-| 缓存 | L1 内存 + L2 磁盘持久化 (30min TTL, 手动刷新) |
-| ML 训练 | Python 3.11+ (scikit-learn, xgboost, joblib) |
-| ML 推理 | Node.js → Python 子进程 (stdin/stdout JSON) |
-| 前端 | 纯 CSS (暗色主题，移动端适配) |
-| 数据源 | Football-data.org API + 历史比赛 CSV (46k 场) + FIFA 排名 |
+|----|------|
+| **前端** | Express + EJS 模板 + CSS 自定义变量 |
+| **后端** | Node.js 24 + Express 4.x |
+| **ML 引擎** | Python 3.11 + scikit-learn + xgboost + joblib |
+| **数据源** | football-data.org API (实时赛果) / Odds-API.io / Polymarket |
+| **缓存** | 内存 L1 缓存 + 磁盘 L2 缓存 |
+| **同步** | crontab 定时同步 + 人工触发刷新 |
+| **部署** | Docker + GitHub Actions + Railway / Render / VPS |
 
-## 快速启动
+---
+
+## 快速开始
+
+### 环境要求
+- Node.js 24+
+- Python 3.11+（可选，ML 引擎需要）
+- npm 依赖 + pip 依赖
+
+### 安装
 
 ```bash
-# 安装 Node.js 依赖
-npm install
+# 1. 克隆仓库
+git clone <repo-url>
+cd worldcup_new_2026
 
-# 安装 Python 依赖（ML 引擎必需）
-pip install scikit-learn xgboost joblib numpy pandas
+# 2. 复制环境变量
+cp .env.template .env
+# 编辑 .env 填入 API Key
 
-# 启动服务器
+# 3. 安装依赖
+npm ci
+
+# 4. 安装 Python 依赖（ML 引擎）
+pip install -r requirements.txt
+
+# 5. 启动
 node server/index.js
-
-# 访问
-http://localhost:3000
 ```
 
-> 默认启用 Elo 引擎。首次请求 `?engine=ml` 时自动加载 ML 模型。
+访问 `http://localhost:3000`
 
-## 双引擎预测架构
+### 环境变量
 
-```
-用户浏览器 (EJS 页面)
-       │
-       ▼
-  Express 服务器 (:3000)
-       │
-       ├── Engine A (Elo + Dixon-Coles) ──── 默认引擎
-       │     └── server/services/predictionService.js
-       │
-       ├── Engine B (ML Pipeline) ─────────── Phase 5 新增
-       │     ├── server/ml/data/        特征工程管线
-       │     ├── server/ml/models/      5 个训练模型 (55MB)
-       │     ├── server/ml/inference/   推理服务
-       │     └── server/ml/backtest/    回测框架
-       │
-       └── 引擎切换 ─────────────────── ?engine=ml|elo|ensemble
-```
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `FOOTBALL_API_KEY` | ✅ | football-data.org API Key |
+| `ODDS_API_KEY` | ✅ | Odds-API.io API Key（降级使用缓存） |
+| `PORT` | 否 | 端口号（默认 3000） |
+| `NODE_ENV` | 否 | production / development |
+| `HTTPS_PROXY` | 否 | HTTP 代理地址（国内访问外部 API 需要） |
 
-**API 引擎切换：**
+---
+
+## API 端点
+
+| 端点 | 说明 |
+|------|------|
+| `GET /api/health` | 健康检查（uptime / 内存 / 环境变量状态） |
+| `GET /api/teams` | 球队列表（含 Elo 评分） |
+| `GET /api/teams/:slug` | 球队详情 |
+| `GET /api/matches/today` | 今日赛事 |
+| `GET /api/matches/schedule` | 赛程列表 |
+| `GET /api/matches/upcoming` | 即将开赛 |
+| `GET /api/matches/match/:t1/:t2` | 单场预测（Elo + ML + 融合） |
+| `GET /api/matches/compare/:t1/:t2` | 两队对比 |
+| `GET /api/matches/knockout-pred/:t1/:t2` | 淘汰赛加时/点球预测 |
+| `GET /api/standings/groups` | 小组积分榜 |
+| `GET /api/standings/advancement` | 晋级概率榜（MC 模拟） |
+| `GET /api/knockout/bracket` | 确定性淘汰赛对阵 |
+| `GET /api/knockout/qualifiers` | 出线球队（32强完整名单） |
+| `GET /api/knockout/third-rank` | 第三名竞争势态 |
+| `GET /api/knockout/path/:slug` | 单队晋级路径分析 |
+| `GET /api/knockout/opponent-matrix` | 对手分布矩阵 |
+| `GET /api/odds/polymarket` | Polymarket 市场列表 |
+| `GET /api/bracket` | 淘汰赛树（含 MC 概率） |
+| `GET /api/ml/status` | ML 引擎状态 |
+| `GET /api/ml/backtest` | ML 回测结果 |
+
+支持 `?force=1` 参数跳过缓存强制刷新。
+
+---
+
+## 页面路由
+
+| 路径 | 说明 |
+|------|------|
+| `/` | 首页 / 今日赛事 |
+| `/schedule` | 完整赛程 |
+| `/standings` | 小组积分 + 晋级概率 |
+| `/knockout` | 淘汰赛仪表盘（晋级树 / 32强 / 第三名 / 比赛列表） |
+| `/bracket` | 晋级树全景（含 MC 冠军概率） |
+| `/simulation` | 蒙特卡洛模拟详情 |
+| `/match/:t1/:t2` | 单场预测详情 |
+| `/team/:slug` | 球队详情（含晋级路径分析） |
+| `/teams` | 球队列表 |
+| `/polymarket` | Polymarket 预测市场 |
+| `/online-learning` | 在线学习仪表盘 |
+
+---
+
+## 部署
+
+### Railway（推荐）
+Railway 支持 Node.js + Python 双语言环境，免费层每月 $5 额度。
+
 ```bash
-# Elo 引擎（默认）
-curl "http://localhost:3000/api/matches/match/Brazil/Argentina"
+# railway.json 已配置，push 后自动部署
+git push main
+```
+在 Railway Dashboard 设置环境变量 `FOOTBALL_API_KEY` 和 `ODDS_API_KEY`。
 
-# ML 引擎
-curl "http://localhost:3000/api/matches/match/Brazil/Argentina?engine=ml"
+### Render
+```bash
+# render.yaml 已配置，连接 GitHub 仓库自动部署
+```
+在 Render Dashboard 设置环境变量。
 
-# 集成引擎（Elo 30% + ML 70%）
-curl "http://localhost:3000/api/matches/match/Brazil/Argentina?engine=ensemble"
+### Docker 部署
+```bash
+# 构建镜像
+docker build -t worldcup-predict:latest .
+
+# 运行
+docker run -d -p 3000:3000 \
+  -e FOOTBALL_API_KEY=xxx \
+  -e ODDS_API_KEY=xxx \
+  --name worldcup \
+  worldcup-predict:latest
 ```
 
-**页面引擎切换**：比赛详情页顶部 Tab 选择器，点击即时切换。
+### VPS + Docker + GitHub Actions
+配置 GitHub Secrets 后手动触发 deploy-vps workflow：
+- `SSH_HOST`, `SSH_USER`, `SSH_KEY`
+- `DOCKER_REGISTRY`（可选，默认 ghcr.io）
+
+---
 
 ## 项目结构
 
 ```
 worldcup_new_2026/
-├── server/
-│   ├── index.js                    # Express 入口 + 页面路由 + ML API
-│   ├── config.js                   # 项目全局配置
-│   ├── routes/
-│   │   ├── matches.js              # 赛事/预测 API（支持 ?engine 参数）
-│   │   ├── standings.js            # 积分榜/晋级概率 API
-│   │   ├── bracket.js              # 淘汰赛对阵
-│   │   ├── teams.js                # 球队信息 API
-│   │   └── odds.js                 # 赔率数据 API
-│   ├── services/
-│   │   ├── footballApi.js          # Football-data.org API 封装
-│   │   ├── dataService.js          # 数据加载 + 降级
-│   │   ├── predictionService.js    # Elo 预测服务
-│   │   ├── monteCarloService.js    # 蒙特卡洛模拟 (晋级概率)
-│   │   └── oddsApi.js              # 赔率服务
-│   ├── middleware/
-│   │   ├── cache.js                # L1+L2 持久化缓存
-│   │   └── parseForce.js           # ?force=1 中间件
-│   └── ml/                         # ★ ML 引擎 (Phase 5)
-│       ├── config.js               # ML 模块配置
-│       ├── data/
-│       │   ├── loader.js           # 历史比赛加载 (46k 场)
-│       │   ├── rankings.js         # FIFA 排名 + Elo 评分
-│       │   └── features.js         # 23 维特征工程
-│       ├── models/v1/              # 训练好的模型 (55MB)
-│       ├── inference/
-│       │   ├── predict.py          # Python 子进程推理
-│       │   ├── predictor.js        # Node.js 封装
-│       │   └── poisson.js          # 泊松比分矩阵
-│       ├── training/
-│       │   └── train.py            # Python 训练脚本
-│       └── manifests/v1.json       # 模型版本清单
-├── views/
-│   ├── partials/                   # 页头/页脚组件
-│   └── pages/                      # 页面模板 (EJS)
-├── public/
-│   ├── css/app.css                 # 暗色主题样式
-│   └── js/
-│       ├── app.js                  # 前端工具函数
-│       └── cache-ui.js             # 缓存状态指示器
-├── data/
-│   ├── elo-calibrated.json         # 48 支球队 Elo 评分
-│   ├── wc2026-results.json         # 已完赛结果
-│   ├── cache/                      # 磁盘缓存 (已 gitignore)
-│   └── ml/train/v1/                # 特征数据集
-├── docs/
-│   └── DEPLOY.md                   # 部署文档
-└── package.json
+├── server/                 # Node.js 后端
+│   ├── index.js            # Express 入口 + 健康检查
+│   ├── routes/             # API 路由
+│   │   ├── matches.js      # 比赛预测 / 对比
+│   │   ├── standings.js    # 积分榜 + 晋级概率
+│   │   ├── teams.js        # 球队信息
+│   │   ├── bracket.js      # 淘汰赛树 + MC 模拟
+│   │   ├── knockout.js     # 淘汰赛管线（Phase 8）
+│   │   └── odds.js         # Polymarket + 赔率融合
+│   ├── services/           # 核心服务
+│   │   ├── monteCarloService.js  # MC 模拟引擎
+│   │   ├── bracketBuilder.js     # 构建淘汰赛对阵
+│   │   ├── groupResolver.js      # 小组解析
+│   │   ├── thirdRankResolver.js  # 第三名分析
+│   │   ├── pathAnalyst.js        # 晋级路径分析
+│   │   └── dataService.js        # 球队数据 + 国旗
+│   └── ml/                 # ML 引擎
+│       ├── config.js       # 引擎配置
+│       ├── elo/            # Elo 评分系统
+│       ├── inference/      # 预测推理
+│       ├── features/       # 特征工程
+│       ├── odds/           # Polymarket 集成
+│       └── models/         # 训练好的模型文件
+├── views/                  # EJS 模板
+│   ├── pages/              # 页面模板
+│   └── partials/           # 公共组件
+├── public/                 # 静态资源
+│   ├── css/
+│   ├── js/
+│   └── images/flags/       # SVG 国旗（48 队）
+├── data/                   # 数据文件
+│   ├── cache/              # 缓存（自动生成）
+│   └── *.json              # 种子数据
+├── .github/workflows/      # CI/CD 管线
+│   ├── ci.yml              # 持续集成
+│   ├── deploy-vps.yml      # VPS 部署
+│   └── rollback.yml        # 回滚
+├── docs/                   # 文档
+├── Dockerfile              # Docker 构建
+├── railway.json            # Railway 部署
+├── render.yaml             # Render 部署
+├── verify.cjs              # 冒烟测试
+└── .env.template           # 环境变量模板
 ```
 
-## API 文档
+---
 
-### 赛程与预测
+## 最近更新
 
-| 端点 | 说明 |
-|---|---|
-| `GET /api/matches/today` | 今日赛事列表（含预测） |
-| `GET /api/matches/schedule?date=&group=&status=` | 赛程查询（支持筛选） |
-| `GET /api/matches/upcoming?limit=10` | 即将开赛的比赛 |
-| `GET /api/matches/match/:t1/:t2?engine=ml` | **单场预测（支持引擎切换）** |
-| `GET /api/matches/compare/:t1/:t2?scores=true` | 两队实力对比 + 比分分布 |
+### Phase 9 — CI/CD 自动化部署（最新）
+- GitHub Actions CI 管线（lint + 冒烟测试）
+- Docker 容器化（python:3.13-slim + Node.js 24 双层构建）
+- Railway / Render / VPS 三种部署方案
+- 回滚管线（workflow_dispatch 手动触发）
+- 健康检查端点 `GET /api/health`
+- 环境变量模板 `.env.template`
 
-### 积分与晋级
+### Phase 8 — 淘汰赛完整管线
+- 确定性淘汰赛对阵（基于实时小组赛结果）
+- 淘汰赛预测引擎（加时 / 点球 / 压力因子）
+- 晋级路径分析（单队从小组→冠军的逐轮概率）
+- 晋级树可视化升级（CSS Grid + SVG 连线）
+- SVG 国旗 + ELO 徽章 + 中文队名
 
-| 端点 | 说明 |
-|---|---|
-| `GET /api/standings/groups` | 12 小组实时积分榜 |
-| `GET /api/standings/groups/:group` | 单组积分榜 |
-| `GET /api/standings/advancement?sims=5000` | 蒙特卡洛晋级概率 |
+### Phase 7 — 赔率融合与在线学习
+- Polymarket 市场数据接入
+- Elo + ML + Polymarket 三源融合
+- 在线学习仪表盘（动态权重 + 误差反馈）
+- 加时 / 点球预测
 
-### 球队信息
+### Phase 6 — 双引擎与 MC 模拟
+- Elo + ML 双引擎独立预测
+- Ensemble 集成学习（动态权重分配）
+- 蒙特卡洛模拟（5000-20000 次）
+- ML 回测 + 降级统计
 
-| 端点 | 说明 |
-|---|---|
-| `GET /api/teams` | 48 支球队列表（含 Elo 评分） |
-| `GET /api/teams/:slug` | 球队详情 |
-| `GET /api/teams/:slug/compare/:opponent` | 球队快速对比 |
+### 关键 Bug 修复
+- ✅ MC 模拟数据源从静态（44场）切换到实时 API（104场）
+- ✅ 2026 世界杯最佳第三名从 4 个修正为 8 个
+- ✅ 第三方球队 SVG 国旗缺失修复（flagPath 字段注入）
+- ✅ 晋级树水平滚动溢出修复
+- ✅ 淘汰赛路径字段名不匹配修复
+- ✅ 32强 / 第三名竞争页面空数据显示修复
+- ✅ 球队名统一显示中文
+- ✅ Polymarket 标题自动翻译为中文
 
-### ML 引擎（Phase 5 新增）
+---
 
-| 端点 | 说明 |
-|---|---|
-| `GET /api/ml/status` | ML 引擎状态 & 模型版本信息 |
-| `GET /api/ml/backtest` | 历史世界杯回测 |
+## 数据可靠性
 
-### 缓存管理
+| 数据源 | 可靠性 | 备选 |
+|--------|--------|------|
+| football-data.org | ⭐⭐⭐ 实时赛果 | 降级到本地种子数据 |
+| Odds-API.io | ⭐⭐ 赔率 | 缓存上次有效数据 |
+| Polymarket | ⭐⭐⭐ 预测市场 | 离线模式跳过 |
+| ML 模型 | ⭐⭐⭐ 本地推理 | Elo 引擎降级 |
 
-| 端点 | 说明 |
-|---|---|
-| `GET /api/cache/stats?force=1` | 缓存统计 + 强制刷新 |
+系统在外部 API 不可用时自动降级，不影响核心功能。
 
-### ML 预测输出结构
+---
 
-```json
-{
-  "engine": "ml-v1",
-  "expectedGoals": { "home": 2.42, "away": 1.32 },
-  "probabilities": { "homeWin": 0.6174, "draw": 0.1867, "awayWin": 0.1960 },
-  "scoreDistribution": [ [9x9 泊松矩阵] ],
-  "topScores": [
-    { "home": 2, "away": 1, "probability": 0.0919 },
-    ...
-  ],
-  "overUnder": {
-    "over2_5": 0.72, "under2_5": 0.28,
-    "over3_5": 0.51, "under3_5": 0.49,
-    "expectedTotal": 3.73
-  },
-  "btts": { "yes": 0.67, "no": 0.33 },
-  "risk": { "level": "high", "score": 0.14, "description": "..." },
-  "coverage": { "percent": 61.74, "top3ScoreCoverage": 24.19 },
-  "metadata": {
-    "modelVersion": "v1", "confidence": 0.38,
-    "calibrated": true,
-    "features": ["team_rank", "team_points", ...]
-  }
-}
-```
+## 许可证
 
-## 页面路由
-
-| 路径 | 页面 |
-|---|---|
-| `/` | 今日赛事首页 |
-| `/match/:t1/:t2` | 比赛预测详情页（支持引擎切换） |
-| `/schedule` | 完整赛程 |
-| `/standings` | 晋级概率榜 + 小组积分榜 |
-| `/teams` | 球队信息库 |
-| `/teams/:slug` | 球队详情页 |
-| `/methodology` | 预测模型科普说明 |
-| `/backtest` | 模型历史回测 |
-| `/simulator` | 数据模拟器 |
-| `/demo` | 预测市场模拟 |
-
-## 模型说明
-
-### Engine A: Elo + Dixon-Coles（默认）
-
-1. **Elo 评分**：基于 913 场国际比赛（2023.10 – 2026.06）校准的球队实力评级
-2. **Dixon-Coles 泊松**：计算胜平负概率与预期进球，修正低比分偏差
-3. **蒙特卡洛模拟**：模拟上万次赛程走向，计算晋级概率
-
-模型回测 62% 准确率，预期校准误差 2.3%。详见 `/methodology` 页面。
-
-### Engine B: ML Pipeline（Phase 5 新增）
-
-| 模型 | 类型 | 用途 | 测试指标 |
-|---|---|---|---|
-| xgb_home | XGBoost 回归 | 预期主队进球 | RMSE=1.40 |
-| xgb_away | XGBoost 回归 | 预期客队进球 | RMSE=1.15 |
-| rf_1x2 | Random Forest 分类 | 胜平负 | Acc=55.3% |
-| xgb_btts | XGBoost 分类 | 双方进球 | Acc=56.7% |
-| xgb_over_under | XGBoost 分类 | >2.5 球 | Acc=58.0% |
-
-- **训练数据**：46,383 场国际比赛（1930~2026），严格时间序列分割
-- **特征空间**：23 维（FIFA 排名、Elo 评分、近期战绩、锦标赛权重等）
-- **推理流程**：Node.js 构建特征向量 → Python 子进程推理 → 泊松比分矩阵 → 标准化输出
-
-### Engine Ensemble（集成）
-
-Elo 30% + ML 70% 概率加权融合，归一化输出。
-
-## 缓存系统（Phase 4）
-
-- **两层级**：L1 内存 (快速) + L2 磁盘文件 (持久化)
-- **统一 TTL**：30 分钟
-- **击穿保护**：并发请求共享 pending promise
-- **强制刷新**：`?force=1` 参数或页面底部「🔄 Update Data」按钮
-- **定位**：比赛详情页底部缓存状态栏（绿/黄/红点）
-
-## 数据来源
-
-- 实时 API：Football-data.org · OpenFootball
-- FIFA 排名：FIFA 官方（2022.10 + 2026.06 快照）
-- 灵感模型：[world-cup-2026-prediction-model](https://cup26matches.com/)
-
-## 部署
-
-详见 [`docs/DEPLOY.md`](docs/DEPLOY.md)
-
-```bash
-# 部署前检查清单
-# 1. .env 文件存在且包含 FOOTBALL_API_KEY
-# 2. npm install 完成
-# 3. pip install scikit-learn xgboost joblib
-# 4. 模型文件存在 (server/ml/models/v1/*.pkl)
-# 5. 端口 3000 未被占用
-# 6. node server/index.js 启动无报错
-```
-
-## License
-
-MIT
+MIT © 2026

@@ -42,6 +42,17 @@
         </div>
       </div>
 
+      <!-- 加时/点球概率分解（仅淘汰赛显示） -->
+      <div id="knockout-breakdown" style="display:none;margin-top:6px;">
+        <div class="info-section" style="padding:10px 14px;border-color:#2a3a4e;">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
+            <div class="kb-item"><span class="kb-label">常规时间</span><span class="kb-value" id="kb-reg">-%</span></div>
+            <div class="kb-item"><span class="kb-label">加时赛</span><span class="kb-value" id="kb-et">-%</span></div>
+            <div class="kb-item"><span class="kb-label">点球大战</span><span class="kb-value" id="kb-pk">-%</span></div>
+          </div>
+        </div>
+      </div>
+
       <!-- 比赛信息条 -->
       <div class="info-section" id="match-info-bar" style="display:none">
         <div class="match-info-grid">
@@ -214,6 +225,18 @@
   const t2 = '<%= team2Slug %>';
   let currentEngine = 'elo';
 
+  // SVG 旗帜渲染
+  function flagHtml(info, size) {
+    size = size || 'sm';
+    if (!info) return '<span class="team-flag flag-' + size + '"><span class="flag-fallback">⚽</span></span>';
+    const svgPath = info.flagPath || '';
+    const emoji = info.flag || '⚽';
+    if (svgPath) {
+      return '<span class="team-flag flag-' + size + '"><img src="' + svgPath + '" alt="' + (info.name || '') + '" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline\'"><span class="flag-fallback" style="display:none">' + emoji + '</span></span>';
+    }
+    return '<span class="team-flag flag-' + size + '"><span class="flag-fallback">' + emoji + '</span></span>';
+  }
+
   async function loadMatchData(force, engine) {
     engine = engine || currentEngine;
     if (force) {
@@ -252,8 +275,8 @@
       const xgHome = pred.expectedGoals.home;
       const xgAway = pred.expectedGoals.away;
 
-      document.getElementById('match-title').textContent =
-        `${homeFlag} ${homeName} vs ${awayName} ${awayFlag}`;
+      document.getElementById('match-title').innerHTML =
+        flagHtml(pred.home, 'md') + ' ' + homeName + ' vs ' + awayName + ' ' + flagHtml(pred.away, 'md');
 
       document.getElementById('prediction-detail').style.display = 'block';
 
@@ -263,8 +286,8 @@
       document.getElementById('win-away-pct').textContent = awayProb + '%';
 
       // xG
-      document.getElementById('xg-home-name').textContent = homeFlag + ' ' + homeName;
-      document.getElementById('xg-away-name').textContent = awayFlag + ' ' + awayName;
+      document.getElementById('xg-home-name').innerHTML = flagHtml(pred.home, 'sm') + ' ' + homeName;
+      document.getElementById('xg-away-name').innerHTML = flagHtml(pred.away, 'sm') + ' ' + awayName;
       document.getElementById('xg-home-val').textContent = xgHome;
       document.getElementById('xg-away-val').textContent = xgAway;
       const maxXg = Math.max(xgHome, xgAway, 1.5);
@@ -273,8 +296,8 @@
 
       // Elo 或 Elo 等效
       if (pred.home && pred.home.elo) {
-        document.getElementById('elo-home-name').textContent = homeFlag + ' ' + homeName;
-        document.getElementById('elo-away-name').textContent = awayFlag + ' ' + awayName;
+        document.getElementById('elo-home-name').innerHTML = flagHtml(pred.home, 'sm') + ' ' + homeName;
+        document.getElementById('elo-away-name').innerHTML = flagHtml(pred.away, 'sm') + ' ' + awayName;
         document.getElementById('elo-home-score').textContent = pred.home.elo;
         document.getElementById('elo-away-score').textContent = pred.away.elo;
       } else {
@@ -290,10 +313,27 @@
         };
         document.getElementById('mi-stage').textContent = stageLabels[match.stage] || match.stage || '-';
         document.getElementById('mi-group').textContent = match.group ? match.group + '组' : '-';
-        document.getElementById('mi-matchday').textContent = match.matchday ? '第' + match.matchday + '轮' : '-';
-        document.getElementById('mi-time').textContent = (match.date || '') + ' ' + (match.time || '');
+        document.getElementById('mi-matchday').textContent = match.matchday
+          ? '第' + match.matchday + '轮'
+          : (match.stage && match.stage !== 'GROUP_STAGE' ? stageLabels[match.stage] || '' : '-');
+        // 开球时间从 UTC 转为北京时间 (CST, UTC+8)
+        let beijingTime = '-';
+        if (match.utcDate) {
+          const d = new Date(match.utcDate);
+          const bj = new Date(d.getTime() + 8 * 3600000);
+          const pad = n => String(n).padStart(2, '0');
+          beijingTime = `${bj.getUTCFullYear()}-${pad(bj.getUTCMonth()+1)}-${pad(bj.getUTCDate())} ${pad(bj.getUTCHours())}:${pad(bj.getUTCMinutes())}`;
+        } else if (match.date) {
+          beijingTime = match.date + ' ' + (match.time || '');
+        }
+        document.getElementById('mi-time').textContent = beijingTime;
         document.getElementById('mi-status').textContent = match.status === 'FT' ? '已完赛' : match.status === 'TIMED' ? '未开赛' : match.status;
         document.getElementById('mi-score').textContent = (match.g1 != null) ? match.g1 + ' : ' + match.g2 : '-';
+
+        // Phase 8.1: 淘汰赛加时/点球分解
+        if (match.stage && match.stage !== 'GROUP_STAGE') {
+          fetchKnockoutPrediction(t1, t2, match.stage);
+        }
 
         document.getElementById('progress-section').style.display = 'block';
         const stageOrder = ['GROUP_STAGE','LAST_32','LAST_16','QUARTER_FINALS','SEMI_FINALS','FINAL'];
@@ -475,6 +515,26 @@
     metaHtml += '</div>';
 
     fc.innerHTML = rowsHtml + metaHtml;
+  }
+
+  // Phase 8.1: 淘汰赛加时/点球分解
+  async function fetchKnockoutPrediction(t1, t2, stage) {
+    try {
+      const stageMap = {
+        'LAST_32':'round32','LAST_16':'round16',
+        'QUARTER_FINALS':'quarter','SEMI_FINALS':'semi','FINAL':'final'
+      };
+      const s = stageMap[stage] || 'round32';
+      const r = await fetch(`/api/matches/knockout-pred/${t1}/${t2}?stage=${s}`);
+      if (!r.ok) return;
+      const kp = await r.json();
+      document.getElementById('knockout-breakdown').style.display = 'block';
+      document.getElementById('kb-reg').textContent = ((kp.regWinA + kp.regWinB) * 100).toFixed(1) + '%';
+      document.getElementById('kb-et').textContent = ((kp.etWinA + kp.etWinB) * 100).toFixed(1) + '%';
+      document.getElementById('kb-pk').textContent = ((kp.pkWinA + kp.pkWinB) * 100).toFixed(1) + '%';
+    } catch (e) {
+      console.warn('淘汰赛数据加载失败:', e.message);
+    }
   }
 
   // Phase 7.2: 独立加载融合数据（超时保护）

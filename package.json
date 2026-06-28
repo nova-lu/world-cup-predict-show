@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "dev": "node --watch server/index.js",
+    "verify": "node verify.cjs"
   },
   "dependencies": {
     "cross-env": "^10.1.0",

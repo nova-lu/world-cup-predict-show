@@ -68,15 +68,20 @@ router.get('/groups', async (req, res) => {
 });
 
 // ===== 晋级概率榜（蒙特卡洛模拟） =====
-router.get('/advancement', (req, res) => {
+router.get('/advancement', async (req, res) => {
   const sims = Math.min(parseInt(req.query.sims) || 5000, 20000);
   console.log(`[standings/advancement] 开始 ${sims} 次模拟...`);
-  const result = runMonteCarlo(sims, req.forceRefresh);
-  res.json({
-    ...result,
-    note: '数学模型预测，仅供娱乐参考',
-    _cache: buildCacheMeta(`mc:full:${sims}`, true, null),
-  });
+  try {
+    const result = await runMonteCarlo(sims, req.forceRefresh);
+    res.json({
+      ...result,
+      note: '数学模型预测，仅供娱乐参考',
+      _cache: buildCacheMeta(`mc:full:${sims}`, true, null),
+    });
+  } catch (e) {
+    console.error('[standings/advancement] 失败:', e.message);
+    res.status(500).json({ error: e.message, note: '模拟失败，请稍后重试' });
+  }
 });
 
 // ===== 单组详情 =====

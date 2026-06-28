@@ -1,0 +1,66 @@
+name: Deploy to VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (default: latest)"
+        required: false
+        default: "latest"
+        type: string
+
+env:
+  REGISTRY: ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}
+  IMAGE_NAME: worldcup-2026-data-assistant
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        run: |
+          echo "Logging into ${{ env.REGISTRY }}..."
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          TAG="${{ github.event.inputs.image_tag || 'latest' }}"
+          IMAGE_URI="${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${TAG}"
+          docker build -t ${IMAGE_URI} .
+          docker push ${IMAGE_URI}
+          echo "Pushed ${IMAGE_URI}"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            TAG="${{ github.event.inputs.image_tag || 'latest' }}"
+            IMAGE_URI="${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${TAG}"
+
+            echo "Pulling image ${IMAGE_URI}..."
+            docker pull ${IMAGE_URI}
+
+            echo "Stopping old container..."
+            docker stop worldcup-app || true
+            docker rm worldcup-app || true
+
+            echo "Starting new container..."
+            docker run -d \
+              --name worldcup-app \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -v worldcup-data:/app/data \
+              ${IMAGE_URI}
+
+            echo "Cleaning up old images..."
+            docker image prune -f
+
+            echo "Deployment complete!"

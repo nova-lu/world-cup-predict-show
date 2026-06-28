@@ -24,6 +24,11 @@
         <h2>近期赛果</h2>
         <div id="team-matches"></div>
       </div>
+      <!-- 淘汰赛晋级路径 -->
+      <div class="info-section" id="team-knockout-path" style="display:none">
+        <h2>🏆 淘汰赛预测路径</h2>
+        <div class="ko-path-content"></div>
+      </div>
     </div>
   </main>
 
@@ -45,12 +50,12 @@
       const team = await cachedFetch(`/api/teams/${slug}`, { force });
       document.getElementById('loading-spinner').style.display = 'none';
       document.getElementById('team-detail').style.display = 'block';
-      document.getElementById('team-title').textContent = `${team.flag || ''} ${team.name || team.nameEn || slug}`;
+      document.getElementById('team-title').innerHTML = window.flagHtml(team, 'md') + ' ' + (team.name || team.nameEn || slug);
       document.getElementById('team-hero').innerHTML = `
         <div class="team-hero-left">
-          <span class="team-hero-flag">${team.flag || '⚽'}</span>
-          <span class="team-hero-name">${team.name || slug}</span>
-          <span class="team-hero-en">${team.nameEn || ''}</span>
+          ${window.flagHtml(team, 'xl')}
+          <div class="team-hero-info">
+            <h1>${team.name || team.nameEn || slug}</h1>
         </div>
         <div class="team-hero-right">
           <p>${team.group ? team.group + '组' : '未分组'}</p>
@@ -74,12 +79,39 @@
         div.className = 'mini-match-row';
         div.innerHTML = `
           <span class="mini-date">${m.date}</span>
-          <span class="mini-teams">${isHome ? '<strong>' : ''}${m.team1Info?.flag || ''} ${m.team1Info?.name || m.t1}${isHome ? '</strong>' : ''} vs ${!isHome ? '<strong>' : ''}${m.team2Info?.flag || ''} ${m.team2Info?.name || m.t2}${!isHome ? '</strong>' : ''}</span>
+          <span class="mini-teams">${isHome ? '<strong>' : ''}${window.flagHtml(m.team1Info, 'sm')} ${m.team1Info?.name || m.t1}${isHome ? '</strong>' : ''} vs ${!isHome ? '<strong>' : ''}${window.flagHtml(m.team2Info, 'sm')} ${m.team2Info?.name || m.t2}${!isHome ? '</strong>' : ''}</span>
           <span class="mini-score">${isFinished ? (isHome ? m.g1 + '-' + m.g2 : m.g2 + '-' + m.g1) : '未赛'}</span>
         `;
         div.onclick = () => window.location = `/match/${m.t1}/${m.t2}`;
         container.appendChild(div);
       });
+
+      // 淘汰赛路径（移出 forEach 循环）
+      try {
+        var koPathSection = document.getElementById('team-knockout-path');
+        var pathRes = await cachedFetch('/api/knockout/path/' + slug, { force: false });
+        if (pathRes && pathRes.bracketPath && pathRes.bracketPath.length > 0) {
+          koPathSection.style.display = 'block';
+          var pathHtml = '<div class="ko-path-rows">';
+          pathRes.bracketPath.forEach(function(p) {
+            var oppInfo = p.opponentInfo || {};
+            var stageLabels = {'R32':'32强','R16':'16强','QF':'8强','SF':'4强','FINAL':'决赛'};
+            var label = stageLabels[p.stage] || p.stage || '';
+            pathHtml += '<div class="ko-path-row">' +
+              '<span class="path-stage">' + label + '</span>' +
+              '<span class="path-vs">vs</span>' +
+              window.flagHtml(oppInfo, 'md') +
+              '<span class="path-opponent">' + (oppInfo.name || p.opponent || '待定') + '</span>' +
+              '<span class="path-prob" style="color:' + (p.prob >= 60 ? '#4ade80' : p.prob >= 30 ? '#facc15' : '#f87171') + '">' + p.prob.toFixed(1) + '%</span>' +
+              '<span class="path-bar-cell"><span class="path-bar" style="width:' + Math.max(p.prob, 2) + '%"></span></span>' +
+              '</div>';
+          });
+          pathHtml += '</div>';
+          koPathSection.querySelector('.ko-path-content').innerHTML = pathHtml;
+        }
+      } catch (err) {
+        // 路径不可用时静默处理
+      }
     } catch (err) {
       console.error('Failed to load team data:', err);
       document.getElementById('loading-spinner').style.display = 'none';

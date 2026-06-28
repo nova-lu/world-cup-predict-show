@@ -301,7 +301,7 @@
     background: linear-gradient(90deg, #8b6914, #c9852e, #8b6914);
   }
 
-  /* Stage Matrix */
+  /* Stage Matrix — 对齐修正 */
   .matrix-wrapper {
     overflow-x: auto;
   }
@@ -309,46 +309,63 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.82rem;
-    min-width: 600px;
+    min-width: 680px;
+    table-layout: fixed;
+  }
+  .stage-matrix thead th:first-child {
+    width: 160px;
+    min-width: 140px;
+  }
+  .stage-matrix thead th:not(:first-child) {
+    width: 90px;
+    min-width: 72px;
   }
   .stage-matrix th {
     background: rgba(255,255,255,0.03);
-    padding: 8px 10px;
+    padding: 10px 6px;
     font-weight: 600;
     color: var(--text-muted);
     text-align: center;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
     white-space: nowrap;
   }
   .stage-matrix th:first-child {
     text-align: left;
+    padding-left: 12px;
     position: sticky;
     left: 0;
     background: var(--bg-card);
-    z-index: 1;
+    z-index: 2;
+    border-right: 1px solid var(--border);
   }
   .stage-matrix td {
-    padding: 6px 8px;
-    text-align: center;
+    padding: 8px 6px;
+    text-align: right;
     border-bottom: 1px solid var(--border);
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     font-size: 0.82rem;
+    width: 90px;
+    min-width: 72px;
   }
   .stage-matrix tr:hover td {
     background: var(--bg-hover);
   }
   .stage-matrix td:first-child {
     text-align: left;
+    padding-left: 12px;
     font-weight: 600;
     position: sticky;
     left: 0;
     background: var(--bg-card);
     z-index: 1;
     white-space: nowrap;
+    width: 160px;
+    min-width: 140px;
+    border-right: 1px solid var(--border);
   }
   .stage-matrix tr:hover td:first-child {
     background: var(--bg-hover);
@@ -468,7 +485,7 @@
         const top3Class = rank <= 3 ? 'champ-top3' : '';
         html += `<tr class="${top3Class}">
           <td class="champ-rank">${rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank}</td>
-          <td class="champ-team"><span class="flag">${t.flag || '⚽'}</span> ${t.name || t.slug}</td>
+          <td class="champ-team">${window.flagHtml(t, 'sm')} ${t.name || t.slug}</td>
           <td class="champ-elo">${t.elo || '-'}</td>
           <td style="color:var(--text-muted);font-size:0.8rem">${t.group || '-'}</td>
           <td class="champ-pct">${pct.toFixed(1)}%</td>
@@ -489,7 +506,7 @@
 
       teams.forEach(t => {
         html += `<tr class="team-row">`;
-        html += `<td><span class="flag">${t.flag || '⚽'}</span> ${t.name || t.slug}</td>`;
+        html += `<td>${window.flagHtml(t, 'sm')} ${t.name || t.slug}</td>`;
         STAGES.forEach(s => {
           const val = t.prob[s.key] || 0;
           const cls = cellClass(val);
