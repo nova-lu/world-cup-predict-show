@@ -129,21 +129,6 @@ node server/index.js
 
 ## 部署
 
-### Railway（推荐）
-Railway 支持 Node.js + Python 双语言环境，免费层每月 $5 额度。
-
-```bash
-# railway.json 已配置，push 后自动部署
-git push main
-```
-在 Railway Dashboard 设置环境变量 `FOOTBALL_API_KEY` 和 `ODDS_API_KEY`。
-
-### Render
-```bash
-# render.yaml 已配置，连接 GitHub 仓库自动部署
-```
-在 Render Dashboard 设置环境变量。
-
 ### Docker 部署
 ```bash
 # 构建镜像
@@ -156,11 +141,6 @@ docker run -d -p 3000:3000 \
   --name worldcup \
   worldcup-predict:latest
 ```
-
-### VPS + Docker + GitHub Actions
-配置 GitHub Secrets 后手动触发 deploy-vps workflow：
-- `SSH_HOST`, `SSH_USER`, `SSH_KEY`
-- `DOCKER_REGISTRY`（可选，默认 ghcr.io）
 
 ---
 
