@@ -46,7 +46,7 @@ const ODDS_TO_MODEL = {
 
 // 推荐使用的博彩公司
 const DEFAULT_BOOKMAKERS = [
-  'Bet365', 'Unibet', 'William Hill', 'Pinnacle',
+  'Bet365', 'William Hill', 'Ladbrokes', 'Unibet', 'Pinnacle',
   'Bwin ES', 'DafaBet', '10BET', 'Betfair ES'
 ];
 
@@ -163,20 +163,26 @@ async function fetchOddsForMatch(homeSlug, awaySlug) {
   const eventId = await findEventId(homeSlug, awaySlug);
   if (!eventId) return null;
 
-  const bm = DEFAULT_BOOKMAKERS[0]; // 先只用 Bet365 减少请求
-  const data = await request(`/odds?eventId=${eventId}&bookmakers=${encodeURIComponent(bm)}`);
+  // 优先请求主流公司，兼顾覆盖与速率限制
+  const preferred = DEFAULT_BOOKMAKERS.slice(0, 5);
+  const data = await request(`/odds?eventId=${eventId}&bookmakers=${encodeURIComponent(preferred.join(','))}`);
   if (!data || !data.bookmakers) return null;
 
   const odds = extractOdds(data);
   if (!odds) return null;
 
+  const consensus = calculateConsensusProb(odds);
+
   return {
+    found: true,
     eventId,
     home: data.home,
     away: data.away,
     status: data.status,
     date: data.date,
     bookmakers: odds,
+    nBookmakers: Object.keys(odds).length,
+    consensus,
     // 最佳赔率（多博彩公司时取最优）
     best: calculateBest(odds),
   };
@@ -300,6 +306,49 @@ function calculateBest(odds) {
     if (o.away > bestAway) { bestAway = o.away; bestAwayBm = bm; }
   }
   return { home: bestHome, draw: bestDraw, away: bestAway, homeBm: bestHomeBm, drawBm: bestDrawBm, awayBm: bestAwayBm };
+}
+
+function normalizeImpliedFromOdds(oneX2) {
+  const h = oneX2?.home > 1 ? 1 / oneX2.home : 0;
+  const d = oneX2?.draw > 1 ? 1 / oneX2.draw : 0;
+  const a = oneX2?.away > 1 ? 1 / oneX2.away : 0;
+  const s = h + d + a;
+  if (!s) return null;
+  return {
+    home: h / s,
+    draw: d / s,
+    away: a / s,
+    overround: s - 1,
+  };
+}
+
+function calculateConsensusProb(oddsByBookmaker) {
+  const entries = Object.values(oddsByBookmaker || {});
+  if (!entries.length) return null;
+
+  let home = 0;
+  let draw = 0;
+  let away = 0;
+  let overround = 0;
+  let n = 0;
+
+  for (const o of entries) {
+    const p = normalizeImpliedFromOdds(o);
+    if (!p) continue;
+    home += p.home;
+    draw += p.draw;
+    away += p.away;
+    overround += p.overround;
+    n++;
+  }
+
+  if (!n) return null;
+  return {
+    home: home / n,
+    draw: draw / n,
+    away: away / n,
+    overround: overround / n,
+  };
 }
 
 /**

@@ -349,7 +349,7 @@
       if (compareData.topScores && compareData.topScores.length > 0) {
         document.getElementById('scores-section').style.display = 'block';
         const grid = document.getElementById('scores-grid');
-        compareData.topScores.slice(0, 8).forEach(s => {
+        compareData.topScores.slice(0, 3).forEach(s => {
           const div = document.createElement('div');
           div.className = 'score-chip';
           div.innerHTML = `<span class="score-result">${s.home}:${s.away}</span><span class="score-prob">${s.prob}%</span>`;
@@ -378,7 +378,7 @@
         const topScores = pred.topScores || [];
         const scoresList = document.getElementById('ml-scores-list');
         scoresList.innerHTML = '';
-        topScores.slice(0, 5).forEach(s => {
+        topScores.slice(0, 3).forEach(s => {
           const div = document.createElement('div');
           div.className = 'ml-score-row';
           div.innerHTML = `<span class="ml-score-result">${s.home} : ${s.away}</span><span class="ml-score-prob-bar"><span class="ml-score-bar" style="width:${(s.probability * 1000)}%"></span></span><span class="ml-score-prob">${(s.probability * 100).toFixed(1)}%</span>`;
