@@ -17,6 +17,7 @@ import { normalizePrediction, toProbabilities, validateProbabilities } from '../
 import {
   computePoissonMatrix, computeProbabilities, computeTopScores,
   computeOverUnder, computeBTTS, computeRisk, computeCoverage,
+  filterScoresByDirection,
 } from './poisson.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -87,7 +88,8 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
 
   const scoreMatrix = computePoissonMatrix(lambdaHome, lambdaAway);
   const probabilities = computeProbabilities(scoreMatrix);
-  const topScores = computeTopScores(scoreMatrix, 5);
+  const rawTopScores = computeTopScores(scoreMatrix, 10); // 取 Top10 保留方向门控空间
+
   const overUnder = computeOverUnder(scoreMatrix);
   const btts = computeBTTS(scoreMatrix);
 
@@ -97,6 +99,18 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
     mlResult.probabilities,
     mlConfig.ensemble.mlWeight,
   );
+
+  // 确定主方向
+  const dirKeys = ['homeWin', 'draw', 'awayWin'];
+  const dirLabels = ['home', 'draw', 'away'];
+  const mainDirIdx = dirKeys.indexOf(
+    dirKeys.reduce((a, b) => blendedProbs[b] > blendedProbs[a] ? b : a)
+  );
+  const mainDirection = dirLabels[mainDirIdx];
+
+  // Phase 10 Task D: 方向门控 Top3
+  const originalTopScores = rawTopScores.slice(0, 5); // 保留原始 Top5 用于元数据
+  const topScores = filterScoresByDirection(rawTopScores, mainDirection, 3);
 
   // 风险评估
   const risk = computeRisk(blendedProbs, mlResult.confidence);
@@ -128,6 +142,12 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
       confidence: mlResult.confidence,
       calibrated: true,
       features: Object.keys(features),
+      // Phase 10 Task D
+      directionGate: {
+        mainDirection,
+        originalTopScores,
+        gated: true,
+      },
     },
   };
 

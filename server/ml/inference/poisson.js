@@ -138,6 +138,64 @@ export function computeRisk(probabilities, classifierConfidence = 0.5) {
 }
 
 /**
+ * 方向门控过滤 Top N 比分
+ *
+ * 确保 TopN 推荐比分与主方向一致：
+ * - home: 保留 home > away 的比分
+ * - draw: 保留 home === away 的比分
+ * - away: 保留 home < away 的比分
+ *
+ * @param {Array} topScores - [{ home, away, probability }]
+ * @param {string} mainDirection - 'home' | 'draw' | 'away'
+ * @param {number} n - 需要返回的条数（默认 3）
+ * @returns {Array} 方向一致的最多 n 条 + 补齐的近邻
+ */
+export function filterScoresByDirection(topScores, mainDirection, n = 3) {
+  if (!topScores || topScores.length === 0) return [];
+
+  // 按方向筛选
+  function passes(s) {
+    if (mainDirection === 'home') return s.home > s.away;
+    if (mainDirection === 'draw') return s.home === s.away;
+    if (mainDirection === 'away') return s.home < s.away;
+    return true;
+  }
+
+  const matched = topScores.filter(passes);
+  if (matched.length >= n) return matched.slice(0, n);
+
+  // 不足 n 条，从剩余比分中按"偏差最小"补齐
+  // home 方向: |(home-away)| 最小且 home > away
+  // draw 方向: |(home-away)| 最小且 home === away 已全取，从"总进球数与最可能平局比分最接近"补齐
+  // away 方向: |(home-away)| 最小且 home < away
+  const unmatched = topScores.filter(s => !passes(s));
+  if (unmatched.length === 0) return matched.slice(0, n);
+
+  // 计算偏差分数（越小越接近主方向）
+  const scored = unmatched.map(s => {
+    let dist;
+    if (mainDirection === 'home') {
+      // 希望 home > away，偏差 = away - home（正数时偏离方向）
+      dist = Math.max(0, s.away - s.home);
+    } else if (mainDirection === 'away') {
+      dist = Math.max(0, s.home - s.away);
+    } else {
+      // draw: 偏差 = |home - away|（平局时接近 0）
+      dist = Math.abs(s.home - s.away);
+    }
+    return { ...s, _dist: dist };
+  });
+
+  scored.sort((a, b) => a._dist - b._dist);
+  const fillers = scored.slice(0, n - matched.length);
+  const result = [...matched, ...fillers];
+
+  // 保持 probability 降序
+  result.sort((a, b) => b.probability - a.probability);
+  return result.slice(0, n);
+}
+
+/**
  * 覆盖度
  */
 export function computeCoverage(matrix, topN = 3) {

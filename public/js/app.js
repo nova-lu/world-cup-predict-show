@@ -26,23 +26,13 @@ window.flagHtml = function(info, size) {
 };
 
 // ===== 缓存感知的数据请求工具函数 =====
-
-/**
- * 缓存感知的 fetch
- * @param {string} url - API URL
- * @param {object} options
- * @param {boolean} [options.force=false] - 是否强制刷新
- * @returns {Promise<object>} 解析后的 JSON 数据
- */
-async function cachedFetch(url, options = {}) {
-  const separator = url.includes('?') ? '&' : '?';
-  const forceUrl = options.force ? url + separator + 'force=1' : url;
-  const resp = await fetch(forceUrl);
-  const data = await resp.json();
-  if (window.cacheUI && data._cache) {
-    window.cacheUI.setStatus(data._cache);
-  } else if (window.cacheUI) {
-    window.cacheUI.setStatus(null);
-  }
-  return data;
+async function cachedFetch(url, options) {
+  if (!options) options = {};
+  var sep = url.includes('?') ? '&' : '?';
+  var fu = options.force ? url + sep + 'force=1' : url;
+  var r = await fetch(fu);
+  var d = await r.json();
+  if (window.cacheUI && d._cache) window.cacheUI.setStatus(d._cache);
+  else if (window.cacheUI) window.cacheUI.setStatus(null);
+  return d;
 }

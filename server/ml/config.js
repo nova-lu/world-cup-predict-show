@@ -51,7 +51,7 @@ const mlConfig = {
   // 赔率源
   oddsSources: [
     { name: 'football-data', enabled: true },
-    { name: 'the-odds-api', enabled: false },
+    { name: 'odds-api', enabled: true },
   ],
 
   // 回测

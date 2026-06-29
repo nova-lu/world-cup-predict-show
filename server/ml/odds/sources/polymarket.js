@@ -9,6 +9,37 @@
 import mlConfig from '../../config.js';
 import { get as cacheGet, set as cacheSet } from '../../../middleware/cache.js';
 import { fetch as undiciFetch, ProxyAgent } from 'undici';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const PM_CACHE_FILE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../data/odds/polymarket-cache.json');
+
+// 读取磁盘缓存
+function readDiskCache() {
+  try {
+    if (fs.existsSync(PM_CACHE_FILE)) {
+      const raw = fs.readFileSync(PM_CACHE_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      const age = Date.now() - (data._ts || 0);
+      // 磁盘缓存有效期 2小时
+      if (age < 7200000) return data.events || [];
+      console.log('[polymarket] 磁盘缓存过期，重新拉取');
+    }
+  } catch {}
+  return null;
+}
+
+// 写入磁盘缓存
+function writeDiskCache(events) {
+  try {
+    const dir = path.dirname(PM_CACHE_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(PM_CACHE_FILE, JSON.stringify({ _ts: Date.now(), events }), 'utf-8');
+  } catch (e) {
+    console.warn('[polymarket] 磁盘缓存写入失败:', e.message);
+  }
+}
 
 // 代理支持: 读 HTTPS_PROXY / HTTP_PROXY 环境变量
 const proxyUrl =
@@ -134,6 +165,13 @@ export async function fetchWorldCupEvents(endDateMin = null, endDateMax = null, 
   const cached = cacheGet(cacheKey);
   if (cached.hit) return cached.value;
 
+  // 尝试磁盘缓存
+  const diskEvents = readDiskCache();
+  if (diskEvents) {
+    cacheSet(cacheKey, diskEvents, { source: 'polymarket', ttlMs: mlConfig.polymarket.marketListCacheMs });
+    return diskEvents;
+  }
+
   const games = [];
   let offset = 0;
   while (true) {
@@ -165,6 +203,7 @@ export async function fetchWorldCupEvents(endDateMin = null, endDateMax = null, 
 
   games.sort((a, b) => (a.kickoff || '').localeCompare(b.kickoff || ''));
   cacheSet(cacheKey, games, { source: 'polymarket', ttlMs: mlConfig.polymarket.marketListCacheMs });
+  writeDiskCache(games);
   console.log(`[polymarket] 加载 ${games.length} 个事件 (${endDateMin} → ${endDateMax})`);
   return games;
 }
@@ -333,4 +372,8 @@ export function findMatchingEvent(events, t1Slug, t2Slug) {
     }
   }
   return null;
+}
+
+export function readDiskCacheEvents() {
+  return readDiskCache();
 }

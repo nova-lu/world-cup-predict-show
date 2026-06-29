@@ -8,6 +8,7 @@ import oddsRouter from './routes/odds.js';  // Phase 7: 含 Polymarket + Fusion 
 import bracketRouter from './routes/bracket.js';
 import knockoutRouter from './routes/knockout.js'; // Phase 8.2
 import { parseForceParam } from './middleware/parseForce.js';
+import { checkDataFreshness } from '../scripts/check_data_freshness.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -59,6 +60,12 @@ app.get('/api/ml/status', async (req, res) => {
       degradeStats = getDegradeStats();
     } catch {}
 
+    // Phase 10: 数据新鲜度
+    let freshness = null;
+    try {
+      freshness = checkDataFreshness();
+    } catch { /* skip if scripts unavailable */ }
+
     res.json({
       enabled: mlConfig.enabled,
       engine: mlConfig.engine,
@@ -75,10 +82,22 @@ app.get('/api/ml/status', async (req, res) => {
         calibrated: modelInfo?.calibration?.calibrated || true,
       },
       degrade: degradeStats || { degradeCount: 0 },
+      // Phase 10: 数据新鲜度状态
+      freshness,
       error,
     });
   } catch (e) {
     res.json({ enabled: false, error: e.message });
+  }
+});
+
+// Phase 10: 数据新鲜度独立端点
+app.get('/api/ml/freshness', (req, res) => {
+  try {
+    const freshness = checkDataFreshness();
+    res.json(freshness);
+  } catch (e) {
+    res.json({ error: e.message, lastCheckAt: new Date().toISOString() });
   }
 });
 

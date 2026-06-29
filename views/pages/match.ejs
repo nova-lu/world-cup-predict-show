@@ -25,190 +25,214 @@
       <button class="engine-tab" data-engine="ensemble" onclick="switchEngine('ensemble')">集成</button>
     </div>
 
-    <div id="prediction-detail" style="display:none">
-      <!-- 概率卡片 -->
-      <div class="prediction-summary">
-        <div class="prob-card prob-home-bg" id="win-home-card">
-          <span class="prob-label">主胜</span>
-          <span class="prob-value" id="win-home-pct">-%</span>
-        </div>
-        <div class="prob-card prob-draw-bg" id="draw-card">
-          <span class="prob-label">平局</span>
-          <span class="prob-value" id="draw-pct">-%</span>
-        </div>
-        <div class="prob-card prob-away-bg" id="win-away-card">
-          <span class="prob-label">客胜</span>
-          <span class="prob-value" id="win-away-pct">-%</span>
-        </div>
-      </div>
+    <!-- Tab 导航 -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="conclusion" onclick="switchTab('conclusion')">📊 预测结论</button>
+      <button class="tab-btn" data-tab="divergence" onclick="switchTab('divergence')">📈 市场分歧</button>
+      <button class="tab-btn" data-tab="data" onclick="switchTab('data')">📋 数据详情</button>
+    </nav>
 
-      <!-- 加时/点球概率分解（仅淘汰赛显示） -->
-      <div id="knockout-breakdown" style="display:none;margin-top:6px;">
-        <div class="info-section" style="padding:10px 14px;border-color:#2a3a4e;">
-          <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
-            <div class="kb-item"><span class="kb-label">常规时间</span><span class="kb-value" id="kb-reg">-%</span></div>
-            <div class="kb-item"><span class="kb-label">加时赛</span><span class="kb-value" id="kb-et">-%</span></div>
-            <div class="kb-item"><span class="kb-label">点球大战</span><span class="kb-value" id="kb-pk">-%</span></div>
+    <!-- Tab: 预测结论（服务端/客户端预渲染） -->
+    <div id="tab-conclusion" class="tab-content active">
+      <div id="prediction-detail" style="display:none">
+        <!-- 概率卡片 -->
+        <div class="prediction-summary">
+          <div class="prob-card prob-home-bg" id="win-home-card">
+            <span class="prob-label">主胜</span>
+            <span class="prob-value" id="win-home-pct">-%</span>
           </div>
-        </div>
-      </div>
-
-      <!-- 比赛信息条 -->
-      <div class="info-section" id="match-info-bar" style="display:none">
-        <div class="match-info-grid">
-          <div class="match-info-item">
-            <span class="info-label">阶段</span>
-            <span class="info-value" id="mi-stage">-</span>
+          <div class="prob-card prob-draw-bg" id="draw-card">
+            <span class="prob-label">平局</span>
+            <span class="prob-value" id="draw-pct">-%</span>
           </div>
-          <div class="match-info-item">
-            <span class="info-label">分组</span>
-            <span class="info-value" id="mi-group">-</span>
-          </div>
-          <div class="match-info-item">
-            <span class="info-label">比赛日</span>
-            <span class="info-value" id="mi-matchday">-</span>
-          </div>
-          <div class="match-info-item">
-            <span class="info-label">开球时间</span>
-            <span class="info-value" id="mi-time">-</span>
-          </div>
-          <div class="match-info-item">
-            <span class="info-label">状态</span>
-            <span class="info-value" id="mi-status">-</span>
-          </div>
-          <div class="match-info-item">
-            <span class="info-label">最终比分</span>
-            <span class="info-value" id="mi-score">-</span>
+          <div class="prob-card prob-away-bg" id="win-away-card">
+            <span class="prob-label">客胜</span>
+            <span class="prob-value" id="win-away-pct">-%</span>
           </div>
         </div>
-      </div>
 
-      <!-- 预期进球 -->
-      <div class="info-section">
-        <h2>预期进球 (xG)</h2>
-        <div class="xg-bar-container">
-          <div class="xg-row">
-            <span class="xg-team" id="xg-home-name">-</span>
-            <div class="xg-track"><div class="xg-fill xg-home-fill" id="xg-home-bar"></div></div>
-            <span class="xg-value" id="xg-home-val">-</span>
-          </div>
-          <div class="xg-row">
-            <span class="xg-team" id="xg-away-name">-</span>
-            <div class="xg-track"><div class="xg-fill xg-away-fill" id="xg-away-bar"></div></div>
-            <span class="xg-value" id="xg-away-val">-</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 球队实力 -->
-      <div class="info-section">
-        <h2>球队实力 (Elo)</h2>
-        <div class="elo-row">
-          <span id="elo-home-name">-</span>
-          <span class="elo-score" id="elo-home-score">-</span>
-          <span class="elo-vs">vs</span>
-          <span class="elo-score" id="elo-away-score">-</span>
-          <span id="elo-away-name">-</span>
-        </div>
-      </div>
-
-      <!-- 最可能比分 -->
-      <div class="info-section" id="scores-section" style="display:none">
-        <h2>最可能比分分布</h2>
-        <div class="scores-grid" id="scores-grid"></div>
-      </div>
-
-      <!-- 赔率对比区域 -->
-      <div class="info-section" id="odds-section">
-        <h2>市场赔率 <span class="api-source-badge api-source-live">Bet365</span></h2>
-        <div id="odds-content">
-          <div class="loading-sm">加载赔率数据...</div>
-        </div>
-      </div>
-
-      <!-- Phase 7.2: 赔率融合面板 -->
-      <div class="info-section" id="fusion-section" style="display:none">
-        <h2>🧬 赔率融合 <span class="api-source-badge api-source-ml">三源</span></h2>
-        <div id="fusion-content"></div>
-      </div>
-
-      <!-- ML 引擎额外信息 -->
-      <div class="info-section" id="ml-info-section" style="display:none">
-        <h2>ML 引擎详情 <span class="engine-badge" id="ml-version-badge">v1</span></h2>
-        <div class="ml-grid">
-          <!-- TOP 5 比分 -->
-          <div class="ml-card" id="ml-top-scores">
-            <div class="ml-card-title">最可能比分</div>
-            <div class="ml-scores-list" id="ml-scores-list"></div>
-          </div>
-          <!-- 大小球 -->
-          <div class="ml-card" id="ml-over-under">
-            <div class="ml-card-title">大小球</div>
-            <div class="ml-ou-grid" id="ml-ou-grid">
-              <div class="ou-item"><span class="ou-label">O2.5</span><span class="ou-val" id="ou-25-over">-%</span></div>
-              <div class="ou-item"><span class="ou-label">U2.5</span><span class="ou-val" id="ou-25-under">-%</span></div>
-              <div class="ou-item"><span class="ou-label">O3.5</span><span class="ou-val" id="ou-35-over">-%</span></div>
-              <div class="ou-item"><span class="ou-label">U3.5</span><span class="ou-val" id="ou-35-under">-%</span></div>
-              <div class="ou-item ou-total"><span class="ou-label">预期总进球</span><span class="ou-val" id="ou-expected-total">-</span></div>
-            </div>
-          </div>
-          <!-- BTTS -->
-          <div class="ml-card" id="ml-btts">
-            <div class="ml-card-title">双方进球 (BTTS)</div>
-            <div class="btts-bars">
-              <div class="btts-row"><span>是</span><div class="btts-track"><div class="btts-fill btts-yes" id="btts-yes-bar"></div></div><span class="btts-pct" id="btts-yes-pct">-%</span></div>
-              <div class="btts-row"><span>否</span><div class="btts-track"><div class="btts-fill btts-no" id="btts-no-bar"></div></div><span class="btts-pct" id="btts-no-pct">-%</span></div>
-            </div>
-          </div>
-          <!-- 风险评估 -->
-          <div class="ml-card" id="ml-risk">
-            <div class="ml-card-title">风险评估</div>
-            <div class="risk-display">
-              <span class="risk-badge" id="risk-level-badge">-</span>
-              <span class="risk-score" id="risk-score-text">-</span>
-              <p class="risk-desc" id="risk-description">-</p>
-            </div>
-          </div>
-          <!-- 覆盖度 -->
-          <div class="ml-card" id="ml-coverage">
-            <div class="ml-card-title">覆盖度</div>
-            <div class="cov-display">
-              <span class="cov-pct" id="coverage-pct">-%</span>
-              <span class="cov-label">TOP 3 比分覆盖</span>
-              <span class="cov-pct cov-small" id="coverage-top3">-%</span>
-            </div>
-          </div>
-          <!-- 模型元数据 -->
-          <div class="ml-card ml-card-wide" id="ml-meta">
-            <div class="ml-card-title">模型元数据</div>
-            <div class="meta-grid">
-              <div class="meta-item"><span class="meta-label">引擎</span><span class="meta-val" id="meta-engine">ml-v1</span></div>
-              <div class="meta-item"><span class="meta-label">置信度</span><span class="meta-val" id="meta-confidence">-</span></div>
-              <div class="meta-item"><span class="meta-label">特征数</span><span class="meta-val" id="meta-features">-</span></div>
-              <div class="meta-item"><span class="meta-label">校准</span><span class="meta-val" id="meta-calibrated">-</span></div>
-              <div class="meta-item"><span class="meta-label">集成权重</span><span class="meta-val" id="meta-ensemble-weights" style="display:none">-</span></div>
-              <div class="meta-item"><span class="meta-label"></span><span class="meta-val" id="meta-weights-note" style="display:none"></span></div>
+        <!-- 加时/点球概率分解（仅淘汰赛显示） -->
+        <div id="knockout-breakdown" style="display:none;margin-top:6px;">
+          <div class="info-section" style="padding:10px 14px;border-color:#2a3a4e;">
+            <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
+              <div class="kb-item"><span class="kb-label">常规时间</span><span class="kb-value" id="kb-reg">-%</span></div>
+              <div class="kb-item"><span class="kb-label">加时赛</span><span class="kb-value" id="kb-et">-%</span></div>
+              <div class="kb-item"><span class="kb-label">点球大战</span><span class="kb-value" id="kb-pk">-%</span></div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 进度指示器 -->
-      <div class="info-section" id="progress-section" style="display:none">
-        <h2>比赛进度</h2>
-        <div class="tournament-progress">
-          <div class="progress-step" id="p-stage">小组赛</div>
-          <div class="progress-arrow">→</div>
-          <div class="progress-step" id="p-32">32强</div>
-          <div class="progress-arrow">→</div>
-          <div class="progress-step" id="p-16">16强</div>
-          <div class="progress-arrow">→</div>
-          <div class="progress-step" id="p-qf">8强</div>
-          <div class="progress-arrow">→</div>
-          <div class="progress-step" id="p-sf">4强</div>
-          <div class="progress-arrow">→</div>
-          <div class="progress-step" id="p-final">决赛</div>
+        <!-- 比赛信息条 -->
+        <div class="info-section" id="match-info-bar" style="display:none">
+          <div class="match-info-grid">
+            <div class="match-info-item">
+              <span class="info-label">阶段</span>
+              <span class="info-value" id="mi-stage">-</span>
+            </div>
+            <div class="match-info-item">
+              <span class="info-label">分组</span>
+              <span class="info-value" id="mi-group">-</span>
+            </div>
+            <div class="match-info-item">
+              <span class="info-label">比赛日</span>
+              <span class="info-value" id="mi-matchday">-</span>
+            </div>
+            <div class="match-info-item">
+              <span class="info-label">开球时间</span>
+              <span class="info-value" id="mi-time">-</span>
+            </div>
+            <div class="match-info-item">
+              <span class="info-label">状态</span>
+              <span class="info-value" id="mi-status">-</span>
+            </div>
+            <div class="match-info-item">
+              <span class="info-label">最终比分</span>
+              <span class="info-value" id="mi-score">-</span>
+            </div>
+          </div>
         </div>
+
+        <!-- 预期进球 -->
+        <div class="info-section">
+          <h2>预期进球 (xG)</h2>
+          <div class="xg-bar-container">
+            <div class="xg-row">
+              <span class="xg-team" id="xg-home-name">-</span>
+              <div class="xg-track"><div class="xg-fill xg-home-fill" id="xg-home-bar"></div></div>
+              <span class="xg-value" id="xg-home-val">-</span>
+            </div>
+            <div class="xg-row">
+              <span class="xg-team" id="xg-away-name">-</span>
+              <div class="xg-track"><div class="xg-fill xg-away-fill" id="xg-away-bar"></div></div>
+              <span class="xg-value" id="xg-away-val">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 球队实力 -->
+        <div class="info-section">
+          <h2>球队实力 (Elo)</h2>
+          <div class="elo-row">
+            <span id="elo-home-name">-</span>
+            <span class="elo-score" id="elo-home-score">-</span>
+            <span class="elo-vs">vs</span>
+            <span class="elo-score" id="elo-away-score">-</span>
+            <span id="elo-away-name">-</span>
+          </div>
+        </div>
+
+        <!-- 最可能比分 -->
+        <div class="info-section" id="scores-section" style="display:none">
+          <h2>最可能比分分布</h2>
+          <div class="scores-grid" id="scores-grid"></div>
+        </div>
+
+        <!-- 赔率对比区域 -->
+        <div class="info-section" id="odds-section">
+          <h2>市场赔率 <span class="api-source-badge api-source-live">Bet365</span></h2>
+          <div id="odds-content">
+            <div class="loading-sm">加载赔率数据...</div>
+          </div>
+        </div>
+
+        <!-- ML 引擎额外信息 -->
+        <div class="info-section" id="ml-info-section" style="display:none">
+          <h2>ML 引擎详情 <span class="engine-badge" id="ml-version-badge">v1</span></h2>
+          <div class="ml-grid">
+            <!-- TOP 5 比分 -->
+            <div class="ml-card" id="ml-top-scores">
+              <div class="ml-card-title">最可能比分</div>
+              <div class="ml-scores-list" id="ml-scores-list"></div>
+            </div>
+            <!-- 大小球 -->
+            <div class="ml-card" id="ml-over-under">
+              <div class="ml-card-title">大小球</div>
+              <div class="ml-ou-grid" id="ml-ou-grid">
+                <div class="ou-item"><span class="ou-label">O2.5</span><span class="ou-val" id="ou-25-over">-%</span></div>
+                <div class="ou-item"><span class="ou-label">U2.5</span><span class="ou-val" id="ou-25-under">-%</span></div>
+                <div class="ou-item"><span class="ou-label">O3.5</span><span class="ou-val" id="ou-35-over">-%</span></div>
+                <div class="ou-item"><span class="ou-label">U3.5</span><span class="ou-val" id="ou-35-under">-%</span></div>
+                <div class="ou-item ou-total"><span class="ou-label">预期总进球</span><span class="ou-val" id="ou-expected-total">-</span></div>
+              </div>
+            </div>
+            <!-- BTTS -->
+            <div class="ml-card" id="ml-btts">
+              <div class="ml-card-title">双方进球 (BTTS)</div>
+              <div class="btts-bars">
+                <div class="btts-row"><span>是</span><div class="btts-track"><div class="btts-fill btts-yes" id="btts-yes-bar"></div></div><span class="btts-pct" id="btts-yes-pct">-%</span></div>
+                <div class="btts-row"><span>否</span><div class="btts-track"><div class="btts-fill btts-no" id="btts-no-bar"></div></div><span class="btts-pct" id="btts-no-pct">-%</span></div>
+              </div>
+            </div>
+            <!-- 风险评估 -->
+            <div class="ml-card" id="ml-risk">
+              <div class="ml-card-title">风险评估</div>
+              <div class="risk-display">
+                <span class="risk-badge" id="risk-level-badge">-</span>
+                <span class="risk-score" id="risk-score-text">-</span>
+                <p class="risk-desc" id="risk-description">-</p>
+              </div>
+            </div>
+            <!-- 覆盖度 -->
+            <div class="ml-card" id="ml-coverage">
+              <div class="ml-card-title">覆盖度</div>
+              <div class="cov-display">
+                <span class="cov-pct" id="coverage-pct">-%</span>
+                <span class="cov-label">TOP 3 比分覆盖</span>
+                <span class="cov-pct cov-small" id="coverage-top3">-%</span>
+              </div>
+            </div>
+            <!-- 模型元数据 -->
+            <div class="ml-card ml-card-wide" id="ml-meta">
+              <div class="ml-card-title">模型元数据</div>
+              <div class="meta-grid">
+                <div class="meta-item"><span class="meta-label">引擎</span><span class="meta-val" id="meta-engine">ml-v1</span></div>
+                <div class="meta-item"><span class="meta-label">置信度</span><span class="meta-val" id="meta-confidence">-</span></div>
+                <div class="meta-item"><span class="meta-label">特征数</span><span class="meta-val" id="meta-features">-</span></div>
+                <div class="meta-item"><span class="meta-label">校准</span><span class="meta-val" id="meta-calibrated">-</span></div>
+                <div class="meta-item"><span class="meta-label">集成权重</span><span class="meta-val" id="meta-ensemble-weights" style="display:none">-</span></div>
+                <div class="meta-item"><span class="meta-label"></span><span class="meta-val" id="meta-weights-note" style="display:none"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 进度指示器 -->
+        <div class="info-section" id="progress-section" style="display:none">
+          <h2>比赛进度</h2>
+          <div class="tournament-progress">
+            <div class="progress-step" id="p-stage">小组赛</div>
+            <div class="progress-arrow">→</div>
+            <div class="progress-step" id="p-32">32强</div>
+            <div class="progress-arrow">→</div>
+            <div class="progress-step" id="p-16">16强</div>
+            <div class="progress-arrow">→</div>
+            <div class="progress-step" id="p-qf">8强</div>
+            <div class="progress-arrow">→</div>
+            <div class="progress-step" id="p-sf">4强</div>
+            <div class="progress-arrow">→</div>
+            <div class="progress-step" id="p-final">决赛</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 市场分歧（客户端懒加载） -->
+    <div id="tab-divergence" class="tab-content" data-lazy="/api/odds/fusion/match/<%= team1Slug %>/<%= team2Slug %>">
+      <div class="lazy-placeholder">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line skeleton-line-short"></div>
+        <p class="loading-text">加载市场分歧数据...</p>
+      </div>
+    </div>
+
+    <!-- Tab: 数据详情（客户端懒加载） -->
+    <div id="tab-data" class="tab-content" data-lazy="/api/matches/detail/<%= team1Slug %>/<%= team2Slug %>">
+      <div class="lazy-placeholder">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line skeleton-line-short"></div>
+        <p class="loading-text">加载数据详情...</p>
       </div>
     </div>
 
@@ -224,6 +248,10 @@
   const t1 = '<%= team1Slug %>';
   const t2 = '<%= team2Slug %>';
   let currentEngine = 'elo';
+  document.body.classList.add('page-match-detail');
+
+  // ===== Phase 10 Task D: Tab 懒加载缓存 =====
+  const lazyCache = {};
 
   // SVG 旗帜渲染
   function flagHtml(info, size) {
@@ -250,12 +278,21 @@
     document.getElementById('odds-content').innerHTML = '<div class="loading-sm">加载赔率数据...</div>';
 
     try {
-      const [matchData, compareData] = await Promise.all([
+      const feed = await Promise.all([
         cachedFetch(`/api/matches/match/${t1}/${t2}?engine=${engine}`, { force }),
-        cachedFetch(`/api/matches/compare/${t1}/${t2}?scores=true`, { force }),
+        cachedFetch(`/api/matches/compare/${t1}/${t2}?scores=true`, { force }).catch(function() { return {}; }),
       ]);
+      var matchData = feed[0], compareData = feed[1] || {};
 
       document.getElementById('loading-spinner').style.display = 'none';
+
+      // 后端返回了错误对象而非预测数据
+      if (!matchData || !matchData.prediction) {
+        document.getElementById('error-message').querySelector('p').textContent = matchData && matchData.error ? '⚠️ ' + matchData.error : '⚠️ 未找到该场比赛信息';
+        document.getElementById('error-message').style.display = 'block';
+        console.error('预测数据返回异常:', matchData);
+        return;
+      }
       const pred = matchData.prediction;
       const match = matchData.match;
 
@@ -280,6 +317,23 @@
 
       document.getElementById('prediction-detail').style.display = 'block';
 
+      // 降级提示
+      if (pred._degraded) {
+        var degBanner = document.getElementById('degraded-banner');
+        if (!degBanner) {
+          degBanner = document.createElement('div');
+          degBanner.id = 'degraded-banner';
+          degBanner.className = 'degrade-banner';
+          degBanner.style.marginBottom = '12px';
+          document.getElementById('prediction-detail').insertBefore(degBanner, document.getElementById('prediction-detail').firstChild);
+        }
+        degBanner.innerHTML = '⚠️ ML 模型暂时不可用，已降级到 Elo 引擎提供基础预测';
+        degBanner.style.display = 'block';
+      } else {
+        var degBanner = document.getElementById('degraded-banner');
+        if (degBanner) degBanner.style.display = 'none';
+      }
+
       // 概率
       document.getElementById('win-home-pct').textContent = homeProb + '%';
       document.getElementById('draw-pct').textContent = drawProb + '%';
@@ -301,7 +355,8 @@
         document.getElementById('elo-home-score').textContent = pred.home.elo;
         document.getElementById('elo-away-score').textContent = pred.away.elo;
       } else {
-        document.querySelector('.info-section:has(.elo-row)').style.display = 'none';
+        var eloRow = document.querySelector('.info-section .elo-row');
+        if (eloRow) eloRow.closest('.info-section').style.display = 'none';
       }
 
       // 比赛信息
@@ -345,15 +400,23 @@
         });
       }
 
-      // 比分分布 (Elo 的 topScores)
-      if (compareData.topScores && compareData.topScores.length > 0) {
+      // 比分分布（按引擎区分：ML/Ensemble 用预测的 topScores，Elo 用 compareData）
+      var isEl = (engine === 'elo');
+      var scoresData = isEl ? (compareData.topScores || []) : (pred.topScores || []);
+      if (scoresData.length > 0) {
         document.getElementById('scores-section').style.display = 'block';
-        const grid = document.getElementById('scores-grid');
-        compareData.topScores.slice(0, 3).forEach(s => {
-          const div = document.createElement('div');
-          div.className = 'score-chip';
-          div.innerHTML = `<span class="score-result">${s.home}:${s.away}</span><span class="score-prob">${s.prob}%</span>`;
-          grid.appendChild(div);
+        var grid = document.getElementById('scores-grid');
+        grid.innerHTML = '';
+        scoresData.slice(0, 3).forEach(function(s) {
+          var sc = document.createElement('div');
+          sc.className = 'score-chip';
+          if (isEl) {
+            sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + s.prob + '%</span>';
+          } else {
+            var pct = ((s.probability != null ? s.probability : s.prob / 100 || 0) * 100).toFixed(1);
+            sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + pct + '%</span>';
+          }
+          grid.appendChild(sc);
         });
       }
 
@@ -365,9 +428,6 @@
       } else {
         renderOddsTable(oddsData, oc);
       }
-
-      // Phase 7.2: 独立加载融合数据（不阻塞主渲染）
-      loadFusionData(t1, t2, engine);
 
       // ---------- ML 引擎额外信息 ----------
       if (pred.engine && pred.engine !== 'elo') {
@@ -427,10 +487,12 @@
           document.getElementById('meta-calibrated').textContent = pred.metadata.calibrated ? '是' : '否';
         }
         // Phase 6.5a: 权重显示
-        if (pred.metadata?.ensembleWeights) {
-          const ew = pred.metadata.ensembleWeights;
-          document.getElementById('meta-ensemble-weights').textContent =
-            `Elo ${(ew.elo * 100).toFixed(0)}% / ML ${(ew.ml * 100).toFixed(0)}%`;
+        if (pred.metadata && pred.metadata.ensembleWeights) {
+          var ew = pred.metadata.ensembleWeights;
+          var ewText = '';
+          if (ew.elo != null) ewText += 'Elo ' + (ew.elo * 100).toFixed(0) + '%';
+          if (ew.ml != null) ewText += (ewText ? ' / ' : '') + 'ML ' + (ew.ml * 100).toFixed(0) + '%';
+          document.getElementById('meta-ensemble-weights').textContent = ewText;
           document.getElementById('meta-ensemble-weights').style.display = 'block';
           if (pred.metadata.dynamicAdjusted) {
             document.getElementById('meta-weights-note').textContent = '· 动态调整';
@@ -470,51 +532,236 @@
     oc.appendChild(table);
   }
 
-  // Phase 7.2: 融合面板渲染
-  function renderFusionPanel(fd) {
-    const fc = document.getElementById('fusion-content');
-    const f = fd.fusion;
-    const model = fd.model;
-    const sources = fd.sources || [];
+  // ===== Phase 10 Task D: Tab 切换 =====
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.tab-btn[data-tab="' + tabId + '"]').classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    const tabContent = document.getElementById('tab-' + tabId);
+    tabContent.classList.add('active');
 
-    // 构建概率对比行
-    let rowsHtml = '<div class="fusion-compare">';
+    // 懒加载（分歧Tab和数据Tab）
+    const lazyUrl = tabContent.getAttribute('data-lazy');
+    if (lazyUrl && !tabContent.dataset.loaded) {
+      const ck = currentEngine + ':' + tabId;
+      if (lazyCache[ck]) {
+        tabContent.innerHTML = lazyCache[ck];
+        tabContent.dataset.loaded = '1';
+        return;
+      }
+      loadLazyTab(tabContent, lazyUrl, tabId);
+    }
+  }
+
+  async function loadLazyTab(container, url, tabId) {
+    const ck = currentEngine + ':' + tabId;
+    container.innerHTML = '<div class="lazy-placeholder"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div><p class="loading-text">加载中...</p></div>';
+    try {
+      const sep = url.includes('?') ? '&' : '?';
+      const r = await fetch(url + sep + 'engine=' + currentEngine + '&_t=' + Date.now());
+      if (!r.ok) {
+        container.innerHTML = '<div class="lazy-error"><p>⚠️ 服务暂时不可用</p><p class="lazy-error-detail">HTTP ' + r.status + ' - API 限流或超时，请稍后重试</p><button class="btn btn-sm" onclick="switchTab(\'' + tabId + '\')">重试</button></div>';
+        return;
+      }
+      const data = await r.json();
+      if (data.error) {
+        container.innerHTML = '<div class="lazy-error"><p>⚠️ ' + data.error + '</p><p class="lazy-error-detail">数据暂时不可用，请稍后重试或切换引擎</p><button class="btn btn-sm" onclick="switchTab(\'' + tabId + '\')">重试</button></div>';
+        return;
+      }
+      let html;
+      if (tabId === 'divergence') html = renderDivergenceContent(data);
+      else html = renderDataContent(data);
+      container.innerHTML = html;
+      container.dataset.loaded = '1';
+      lazyCache[ck] = html;
+    } catch (e) {
+      container.innerHTML = '<div class="lazy-error"><p>⚠️ 数据加载失败</p><p class="lazy-error-detail">' + e.message + '</p><button class="btn btn-sm" onclick="switchTab(\'' + tabId + '\')">重试</button></div>';
+    }
+  }
+
+  // ===== 市场分歧 Tab 渲染 =====
+  function renderDivergenceContent(data) {
+    var s = data.sources || [];
+    var model = data.model;
+    var f = data.fusion;
+    var html = '<div class="fusion-panel"><h3>信源对比</h3><div class="fusion-compare">';
 
     // 标题行
-    rowsHtml += '<div class="fusion-row fusion-header"><span class="fusion-label">信源</span><span class="fusion-p">主胜</span><span class="fusion-p">平局</span><span class="fusion-p">客胜</span></div>';
+    html += '<div class="fusion-row fusion-header"><span class="fusion-label">信源</span><span class="fusion-p">主胜</span><span class="fusion-p">平局</span><span class="fusion-p">客胜</span></div>';
 
-    // 三源 + 融合
-    const allSources = [
-      { label: '市场 (去抽水)', src: sources.find(s => s.source === 'oddsApi') },
-      { label: 'Polymarket', src: sources.find(s => s.source === 'polymarket') },
+    // 三信源：市场(去抽水) + Polymarket + 模型
+    var allSources = [
+      { label: '市场 (去抽水)', src: s.find(function(si) { return si.source === 'oddsApi'; }) },
+      { label: 'Polymarket', src: s.find(function(si) { return si.source === 'polymarket'; }) },
       { label: '模型', src: model },
     ];
 
-    allSources.forEach(s => {
-      if (!s.src || !s.src.probabilities) return;
-      const p = s.src.probabilities;
-      rowsHtml += `<div class="fusion-row"><span class="fusion-label">${s.label}</span><span class="fusion-p">${(p.homeWin * 100).toFixed(1)}%</span><span class="fusion-p">${(p.draw * 100).toFixed(1)}%</span><span class="fusion-p">${(p.awayWin * 100).toFixed(1)}%</span></div>`;
+    allSources.forEach(function(si) {
+      if (!si.src || !si.src.probabilities) return;
+      var p = si.src.probabilities;
+      html += '<div class="fusion-row"><span class="fusion-label">' + si.label + '</span><span class="fusion-p">' + (p.homeWin * 100).toFixed(1) + '%</span><span class="fusion-p">' + (p.draw * 100).toFixed(1) + '%</span><span class="fusion-p">' + (p.awayWin * 100).toFixed(1) + '%</span></div>';
     });
 
     // 融合结果（高亮）
-    if (f.fused) {
-      rowsHtml += `<div class="fusion-row fusion-result"><span class="fusion-label">🔬 融合</span><span class="fusion-p">${(f.fused.homeWin * 100).toFixed(1)}%</span><span class="fusion-p">${(f.fused.draw * 100).toFixed(1)}%</span><span class="fusion-p">${(f.fused.awayWin * 100).toFixed(1)}%</span></div>`;
+    if (f && f.fused) {
+      html += '<div class="fusion-row fusion-result"><span class="fusion-label">🔬 融合</span><span class="fusion-p">' + (f.fused.homeWin * 100).toFixed(1) + '%</span><span class="fusion-p">' + (f.fused.draw * 100).toFixed(1) + '%</span><span class="fusion-p">' + (f.fused.awayWin * 100).toFixed(1) + '%</span></div>';
     }
-
-    rowsHtml += '</div>';
+    html += '</div>';
 
     // 元数据
-    let metaHtml = '<div class="fusion-meta">';
-    metaHtml += `<span>权重: ${Object.entries(f.weights || {}).filter(([,v]) => v > 0).map(([k,v]) => `${k} ${(v*100).toFixed(0)}%`).join(' | ')}</span>`;
-    if (f.divergence) {
-      const divColor = f.divergence.level === 'high' ? '#ef4444' : f.divergence.level === 'medium' ? '#eab308' : '#22c55e';
-      metaHtml += `<span>分歧: <span style="color:${divColor}">${(f.divergence.maxDivergence * 100).toFixed(1)}%</span> (${f.divergence.level})</span>`;
+    html += '<div class="fusion-meta">';
+    if (f && f.weights) {
+      html += '<span>权重: ' + Object.entries(f.weights).filter(function(kv) { return kv[1] > 0; }).map(function(kv) { return kv[0] + ' ' + (kv[1] * 100).toFixed(0) + '%'; }).join(' | ') + '</span>';
     }
-    metaHtml += `<span>置信度: ${(f.confidence * 100).toFixed(0)}%</span>`;
-    metaHtml += `<span>策略: ${f.strategy}</span>`;
-    metaHtml += '</div>';
+    if (f && f.divergence) {
+      var c = f.divergence.level === 'high' ? '#ef4444' : f.divergence.level === 'medium' ? '#eab308' : '#22c55e';
+      html += '<span>分歧: <span style="color:' + c + '">' + (f.divergence.maxDivergence * 100).toFixed(1) + '%</span> (' + f.divergence.level + ')</span>';
+    }
+    html += '<span>置信度: ' + (f ? (f.confidence * 100).toFixed(0) : '-') + '%</span>';
+    if (f) html += '<span>策略: ' + f.strategy + '</span>';
+    if (f) html += '<span>源数: ' + f.nSources + '</span>';
 
-    fc.innerHTML = rowsHtml + metaHtml;
+    // 细分分歧
+    if (data.marketDivergence) {
+      var d = data.marketDivergence;
+      html += '</div><h3>细分分歧</h3>';
+      html += '<div class="div-grid"><div>主胜差 <span class="div-val">' + (d.maxMinSpread.home * 100).toFixed(1) + '%</span></div>';
+      html += '<div>平局差 <span class="div-val">' + (d.maxMinSpread.draw * 100).toFixed(1) + '%</span></div>';
+      html += '<div>客胜差 <span class="div-val">' + (d.maxMinSpread.away * 100).toFixed(1) + '%</span></div>';
+      html += '<div>源数 <span class="div-val">' + d.nSources + '</span></div></div>';
+    }
+
+    // 博彩公司明细
+    if (data.bookmakerDetails && data.bookmakerDetails.length > 0) {
+      html += '<h3>博彩公司明细</h3><div class="odds-table">';
+      html += '<div class="odds-row odds-header"><span class="odds-bm">公司</span><span class="odds-val odds-h">主</span><span class="odds-val odds-d">平</span><span class="odds-val odds-a">客</span><span class="odds-val odds-m">Margin</span></div>';
+      data.bookmakerDetails.forEach(function(bm) {
+        html += '<div class="odds-row"><span class="odds-bm">' + bm.name + '</span><span class="odds-val odds-h">' + bm.odds.home.toFixed(2) + '</span><span class="odds-val odds-d">' + bm.odds.draw.toFixed(2) + '</span><span class="odds-val odds-a">' + bm.odds.away.toFixed(2) + '</span><span class="odds-val odds-m">' + (bm.margin ? (bm.margin * 100).toFixed(1) + '%' : '-') + '</span></div>';
+      });
+      html += '</div>';
+    }
+
+    if (data.degraded) html += '<div class="degrade-banner">⚠️ 可用赔率源不足，部分数据降级</div>';
+    html += '</div>';
+    return html;
+  }
+
+  // ===== 数据详情 Tab 渲染 =====
+  function renderDataContent(data) {
+    var html = '<div class="data-detail-panel">';
+
+    // 空数据兜底
+    if (!data.expectedGoals && !data.overUnder && !data.btts && !data.topScores) {
+      html += '<div class="empty-state" style="margin-top:20px;"><p>预测详情数据生成中，请稍后重试或切换引擎</p>';
+      html += '<button class="btn" onclick="switchTab(\'data\')">重试</button></div>';
+      html += '</div>';
+      return html;
+    }
+
+    // 引擎和版本徽标
+    var engBadge = data.engine || '-';
+    var engVer = data.engineVersion || '';
+    if (engVer) {
+      if (engVer.indexOf('v') === 0 || engVer.indexOf('V') === 0) engBadge += ' ' + engVer;
+      else engBadge += ' v' + engVer;
+    }
+    html += '<div class="engine-info-bar" style="display:flex;gap:10px;align-items:center;margin-bottom:14px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);">';
+    html += '<span style="font-size:0.78rem;color:var(--text-muted)">当前引擎</span>';
+    html += '<span class="engine-badge">' + engBadge + '</span>';
+    if (data.metadata && data.metadata.directionGate) {
+      var dg = data.metadata.directionGate;
+      var dirLabel = dg.mainDirection === 'home' ? '主胜' : dg.mainDirection === 'draw' ? '平局' : '客胜';
+      html += '<span style="font-size:0.78rem;color:var(--text-muted)">方向门控</span>';
+      html += '<span class="risk-badge risk-' + (dg.mainDirection === 'home' ? 'low' : dg.mainDirection === 'draw' ? 'medium' : 'high') + '" style="font-size:0.72rem;padding:2px 8px;">' + dirLabel + (dg.gated ? ' ✓' : ' ✗') + '</span>';
+    }
+    html += '</div>';
+
+    // 最可能比分（补全）
+    if (data.topScores && data.topScores.length > 0) {
+      html += '<div class="info-section"><h2>最可能比分</h2>';
+      var maxProb = data.topScores[0].probability != null ? data.topScores[0].probability : (data.topScores[0].prob / 100 || 0.01);
+      data.topScores.slice(0, 5).forEach(function(s) {
+        var prob = s.probability != null ? s.probability : (s.prob / 100 || 0);
+        var pct = (prob * 100).toFixed(1);
+        var barW = Math.max((prob / maxProb * 100), 5);
+        html += '<div class="data-score-item">';
+        html += '<span class="score-result">' + s.home + ':' + s.away + '</span>';
+        html += '<div class="ml-score-prob-bar"><div class="ml-score-bar" style="width:' + barW + '%"></div></div>';
+        html += '<span class="score-prob">' + pct + '%</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 预期进球 λ
+    if (data.expectedGoals) {
+      var maxXg = Math.max(data.expectedGoals.home, data.expectedGoals.away, 1.5);
+      html += '<div class="info-section"><h2>预期进球 λ</h2>';
+      html += '<div class="xg-row"><span class="xg-team" style="min-width:70px;">' + (data.homeTeam || '主队') + '</span><div class="xg-track"><div class="xg-fill xg-home-fill" style="width:' + (data.expectedGoals.home / maxXg * 100) + '%"></div></div><span class="xg-value" style="min-width:36px;text-align:right;">' + data.expectedGoals.home.toFixed(2) + '</span></div>';
+      html += '<div class="xg-row"><span class="xg-team" style="min-width:70px;">' + (data.awayTeam || '客队') + '</span><div class="xg-track"><div class="xg-fill xg-away-fill" style="width:' + (data.expectedGoals.away / maxXg * 100) + '%"></div></div><span class="xg-value" style="min-width:36px;text-align:right;">' + data.expectedGoals.away.toFixed(2) + '</span></div>';
+      html += '</div>';
+    }
+
+    // 大小球
+    if (data.overUnder) {
+      html += '<div class="info-section"><h2>大小球</h2><div class="ml-ou-grid">';
+      var ou = data.overUnder;
+      html += '<div class="ou-item"><span class="ou-label">O2.5</span><span class="ou-val">' + (ou.over2_5 * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="ou-item"><span class="ou-label">U2.5</span><span class="ou-val">' + (ou.under2_5 * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="ou-item"><span class="ou-label">O3.5</span><span class="ou-val">' + (ou.over3_5 * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="ou-item"><span class="ou-label">U3.5</span><span class="ou-val">' + (ou.under3_5 * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="ou-item ou-total"><span class="ou-label">预期总进球</span><span class="ou-val" style="font-size:1rem;">' + ou.expectedTotal + '</span></div>';
+      html += '</div></div>';
+    }
+
+    // 双方进球 (BTTS)
+    if (data.btts) {
+      html += '<div class="info-section"><h2>双方进球 (BTTS)</h2><div class="btts-bars">';
+      var by = (data.btts.yes * 100).toFixed(1);
+      var bn = (data.btts.no * 100).toFixed(1);
+      html += '<div class="btts-row"><span>是</span><div class="btts-track"><div class="btts-fill btts-yes" style="width:' + by + '%"></div></div><span class="btts-pct">' + by + '%</span></div>';
+      html += '<div class="btts-row"><span>否</span><div class="btts-track"><div class="btts-fill btts-no" style="width:' + bn + '%"></div></div><span class="btts-pct">' + bn + '%</span></div>';
+      html += '</div></div>';
+    }
+
+    // 风险评估
+    if (data.risk) {
+      var rl = data.risk.level === 'low' ? '低风险' : data.risk.level === 'medium' ? '中风险' : '高风险';
+      html += '<div class="info-section"><h2>风险评估</h2><div class="risk-display"><span class="risk-badge risk-' + data.risk.level + '" style="font-size:0.82rem;padding:4px 12px;">' + rl + '</span>';
+      if (data.risk.score != null) html += '<span class="risk-score" style="margin-left:10px;">评分: <strong>' + data.risk.score + '</strong></span>';
+      if (data.risk.description) html += '<p class="risk-desc" style="margin-top:6px;color:var(--text-muted);font-size:0.82rem;">' + data.risk.description + '</p>';
+      html += '</div></div>';
+    }
+
+    // 引擎信息 + 覆盖度 + 元数据
+    html += '<div class="info-section"><h2>引擎信息</h2><div class="meta-grid">';
+    html += '<div class="meta-item"><span class="meta-label">引擎</span><span class="meta-val">' + (data.engine || '-') + '</span></div>';
+    html += '<div class="meta-item"><span class="meta-label">版本</span><span class="meta-val">' + (data.engineVersion || '-') + '</span></div>';
+    if (data.metadata && data.metadata.confidence != null) {
+      html += '<div class="meta-item"><span class="meta-label">置信度</span><span class="meta-val">' + (data.metadata.confidence * 100).toFixed(1) + '%</span></div>';
+    }
+    if (data.metadata && data.metadata.features) {
+      html += '<div class="meta-item"><span class="meta-label">特征维度</span><span class="meta-val">' + (data.metadata.features.length || data.metadata.features) + '</span></div>';
+    }
+    if (data.metadata && data.metadata.calibrated != null) {
+      html += '<div class="meta-item"><span class="meta-label">概率校准</span><span class="meta-val">' + (data.metadata.calibrated ? '✓ 已校准' : '未校准') + '</span></div>';
+    }
+    if (data.coverage) {
+      html += '<div class="meta-item"><span class="meta-label">总覆盖</span><span class="meta-val">' + data.coverage.percent + '%</span></div>';
+      if (data.coverage.top3ScoreCoverage != null) html += '<div class="meta-item"><span class="meta-label">TOP3覆盖</span><span class="meta-val">' + data.coverage.top3ScoreCoverage + '%</span></div>';
+    }
+    // ensemble 权重（如果有）
+    if (data.metadata && data.metadata.ensembleWeights) {
+      var ew = data.metadata.ensembleWeights;
+      var ewTxt = '';
+      if (ew.elo != null) ewTxt += 'Elo ' + (ew.elo * 100).toFixed(0) + '%';
+      if (ew.ml != null) ewTxt += (ewTxt ? ' / ' : '') + 'ML ' + (ew.ml * 100).toFixed(0) + '%';
+      if (ewTxt) html += '<div class="meta-item"><span class="meta-label">集成权重</span><span class="meta-val">' + ewTxt + '</span></div>';
+    }
+    html += '</div></div>';
+
+    html += '</div>';
+    return html;
   }
 
   // Phase 8.1: 淘汰赛加时/点球分解
@@ -537,29 +784,26 @@
     }
   }
 
-  // Phase 7.2: 独立加载融合数据（超时保护）
-  async function loadFusionData(t1, t2, engine) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 8000);
-      const r = await fetch(`/api/odds/fusion/match/${t1}/${t2}?engine=${engine}`, { signal: controller.signal });
-      clearTimeout(timer);
-      const fusionData = await r.json();
-      if (fusionData.fusion) {
-        document.getElementById('fusion-section').style.display = 'block';
-        renderFusionPanel(fusionData);
-      }
-    } catch(e) {
-      console.warn('融合数据加载失败 (不影响页面):', e.message);
-    }
-  }
-  // 引擎切换
+  // 引擎切换：清除懒加载缓存，重新加载全部数据
   function switchEngine(engine) {
     if (engine === currentEngine) return;
+    // 清除旧引擎的懒加载缓存
+    Object.keys(lazyCache).forEach(function(k) {
+      if (k.indexOf(currentEngine + ':') === 0) delete lazyCache[k];
+    });
+    // 清除懒加载 Tab 的 loaded 标记和内容（重新显示骨架）
+    document.querySelectorAll('.tab-content[data-lazy]').forEach(function(tc) {
+      delete tc.dataset.loaded;
+      tc.innerHTML = '<div class="lazy-placeholder"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div><p class="loading-text">切换引擎，重新加载...</p></div>';
+    });
+    // 重新加载结论 Tab 数据
     loadMatchData(false, engine);
+    // 切换到结论 Tab
+    switchTab('conclusion');
   }
 
   window.cacheUI.onRefresh('match', () => loadMatchData(true, currentEngine));
+  // 初始加载: 默认选中结论 Tab
   loadMatchData(false, 'elo');
   </script>
 </body>
