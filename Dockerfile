@@ -43,6 +43,7 @@ RUN npm ci --omit=dev
 
 # Copy application files
 COPY server/ ./server/
+COPY scripts/ ./scripts/
 COPY public/ ./public/
 COPY views/ ./views/
 COPY data/ ./data/
