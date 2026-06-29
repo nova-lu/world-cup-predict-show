@@ -207,11 +207,24 @@ router.get('/api/odds/fusion/match/:t1/:t2', async (req, res) => {
     const modelSource = modelToSource(modelPrediction);
     const fusionResult = fuse(sources, modelSource);
 
+    // Phase 10: 分歧指标与降级标记
+    const oddsApiSource = sources.find(s => s.source === 'oddsApi');
+    const nOddsSources = sources.filter(s => s.source !== 'model').length;
+    const degraded = nOddsSources < 2; // 不足 2 家赔率源视为降级
+
     res.json({
       match: { t1, t2 },
-      sources: sources.map(s => ({ source: s.source, probabilities: s.probabilities, metadata: s.metadata })),
+      sources: sources.map(s => ({
+        source: s.source,
+        probabilities: s.probabilities,
+        metadata: s.metadata,
+      })),
       model: modelSource,
       fusion: fusionResult,
+      // Phase 10: 扩展字段
+      marketDivergence: oddsApiSource?.metadata?.divergence || null,
+      bookmakerDetails: oddsApiSource?.metadata?.bookmakerDetails || [],
+      degraded,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

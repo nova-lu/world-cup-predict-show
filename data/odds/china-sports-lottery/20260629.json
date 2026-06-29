@@ -1,0 +1,26 @@
+[
+  {
+    "matchId": "周一001",
+    "homeTeam": "阿根廷",
+    "awayTeam": "法国",
+    "date": "2026-06-29",
+    "status": "open",
+    "pools": [
+      { "pool": "HAD", "home": 1.50, "draw": 3.60, "away": 5.00 },
+      { "pool": "HHAD", "home": 2.20, "draw": 3.40, "away": 2.60, "goalLine": -1 },
+      { "pool": "HAFU", "over": 1.80, "under": 1.90, "goalLine": 2.5 }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周一002",
+    "homeTeam": "巴西",
+    "awayTeam": "英格兰",
+    "date": "2026-06-29",
+    "status": "open",
+    "pools": [
+      { "pool": "HAD", "home": 2.10, "draw": 3.20, "away": 3.40 }
+    ],
+    "returnRate": 0.89
+  }
+]

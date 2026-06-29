@@ -46,7 +46,7 @@ const ODDS_TO_MODEL = {
 
 // 推荐使用的博彩公司
 const DEFAULT_BOOKMAKERS = [
-  'Bet365', 'William Hill', 'Ladbrokes', 'Unibet', 'Pinnacle',
+  'Bet365', 'William Hill', 'Ladbrokes', 'Unibet', 'Betano',
   'Bwin ES', 'DafaBet', '10BET', 'Betfair ES'
 ];
 
@@ -163,8 +163,8 @@ async function fetchOddsForMatch(homeSlug, awaySlug) {
   const eventId = await findEventId(homeSlug, awaySlug);
   if (!eventId) return null;
 
-  // 优先请求主流公司，兼顾覆盖与速率限制
-  const preferred = DEFAULT_BOOKMAKERS.slice(0, 5);
+  // 免费版 API 限制最多 2 个 bookmaker/请求
+  const preferred = DEFAULT_BOOKMAKERS.slice(0, 2);
   const data = await request(`/odds?eventId=${eventId}&bookmakers=${encodeURIComponent(preferred.join(','))}`);
   if (!data || !data.bookmakers) return null;
 
@@ -172,6 +172,8 @@ async function fetchOddsForMatch(homeSlug, awaySlug) {
   if (!odds) return null;
 
   const consensus = calculateConsensusProb(odds);
+  const divergence = calculateDivergence(odds);
+  const bookmakerDetails = buildBookmakerDetails(odds);
 
   return {
     found: true,
@@ -180,9 +182,15 @@ async function fetchOddsForMatch(homeSlug, awaySlug) {
     away: data.away,
     status: data.status,
     date: data.date,
-    bookmakers: odds,
+    bookmakers: bookmakerDetails,
     nBookmakers: Object.keys(odds).length,
     consensus,
+    divergence,
+    sourceMetadata: {
+      totalBookmakers: Object.keys(odds).length,
+      availableBookmakers: Object.keys(odds).length,
+      missingBookmakers: DEFAULT_BOOKMAKERS.filter(bm => !odds[bm]),
+    },
     // 最佳赔率（多博彩公司时取最优）
     best: calculateBest(odds),
   };
@@ -370,6 +378,64 @@ function calculateFairProb(odds) {
 }
 
 /**
+ * 构建每家公司明细（含去抽水概率和 margin）
+ */
+function buildBookmakerDetails(oddsByBookmaker) {
+  if (!oddsByBookmaker) return [];
+  return Object.entries(oddsByBookmaker).map(([name, o]) => {
+    const fair = normalizeImpliedFromOdds(o);
+    return {
+      name,
+      odds: { home: o.home, draw: o.draw, away: o.away },
+      fairProb: fair ? { home: fair.home, draw: fair.draw, away: fair.away } : null,
+      margin: fair ? fair.overround : null,
+    };
+  });
+}
+
+/**
+ * 计算市场分歧指标（去抽水后概率的差异分析）
+ */
+function calculateDivergence(oddsByBookmaker) {
+  if (!oddsByBookmaker) return null;
+  const entries = Object.values(oddsByBookmaker);
+  if (entries.length < 2) return null;
+
+  // 计算各家去抽水后概率
+  const fairProbs = entries.map(o => normalizeImpliedFromOdds(o)).filter(Boolean);
+  if (fairProbs.length < 2) return null;
+
+  const n = fairProbs.length;
+
+  // 每项概率的数组
+  const homeArr = fairProbs.map(p => p.home);
+  const drawArr = fairProbs.map(p => p.draw);
+  const awayArr = fairProbs.map(p => p.away);
+
+  // max-min spread
+  const spread = (arr) => +(Math.max(...arr) - Math.min(...arr)).toFixed(4);
+  const maxMinSpread = {
+    home: spread(homeArr),
+    draw: spread(drawArr),
+    away: spread(awayArr),
+  };
+
+  // std dev
+  const std = (arr) => {
+    const mean = arr.reduce((s, v) => s + v, 0) / n;
+    const variance = arr.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+    return +Math.sqrt(variance).toFixed(4);
+  };
+  const stdDev = {
+    home: std(homeArr),
+    draw: std(drawArr),
+    away: std(awayArr),
+  };
+
+  return { maxMinSpread, stdDev, nSources: n };
+}
+
+/**
  * Odds → 隐含概率（简易，不含去抽水）
  */
 function oddsToProb(decimalOdds) {
@@ -403,6 +469,8 @@ export {
   extractOdds,
   extractSimpleOdds,
   calculateFairProb,
+  calculateDivergence,
+  buildBookmakerDetails,
   oddsToProb,
   averageOdds,
   teamToSlug,

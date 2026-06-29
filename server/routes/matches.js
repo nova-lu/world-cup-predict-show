@@ -322,6 +322,135 @@ router.get('/match/:t1/:t2', async (req, res) => {
   res.json({ match: null, prediction, note: '基于实力的纯预测', engine, _cache: { hit: false } });
 });
 
+// Phase 10 Task D: 比赛详情数据接口（供"数据详情"Tab 懒加载使用）
+// 获取预测的通用函数
+async function getPrediction(t1, t2, engine, req) {
+  let prediction;
+  let allMatches = [];
+  try {
+    allMatches = await fetchAllMatches(req.forceRefresh);
+  } catch {}
+
+  const matched = allMatches.find(m =>
+    (m.t1 === t1 && m.t2 === t2) || (m.t1 === t2 && m.t2 === t1)
+  );
+  const isPrimaryOrderHome = matched ? (matched.t1 === t1) : true;
+  const matchDate = matched?.date || new Date().toISOString().split('T')[0];
+  const isKnockout = matched?.stage ? (matched.stage !== 'GROUP_STAGE') : 0;
+
+  const mlContext = {
+    isHome: isPrimaryOrderHome ? 1 : 0,
+    isHost: isPrimaryOrderHome ? (HOST_SLUGS.has(t1) ? 1 : 0) : (HOST_SLUGS.has(t2) ? 1 : 0),
+    isKnockout: isKnockout ? 1 : 0,
+    tournamentWeight: isKnockout ? 1.0 : 0.8,
+    ...buildRecentContext(allMatches, t1, t2, `${matchDate}T00:00:00.000Z`),
+  };
+
+  if (engine === 'ml' || engine === 'ensemble') {
+    const cacheKey = engine === 'ml' ? `ml:pred:${t1}:${t2}` : `ens:pred:${t1}:${t2}`;
+    const cached = cacheGet(cacheKey, { force: req.forceRefresh });
+    if (cached.hit) {
+      prediction = cached.value;
+    } else {
+      const mlMod = await getMLPredictor();
+      if (mlMod) {
+        try {
+          const mlPred = await mlMod.predictMatch(t1, t2, matchDate, { context: mlContext });
+          if (engine === 'ml') {
+            prediction = mlPred;
+          } else {
+            const eloPred = eloPredictMatch(t1, t2, null, req.forceRefresh);
+            normalizePrediction(eloPred, 'elo');
+            prediction = mlMod.ensemblePrediction(eloPred, mlPred);
+          }
+          cacheSet(cacheKey, prediction, { source: 'ml' });
+        } catch (e) {
+          degradeCount++;
+          prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+          prediction._degraded = true;
+        }
+      } else {
+        degradeCount++;
+        prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+        prediction._degraded = true;
+      }
+    }
+  } else {
+    prediction = eloPredictMatch(t1, t2, null, req.forceRefresh);
+  }
+
+  if (prediction && !prediction.home) {
+    prediction.home = { ...getTeamInfo(t1), slug: t1 };
+    prediction.away = { ...getTeamInfo(t2), slug: t2 };
+  }
+
+  if (!prediction.engine || prediction.engine === 'elo') {
+    normalizePrediction(prediction, 'elo');
+  }
+
+  return prediction;
+}
+
+router.get('/detail/:t1/:t2', async (req, res) => {
+  try {
+    const { t1, t2 } = req.params;
+    const engine = req.query.engine || 'elo';
+    const prediction = await getPrediction(t1, t2, engine, req);
+    if (!prediction) return res.json({ error: '无法获取预测' });
+
+    // 对 Elo 引擎补全 overUnder、btts、risk、coverage 等字段
+    const detail = {
+      homeTeam: prediction.homeTeam || t1,
+      awayTeam: prediction.awayTeam || t2,
+      engine: prediction.engine,
+      engineVersion: prediction.engineVersion,
+      expectedGoals: prediction.expectedGoals,
+      topScores: prediction.topScores,
+      _cache: buildCacheMeta(`detail:${t1}:${t2}:${engine}`, true, null),
+    };
+
+    // Elo 引擎没有这些字段，从 expectedGoals 用 Poisson 计算
+    if (!prediction.overUnder && prediction.expectedGoals) {
+      const { expectedGoals } = prediction;
+      const lambda = expectedGoals.home || 1.0;
+      const mu = expectedGoals.away || 1.0;
+      // 计算 Poisson 概率
+      function poissonPmf(k, lam) {
+        return Math.exp(-lam) * Math.pow(lam, k) / (k <= 0 ? 1 : (k === 1 ? 1 : k === 2 ? 2 : k === 3 ? 6 : k === 4 ? 24 : k === 5 ? 120 : 720));
+      }
+      let over25 = 0, under25 = 0, over35 = 0, under35 = 0, bttsYes = 0;
+      for (let a = 0; a <= 8; a++) {
+        for (let b = 0; b <= 8; b++) {
+          const p = poissonPmf(a, lambda) * poissonPmf(b, mu);
+          if (a + b > 2.5) over25 += p; else under25 += p;
+          if (a + b > 3.5) over35 += p; else under35 += p;
+          if (a > 0 && b > 0) bttsYes += p;
+        }
+      }
+      detail.overUnder = {
+        over2_5: +over25.toFixed(3),
+        under2_5: +under25.toFixed(3),
+        over3_5: +over35.toFixed(3),
+        under3_5: +under35.toFixed(3),
+        expectedTotal: +(lambda + mu).toFixed(2),
+      };
+      detail.btts = { yes: +bttsYes.toFixed(3), no: +(1 - bttsYes).toFixed(3) };
+      detail.risk = { level: 'low', score: 0, note: 'Elo 基础' };
+      detail.coverage = { percent: 90, top3ScoreCoverage: 0 };
+    } else {
+      detail.overUnder = prediction.overUnder;
+      detail.btts = prediction.btts;
+      detail.risk = prediction.risk;
+      detail.coverage = prediction.coverage;
+      detail.metadata = prediction.metadata;
+    }
+
+    res.json(detail);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ===== 两队对比 =====
 router.get('/compare/:t1/:t2', async (req, res) => {
   const { compareTeams, getScoreDistribution } = await import('../services/predictionService.js');

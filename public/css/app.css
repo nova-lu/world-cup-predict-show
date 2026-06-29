@@ -825,6 +825,51 @@ a:hover { text-decoration: underline; }
   font-size: 0.82rem;
 }
 
+/* ===== 数据详情 Tab 比分条 ===== */
+.data-score-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  transition: border-color 0.2s;
+}
+.data-score-item:hover {
+  border-color: var(--accent);
+}
+.data-score-item .score-result {
+  min-width: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+  text-align: center;
+}
+.data-score-item .ml-score-prob-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--bg);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 0 4px;
+}
+.data-score-item .ml-score-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #22d3ee);
+  border-radius: 5px;
+  transition: width 0.3s;
+}
+.data-score-item .score-prob {
+  min-width: 48px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
 /* 大小球 */
 .ml-ou-grid {
   display: grid;
@@ -1327,4 +1372,222 @@ a:hover { text-decoration: underline; }
   border-radius: 3px;
   background: linear-gradient(90deg, var(--accent-green), var(--accent));
   min-width: 3px;
+}
+
+/* ===== Phase 10 Task D: Tab 导航 ===== */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.03);
+}
+
+.tab-btn.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+}
+
+/* Tab 内容 */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Tab 导航在移动端的 sticky 支持 */
+@media (max-width: 480px) {
+  .tab-nav {
+    top: 0;
+    margin-left: -12px;
+    margin-right: -12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  .tab-btn {
+    font-size: 0.78rem;
+    padding: 10px 4px;
+  }
+  .tab-btn.active::after {
+    left: 5%;
+    width: 90%;
+  }
+}
+
+/* ===== 骨架屏 & 懒加载占位 ===== */
+.lazy-placeholder {
+  padding: 20px 0;
+  text-align: center;
+}
+
+.skeleton-line {
+  height: 14px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  margin: 10px auto;
+  width: 90%;
+}
+
+.skeleton-line-short {
+  width: 60%;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.loading-text {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin-top: 10px;
+}
+
+.lazy-error {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.lazy-error .btn {
+  margin-top: 12px;
+}
+
+.lazy-error-detail {
+  font-size: 0.75rem;
+  color: var(--warning);
+  margin-top: 8px;
+}
+
+/* 降级标记 */
+.degrade-banner {
+  background: rgba(240, 136, 62, 0.12);
+  border: 1px solid rgba(240, 136, 62, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--warning);
+  margin: 12px 0;
+  text-align: center;
+}
+
+/* ===== 分歧指标布局 ===== */
+.div-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.div-grid > div {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.div-val {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 博彩公司明细在分歧 Tab 中的表格 */
+.fusion-panel h3 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 16px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 数据详情面板间距 */
+.data-detail-panel .info-section {
+  margin-bottom: 14px;
+}
+
+/* 博彩公司表格加 margin 列 */
+.odds-val.odds-m {
+  text-align: right;
+  min-width: 50px;
+  font-size: 0.75rem;
+}
+
+/* ===== 信息密度优化（仅比赛详情页） ===== */
+body.page-match-detail .main-content {
+  max-width: 960px;
+  padding: 16px;
+}
+
+body.page-match-detail .info-section {
+  margin-bottom: 12px;
+}
+
+body.page-match-detail .prediction-summary {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+body.page-match-detail .ml-grid {
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  body.page-match-detail .main-content {
+    padding: 10px;
+  }
+  body.page-match-detail .prediction-summary {
+    gap: 8px;
+  }
+  body.page-match-detail .info-section {
+    margin-bottom: 10px;
+  }
 }

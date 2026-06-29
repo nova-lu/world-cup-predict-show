@@ -23,7 +23,6 @@ export async function fetchAllSources(t1, t2) {
     try {
       const oddsData = await fetchOddsForMatch(t1, t2);
       if (oddsData && oddsData.found && oddsData.consensus) {
-        // 使用去抽水的 consensus 概率
         const c = oddsData.consensus;
         sources.push({
           source: 'oddsApi',
@@ -34,7 +33,9 @@ export async function fetchAllSources(t1, t2) {
           },
           metadata: {
             nBookmakers: oddsData.nBookmakers || 0,
-            overround: oddsData.overround || 0,
+            overround: c.overround || 0,
+            bookmakerDetails: oddsData.bookmakers || [],
+            divergence: oddsData.divergence || null,
           },
         });
       }
@@ -43,14 +44,14 @@ export async function fetchAllSources(t1, t2) {
     }
   }
 
-  // 2. Polymarket
+  // 2. Polymarket (实时 + 缓存回退)
   if (mlConfig.polymarket.enabled) {
     try {
-      // 使用 findMatchingEvent (带别名映射 USA→usa, South Korea→korea-republic)
-      const { findMatchingEvent } = await import('./polymarket.js');
+      const { findMatchingEvent, fetchWorldCupEvents } = await import('./polymarket.js');
       const events = await fetchWorldCupEvents();
       const matched = findMatchingEvent(events, t1, t2);
       if (matched) {
+        const { getPrematch1X2 } = await import('./polymarket.js');
         const pmProb = await getPrematch1X2(matched.slug);
         if (pmProb) {
           sources.push({
@@ -70,7 +71,87 @@ export async function fetchAllSources(t1, t2) {
         }
       }
     } catch (e) {
-      console.warn('[fusion] Polymarket 不可用:', e.message);
+      console.warn('[fusion] Polymarket 实时不可用:', e.message);
+      // 尝试从磁盘缓存读取 Polymarket 数据（备用）
+      try {
+        const { findMatchingEvent } = await import('./polymarket.js');
+        const { readDiskCacheEvents } = await import('./polymarket.js');
+        const diskEvents = readDiskCacheEvents ? readDiskCacheEvents() : null;
+        if (diskEvents && diskEvents.length) {
+          console.log(`[fusion] 使用 Polymarket 磁盘缓存 (${diskEvents.length} 个事件)`);
+          const matched = findMatchingEvent(diskEvents, t1, t2);
+          if (matched) {
+            const { getPrematch1X2 } = await import('./polymarket.js');
+            const pmProb = await getPrematch1X2(matched.slug);
+            if (pmProb) {
+              sources.push({
+                source: 'polymarket',
+                probabilities: {
+                  homeWin: Math.round(pmProb.home * 10000) / 10000,
+                  draw: Math.round(pmProb.draw * 10000) / 10000,
+                  awayWin: Math.round(pmProb.away * 10000) / 10000,
+                },
+                metadata: { overround: pmProb.overround, _cached: true },
+              });
+            }
+          }
+        }
+      } catch (e2) {
+        console.warn('[fusion] Polymarket 缓存回退也失败:', e2.message);
+      }
+    }
+  }
+
+  // 3. 竞彩网离线数据（最后回退）
+  if (sources.length === 0) {
+    try {
+      const mx = await import('./china_sports_lottery.js');
+      if (mx) {
+        const records = mx.loadLatest();
+        if (records && records.length) {
+          // 中文队名映射查找
+          const TEAM_NAME_MAP = {
+            'argentina': ['阿根廷'], 'france': ['法国'], 'brazil': ['巴西'], 'portugal': ['葡萄牙'],
+            'spain': ['西班牙'], 'germany': ['德国'], 'england': ['英格兰'], 'netherlands': ['荷兰'],
+            'italy': ['意大利'], 'croatia': ['克罗地亚'], 'belgium': ['比利时'], 'denmark': ['丹麦'],
+            'switzerland': ['瑞士'], 'uruguay': ['乌拉圭'], 'japan': ['日本'], 'korea-republic': ['韩国', '南韩'],
+            'usa': ['美国'], 'mexico': ['墨西哥'], 'canada': ['加拿大'], 'morocco': ['摩洛哥'],
+            'senegal': ['塞内加尔'], 'nigeria': ['尼日利亚'], 'cameroon': ['喀麦隆'], 'ghana': ['加纳'],
+            'türkiye': ['土耳其'], 'turkey': ['土耳其'], 'poland': ['波兰'], 'serbia': ['塞尔维亚'],
+            'sweden': ['瑞典'], 'norway': ['挪威'], 'ukraine': ['乌克兰'], 'austria': ['奥地利'],
+            'scotland': ['苏格兰'], 'wales': ['威尔士'], 'hungary': ['匈牙利'], 'greece': ['希腊'],
+            'romania': ['罗马尼亚'], 'czech-republic': ['捷克'], 'slovakia': ['斯洛伐克'],
+            'slovenia': ['斯洛文尼亚'], 'australia': ['澳大利亚'], 'iran': ['伊朗'], 'saudi-arabia': ['沙特'],
+            'qatar': ['卡塔尔'], 'united-arab-emirates': ['阿联酋'], 'iraq': ['伊拉克'],
+            'ecuador': ['厄瓜多尔'], 'peru': ['秘鲁'], 'chile': ['智利'], 'colombia': ['哥伦比亚'],
+            'paraguay': ['巴拉圭'], 'venezuela': ['委内瑞拉'], 'costa-rica': ['哥斯达黎加'],
+            'jamaica': ['牙买加'], 'honduras': ['洪都拉斯'], 'panama': ['巴拿马'],
+            'dpr-korea': ['朝鲜'], 'new-zealand': ['新西兰'],
+          };
+          const cnHome = (TEAM_NAME_MAP[t1] || [''])[0];
+          const cnAway = (TEAM_NAME_MAP[t2] || [''])[0];
+          if (cnHome && cnAway) {
+            const match = mx.getMatch(records, cnHome, cnAway);
+            if (match) {
+              const normalized = mx.normalizeToUnified(match);
+              if (normalized) {
+                sources.push({
+                  source: 'china-sports-lottery',
+                  probabilities: {
+                    homeWin: Math.round(normalized.homeWin * 10000) / 10000,
+                    draw: Math.round(normalized.draw * 10000) / 10000,
+                    awayWin: Math.round(normalized.awayWin * 10000) / 10000,
+                  },
+                  metadata: { _cached: true, _offline: true },
+                });
+                console.log(`[fusion] 竞彩网离线数据命中: ${cnHome} vs ${cnAway}`);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[fusion] 竞彩网离线回退失败:', e.message);
     }
   }
 
