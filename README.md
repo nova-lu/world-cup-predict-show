@@ -92,6 +92,7 @@ node server/index.js
 | `GET /api/matches/upcoming` | 即将开赛 |
 | `GET /api/matches/match/:t1/:t2` | 单场预测（Elo + ML + 融合） |
 | `GET /api/matches/compare/:t1/:t2` | 两队对比 |
+| `GET /api/matches/detail/:t1/:t2` | 比赛详情数据（数据 Tab） |
 | `GET /api/matches/knockout-pred/:t1/:t2` | 淘汰赛加时/点球预测 |
 | `GET /api/standings/groups` | 小组积分榜 |
 | `GET /api/standings/advancement` | 晋级概率榜（MC 模拟） |
@@ -101,9 +102,20 @@ node server/index.js
 | `GET /api/knockout/path/:slug` | 单队晋级路径分析 |
 | `GET /api/knockout/opponent-matrix` | 对手分布矩阵 |
 | `GET /api/odds/polymarket` | Polymarket 市场列表 |
+| `GET /api/odds/polymarket/match/:t1/:t2` | 单场 Polymarket 价格 |
+| `GET /api/odds/fusion/match/:t1/:t2` | 单场融合赔率（含分歧指标） |
+| `GET /api/odds/fusion/today` | 今日比赛融合数据 |
+| `GET /api/odds/fusion/status` | 融合引擎状态 |
 | `GET /api/bracket` | 淘汰赛树（含 MC 概率） |
 | `GET /api/ml/status` | ML 引擎状态 |
 | `GET /api/ml/backtest` | ML 回测结果 |
+| `GET /api/ml/freshness` | 数据新鲜度状态 |
+| `GET /api/cache/stats` | 缓存统计 |
+| `GET /api/health` | 健康检查（uptime / 内存 / 环境变量状态） |
+| `GET /api/admin/elo/manifests` | Elo 版本管理 |
+| `GET /api/admin/data/export-features` | 导出特征数据 |
+| `POST /api/admin/odds/china-lottery/fetch` | 从竞彩网抓取赔率 |
+| `GET /api/admin/odds/china-lottery/status` | 竞彩数据状态 |
 
 支持 `?force=1` 参数跳过缓存强制刷新。
 
@@ -122,8 +134,14 @@ node server/index.js
 | `/match/:t1/:t2` | 单场预测详情 |
 | `/team/:slug` | 球队详情（含晋级路径分析） |
 | `/teams` | 球队列表 |
+| `/opponent-matrix` | 淘汰赛对手矩阵 |
 | `/polymarket` | Polymarket 预测市场 |
 | `/online-learning` | 在线学习仪表盘 |
+| `/backtest` | ML 回测看板 |
+| `/blog` | 分析文章 |
+| `/methodology` | 方法论说明 |
+| `/admin` | 管理后台 |
+| `/demo` | 市场演示 |
 
 ---
 

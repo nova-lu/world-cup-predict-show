@@ -4,6 +4,16 @@ function toggleMenu() {
   links.classList.toggle('open');
 }
 
+// 移动端下拉菜单切换（点击展开）
+document.addEventListener('click', function(e) {
+  var toggle = e.target.closest('.nav-dropdown-toggle');
+  if (toggle && window.innerWidth <= 768) {
+    e.preventDefault();
+    var dd = toggle.closest('.nav-dropdown');
+    if (dd) dd.classList.toggle('open');
+  }
+});
+
 // 关闭菜单点击外部
 document.addEventListener('click', function(e) {
   const links = document.querySelector('.nav-links');
