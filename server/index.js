@@ -394,7 +394,7 @@ app.get('/ai-analysis/:t1/:t2', async (req, res) => {
     } catch {}
   }
 
-  console.error('[AI page] initialAnalysis:', typeof initialAnalysis, 'initialDataSources:', typeof initialDataSources);
+  console.log('[AI page] cached:', JSON.stringify(initialAnalysis)?.slice(0, 60), 'dataSources:', initialDataSources ? 'yes' : 'no', 'recentForm:', initialRecentForm ? 'yes' : 'no');
 
   res.render('pages/ai-analysis', {
     title: `AI 分析 · ${t1} vs ${t2}`,
