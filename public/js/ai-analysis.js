@@ -42,6 +42,14 @@
         if (data.dataSources) {
           // 渲染可用的数据源
           if (typeof renderSources === 'function') renderSources(data.dataSources);
+          // 渲染近期表现（如有）
+          if (data.recentForm) renderRecentForm(data.recentForm);
+          // 渲染赛程信息（如有）
+          if (data.matchInfo) renderSchedule(data.matchInfo);
+          // 渲染信源对比表（如有）
+          if (data.sourceProbabilities && Object.keys(data.sourceProbabilities).length > 0) {
+            renderComparison(data.sourceProbabilities);
+          }
           // 显示错误信息在 Hero 区
           showLLMFailed(data.error || 'AI 分析生成失败');
         } else {
