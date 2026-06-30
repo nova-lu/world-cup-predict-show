@@ -8,6 +8,7 @@ import oddsRouter from './routes/odds.js';  // Phase 7: 含 Polymarket + Fusion 
 import bracketRouter from './routes/bracket.js';
 import knockoutRouter from './routes/knockout.js'; // Phase 8.2
 import adminRouter from './routes/admin.js'; // Phase 11: 管理 API
+import aiRouter from './routes/ai.js'; // Phase 14: AI 分析 API
 import { parseForceParam } from './middleware/parseForce.js';
 import { checkDataFreshness } from '../scripts/check_data_freshness.mjs';
 import { getAllTeams, getRatings } from './services/dataService.js';
@@ -39,6 +40,9 @@ app.use('/api/admin', adminRouter); // Phase 11: 管理 API
 
 // Phase 8.2: 淘汰赛过渡管线
 app.use('/api/knockout', knockoutRouter);
+
+// Phase 14: AI 分析 API
+app.use('/api/ai', aiRouter);
 
 // ML 引擎状态
 app.get('/api/ml/status', async (req, res) => {
@@ -218,6 +222,7 @@ app.get('/match/:t1/:t2', async (req, res) => {
     team1Slug: t1,
     team2Slug: t2,
     serverPrediction,
+    aiEnabled: true, // Phase 14: AI 分析功能已配置
   });
 });
 
@@ -358,6 +363,54 @@ app.get('/admin', (req, res) => {
     });
   }
 });
+
+// Phase 14: AI 分析页面
+app.get('/ai-analysis/:t1/:t2', async (req, res) => {
+  const { t1, t2 } = req.params;
+  const aiConfig = (await import('./ai/config.js')).default;
+  const aiEnabled = aiConfig.enabled();
+  // 获取中文队名
+  const { getTeamInfo } = await import('./services/dataService.js');
+  const homeInfo = getTeamInfo(t1);
+  const awayInfo = getTeamInfo(t2);
+
+  // 尝试从缓存读取已有分析结果
+  let initialAnalysis = null;
+  let initialDataSources = null;
+  let initialSourceProbabilities = null;
+  let initialRecentForm = null;
+  let initialMatchInfo = null;
+  if (aiEnabled) {
+    try {
+      const { get } = await import('./middleware/cache.js');
+      const cached = get(`ai:analysis:${t1}:${t2}`, { ttlMs: aiConfig.get().cacheTtl * 1000 });
+      if (cached.hit) {
+        initialAnalysis = cached.value.analysis;
+        initialDataSources = cached.value.dataSources;
+        initialSourceProbabilities = cached.value.sourceProbabilities || null;
+        initialRecentForm = cached.value.recentForm || null;
+        initialMatchInfo = cached.value.matchInfo || null;
+      }
+    } catch {}
+  }
+
+  console.error('[AI page] initialAnalysis:', typeof initialAnalysis, 'initialDataSources:', typeof initialDataSources);
+
+  res.render('pages/ai-analysis', {
+    title: `AI 分析 · ${t1} vs ${t2}`,
+    page: 'ai-analysis',
+    team1Slug: t1,
+    team2Slug: t2,
+    team1Name: homeInfo?.displayName || homeInfo?.name || t1,
+    team2Name: awayInfo?.displayName || awayInfo?.name || t2,
+    aiEnabled,
+    initialAnalysis: JSON.stringify(initialAnalysis),
+    initialDataSources: JSON.stringify(initialDataSources),
+    initialSourceProbabilities: JSON.stringify(initialSourceProbabilities),
+    initialRecentForm: JSON.stringify(initialRecentForm),
+    initialMatchInfo: JSON.stringify(initialMatchInfo),
+  });
+}); // ← 这里补上了 app.get 的闭合
 
 // 404
 app.use((req, res) => {

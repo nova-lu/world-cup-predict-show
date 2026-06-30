@@ -58,6 +58,13 @@ jobs:
               --restart unless-stopped \
               -p 3000:3000 \
               -v worldcup-data:/app/data \
+              -e AI_API_KEY \
+              -e AI_MODEL \
+              -e AI_API_BASE \
+              -e AI_MAX_TOKENS \
+              -e AI_TEMPERATURE \
+              -e AI_CACHE_TTL \
+              -e AI_TIMEOUT \
               ${IMAGE_URI}
 
             echo "Cleaning up old images..."

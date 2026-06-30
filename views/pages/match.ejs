@@ -244,6 +244,14 @@
 
   <%- include('../partials/footer') %>
 
+  <!-- Phase 14: AI 分析悬浮按钮 -->
+  <% if (aiEnabled) { %>
+  <a href="/ai-analysis/<%= team1Slug %>/<%= team2Slug %>" class="ai-fab" title="AI 智能分析">
+    <span class="ai-fab-icon">🤖</span>
+    <span class="ai-fab-label">AI 分析</span>
+  </a>
+  <% } %>
+
   <script>
   const t1 = '<%= team1Slug %>';
   const t2 = '<%= team2Slug %>';

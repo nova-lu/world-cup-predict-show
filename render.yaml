@@ -16,3 +16,17 @@ services:
         value: 3000
       - key: NODE_ENV
         value: production
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: deepseek-v4-flash
+      - key: AI_API_BASE
+        value: https://api.deepseek.com
+      - key: AI_MAX_TOKENS
+        value: "4096"
+      - key: AI_TEMPERATURE
+        value: "0.3"
+      - key: AI_CACHE_TTL
+        value: "3600"
+      - key: AI_TIMEOUT
+        value: "30000"

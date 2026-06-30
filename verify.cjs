@@ -22,6 +22,7 @@ const ENDPOINTS = [
   { path: '/api/knockout/qualifiers', desc: '出线球队 API' },
   { path: '/api/knockout/third-rank', desc: '第三名 API' },
   { path: '/api/health',  desc: '健康检查 API' },
+  { path: '/api/ai/status',  desc: 'AI 分析状态 API' },
 ];
 
 async function fetch(path) {
