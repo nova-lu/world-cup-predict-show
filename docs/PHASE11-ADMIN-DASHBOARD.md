@@ -24,9 +24,11 @@
 | 元素 | 方案 | 理由 |
 |------|------|------|
 | 路由 | 新建 /admin | 独立管理入口，不干扰用户页面 |
-| 布局 | Tab 导航 (4 Tab) | 功能多但关联性强，Tab 切换免跳转 |
+| 布局 | Tab 导航 (3 Tab) | 功能多但关联性强，Tab 切换免跳转 |
 | 权限 | 无认证 (首版) | 个人工具站，后续可按需加 Basic Auth |
 | 导航 | header 增加"管理"链接 | 同其他页面导航 |
+
+清空缓存按钮置于页面标题右侧。
 
 ### 2.2 Tab 结构
 
@@ -35,7 +37,7 @@
 | elo-ranking | ELO 排名 | /api/teams | 服务端预渲染 |
 | elo-history | 更新历史 | data/elo-manifests/ | 客户端 fetch |
 | data-freshness | 数据新鲜度 | /api/ml/freshness | 客户端 fetch |
-| system | 系统状态 | /api/health + /api/cache/stats | 客户端 fetch |
+| ~~system~~ | ~~系统状态~~ | ~~(已移除，仅保留清空缓存按钮)~~ |
 
 ---
 
@@ -52,9 +54,10 @@ Tab 导航结构:
   <button class="admin-tab active" data-tab="elo-ranking">ELO 排名</button>
   <button class="admin-tab" data-tab="elo-history">更新历史</button>
   <button class="admin-tab" data-tab="data-freshness">数据新鲜度</button>
-  <button class="admin-tab" data-tab="system">系统状态</button>
 </nav>
 ```
+
+清空缓存按钮置于页面标题 `<h1>` 右侧。
 
 服务端路由 (server/index.js):
 
@@ -182,39 +185,11 @@ Body: { manifestId: "elo_update_20260627_120000" }
   - 内容: "数据滞后超过阈值，建议重新训练模型"
   - "建议训练"按钮仅做提示，不触发训练 (同 TASK-A 约定)
 
-涉及文件:
-- views/pages/admin.ejs — data-freshness 区段
-- server/routes/admin.js — POST /api/admin/data/export-features
+| 涉及文件:
+|- views/pages/admin.ejs — data-freshness 区段
+|- server/routes/admin.js — POST /api/admin/data/export-features
 
-### 3.5 Tab: 系统状态 (system)
-
-| 项目 | 描述 |
-|------|------|
-| 数据源 | GET /api/health + GET /api/cache/stats (均已有) |
-| 渲染方式 | 客户端 fetch 渲染信息面板 |
-
-服务器健康度 (从 /api/health):
-
-| 项目 | 字段 |
-|------|------|
-| 运行时间 | uptimeHuman |
-| Node 版本 | node |
-| 平台 | platform |
-| 内存 RSS | memory.rss |
-| 堆使用 | heapUsed / heapTotal |
-| API Key 状态 | footballApi / oddsApi (✅ ❌) |
-
-缓存统计 (从 /api/cache/stats):
-
-| 项目 | 字段 |
-|------|------|
-| 缓存条目数 | entries |
-| 命中率 | hitRate |
-| 内存大小 | size |
-
-操作: "清空缓存" 按钮 → GET /api/cache/stats?force=1 并刷新
-
-### 3.6 Header 导航增加管理链接
+### 3.5 Header 导航增加管理链接
 
 文件: views/partials/header.ejs
 
@@ -229,7 +204,7 @@ Body: { manifestId: "elo_update_20260627_120000" }
 
 | # | 文件 | 类型 | 说明 |
 |---|------|------|------|
-| 1 | views/pages/admin.ejs | 新文件 | 管理页面模板(4 Tab) |
+| 1 | views/pages/admin.ejs | 新文件 | 管理页面模板(3 Tab + 清空缓存) |
 | 2 | server/routes/admin.js | 新文件 | 管理 API 路由 |
 | 3 | server/index.js | 修改 | 增加 /admin 路由 + /api/admin 挂载 |
 | 4 | views/partials/header.ejs | 修改 | 增加"管理"导航链接 |
@@ -249,7 +224,7 @@ Body: { manifestId: "elo_update_20260627_120000" }
 | ELO 回缩 | 回缩后排名变化 | 对比回缩前后数值 |
 | 数据新鲜度展示 | 4 个卡片与 API 一致 | 对比 /api/ml/freshness |
 | 特征导出 | 点击后特征文件更新 | 检查 features_full.csv 时间戳 |
-| 系统状态 | 显示 uptime/内存/cache | 查看 system Tab |
+| 清空缓存 | 点击弹出确认，清空后提示成功 | 点击按钮验证 |
 | 导航 | /admin 链接可见 | 查看页面导航条 |
 
 ---
