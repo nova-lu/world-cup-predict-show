@@ -425,6 +425,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🌍 世界杯观赛数据助手启动: http://localhost:${PORT}`);
+  console.log(`   AI 分析引擎: ${process.env.AI_API_KEY ? '✅ 已配置' : '⚠️ AI_API_KEY 未设置（LLM推理不可用，数据聚合仍正常）'}`);
   console.log(`   API 文档:`);
   console.log(`   GET /api/matches/today        今日赛事`);
   console.log(`   GET /api/matches/schedule      赛程列表`);

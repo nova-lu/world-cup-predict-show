@@ -23,14 +23,6 @@ router.post('/analyze/:t1/:t2', async (req, res) => {
     return res.status(400).json({ success: false, error: '缺少队伍参数' });
   }
 
-  if (!aiConfig.enabled()) {
-    return res.json({
-      success: false,
-      error: 'AI_API_KEY 未配置，请在 .env 中设置 AI_API_KEY',
-      actionable: true,
-    });
-  }
-
   // 检查缓存
   const cacheKey = `ai:analysis:${t1}:${t2}`;
   const cached = get(cacheKey, { force: !!force, ttlMs: aiConfig.get().cacheTtl * 1000 });
@@ -118,6 +110,20 @@ router.post('/analyze/:t1/:t2', async (req, res) => {
       home: { gf: homeGf, ga: homeGa, formStr: aggregated.recentForm.home.form || '' },
       away: { gf: awayGf, ga: awayGa, formStr: aggregated.recentForm.away.form || '' },
     };
+  }
+
+  // ===== LLM 密钥检查（不阻塞数据聚合） =====
+  if (!aiConfig.enabled()) {
+    console.log('[AI route] AI_API_KEY 未配置，返回数据聚合结果（不含 LLM 推理）');
+    return res.json({
+      success: false,
+      error: 'AI 推理功能未启用（AI_API_KEY 未配置），已展示数据源聚合结果',
+      dataSources,
+      sourceProbabilities: Object.keys(sourceProbabilities).length > 0 ? sourceProbabilities : undefined,
+      recentForm,
+      matchInfo: aggregated.matchInfo || null,
+      actionable: true,
+    });
   }
 
   // ===== 再调 LLM（可能失败，失败时仍返回 dataSources） =====
