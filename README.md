@@ -12,6 +12,7 @@
 
 | 功能 | 说明 |
 |------|------|
+| **🤖 AI 分析** | AI 自动分析比赛（整合8数据源 + LLM推理） |
 | **📊 小组积分榜** | 实时积分 / 净胜球 / 晋级概率，中文队名 + SVG 国旗 |
 | **🏆 淘汰赛仪表盘** | 晋级树 / 32 强队伍 / 第三名竞争势态 / 比赛列表 |
 | **🤖 双引擎预测** | Elo 评分系统 + ML 模型（XGBoost / RF 校准）+ 集成学习 |
@@ -92,6 +93,7 @@ node server/index.js
 | `GET /api/matches/upcoming` | 即将开赛 |
 | `GET /api/matches/match/:t1/:t2` | 单场预测（Elo + ML + 融合） |
 | `GET /api/matches/compare/:t1/:t2` | 两队对比 |
+| `GET /api/matches/detail/:t1/:t2` | 比赛详情数据（数据 Tab） |
 | `GET /api/matches/knockout-pred/:t1/:t2` | 淘汰赛加时/点球预测 |
 | `GET /api/standings/groups` | 小组积分榜 |
 | `GET /api/standings/advancement` | 晋级概率榜（MC 模拟） |
@@ -101,9 +103,22 @@ node server/index.js
 | `GET /api/knockout/path/:slug` | 单队晋级路径分析 |
 | `GET /api/knockout/opponent-matrix` | 对手分布矩阵 |
 | `GET /api/odds/polymarket` | Polymarket 市场列表 |
+| `GET /api/odds/polymarket/match/:t1/:t2` | 单场 Polymarket 价格 |
+| `GET /api/odds/fusion/match/:t1/:t2` | 单场融合赔率（含分歧指标） |
+| `GET /api/odds/fusion/today` | 今日比赛融合数据 |
+| `GET /api/odds/fusion/status` | 融合引擎状态 |
 | `GET /api/bracket` | 淘汰赛树（含 MC 概率） |
 | `GET /api/ml/status` | ML 引擎状态 |
 | `GET /api/ml/backtest` | ML 回测结果 |
+| `GET /api/ml/freshness` | 数据新鲜度状态 |
+| `GET /api/cache/stats` | 缓存统计 |
+| `POST /api/ai/analyze/:t1/:t2` | AI 分析比赛（8数据源聚合 + LLM推理） |
+| `GET /api/ai/status` | AI 分析引擎状态 |
+| `GET /api/health` | 健康检查（uptime / 内存 / 环境变量状态） |
+| `GET /api/admin/elo/manifests` | Elo 版本管理 |
+| `GET /api/admin/data/export-features` | 导出特征数据 |
+| `POST /api/admin/odds/china-lottery/fetch` | 从竞彩网抓取赔率 |
+| `GET /api/admin/odds/china-lottery/status` | 竞彩数据状态 |
 
 支持 `?force=1` 参数跳过缓存强制刷新。
 
@@ -122,8 +137,15 @@ node server/index.js
 | `/match/:t1/:t2` | 单场预测详情 |
 | `/team/:slug` | 球队详情（含晋级路径分析） |
 | `/teams` | 球队列表 |
+| `/opponent-matrix` | 淘汰赛对手矩阵 |
 | `/polymarket` | Polymarket 预测市场 |
 | `/online-learning` | 在线学习仪表盘 |
+| `/backtest` | ML 回测看板 |
+| `/blog` | 分析文章 |
+| `/methodology` | 方法论说明 |
+| `/admin` | 管理后台 |
+| `/demo` | 市场演示 |
+| `/ai-analysis/:t1/:t2` | AI 分析详情页（8数据源聚合 + LLM推理） |
 
 ---
 
@@ -151,6 +173,7 @@ worldcup_new_2026/
 ├── server/                 # Node.js 后端
 │   ├── index.js            # Express 入口 + 健康检查
 │   ├── routes/             # API 路由
+│   │   ├── ai.js           # AI 分析路由（Phase 14）
 │   │   ├── matches.js      # 比赛预测 / 对比
 │   │   ├── standings.js    # 积分榜 + 晋级概率
 │   │   ├── teams.js        # 球队信息
@@ -171,8 +194,14 @@ worldcup_new_2026/
 │       ├── features/       # 特征工程
 │       ├── odds/           # Polymarket 集成
 │       └── models/         # 训练好的模型文件
+│   └── ai/                 # AI 分析引擎（Phase 14）
+│       ├── config.js       # 配置（API Key / 模型选择）
+│       ├── data-aggregator.js  # 8 数据源聚合
+│       ├── prompt-builder.js   # LLM Prompt 构造
+│       ├── llm-client.js       # LLM 调用客户端
 ├── views/                  # EJS 模板
 │   ├── pages/              # 页面模板
+│   │   └── ai-analysis.ejs # AI 分析详情页（Phase 14）
 │   └── partials/           # 公共组件
 ├── public/                 # 静态资源
 │   ├── css/

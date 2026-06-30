@@ -244,9 +244,19 @@
 
   <%- include('../partials/footer') %>
 
+  <!-- Phase 14: AI 分析悬浮按钮 -->
+  <% if (aiEnabled) { %>
+  <a href="/ai-analysis/<%= team1Slug %>/<%= team2Slug %>" class="ai-fab" title="AI 智能分析">
+    <span class="ai-fab-icon">🤖</span>
+    <span class="ai-fab-label">AI 分析</span>
+  </a>
+  <% } %>
+
   <script>
   const t1 = '<%= team1Slug %>';
   const t2 = '<%= team2Slug %>';
+  // Phase 13: 服务端预渲染数据（首屏直接使用，跳过 fetch）
+  const serverPred = <%- JSON.stringify(serverPrediction || null) %>;
   let currentEngine = 'elo';
   document.body.classList.add('page-match-detail');
 
@@ -265,8 +275,119 @@
     return '<span class="team-flag flag-' + size + '"><span class="flag-fallback">' + emoji + '</span></span>';
   }
 
+  // Phase 13: 服务端预渲染 → 直接填充 DOM（首屏零延迟）
+  function populateFromServerPred(sp) {
+    document.getElementById('loading-spinner').style.display = 'none';
+    document.getElementById('error-message').style.display = 'none';
+    document.getElementById('prediction-detail').style.display = 'block';
+    document.querySelectorAll('.engine-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.engine-tab[data-engine="elo"]').classList.add('active');
+
+    document.getElementById('match-title').innerHTML =
+      flagHtml({ flag: sp.homeFlag, flagPath: sp.homeFlagPath, name: sp.homeName }, 'md') + ' ' + sp.homeName + ' vs ' + sp.awayName + ' ' + flagHtml({ flag: sp.awayFlag, flagPath: sp.awayFlagPath, name: sp.awayName }, 'md');
+
+    // 概率卡片
+    document.getElementById('win-home-pct').textContent = sp.homeProb + '%';
+    document.getElementById('draw-pct').textContent = sp.drawProb + '%';
+    document.getElementById('win-away-pct').textContent = sp.awayProb + '%';
+
+    // xG
+    document.getElementById('xg-home-name').textContent = sp.homeName;
+    document.getElementById('xg-away-name').textContent = sp.awayName;
+    document.getElementById('xg-home-val').textContent = sp.xgHome;
+    document.getElementById('xg-away-val').textContent = sp.xgAway;
+    const maxXg = Math.max(sp.xgHome, sp.xgAway, 1.5);
+    document.getElementById('xg-home-bar').style.width = (sp.xgHome / maxXg * 100) + '%';
+    document.getElementById('xg-away-bar').style.width = (sp.xgAway / maxXg * 100) + '%';
+
+    // Elo
+    document.getElementById('elo-home-name').textContent = sp.homeName;
+    document.getElementById('elo-away-name').textContent = sp.awayName;
+    document.getElementById('elo-home-score').textContent = sp.homeElo;
+    document.getElementById('elo-away-score').textContent = sp.awayElo;
+
+    // Top 比分
+    if (sp.topScores && sp.topScores.length > 0) {
+      document.getElementById('scores-section').style.display = 'block';
+      var grid = document.getElementById('scores-grid');
+      grid.innerHTML = '';
+      sp.topScores.forEach(function(s) {
+        var sc = document.createElement('div');
+        sc.className = 'score-chip';
+        sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + s.prob + '%</span>';
+        grid.appendChild(sc);
+      });
+    }
+
+    // 风险评估
+    if (sp.riskLevel) {
+      var badge = document.getElementById('risk-level-badge');
+      var riskText = sp.riskLevel === 'low' ? '低风险' : sp.riskLevel === 'medium' ? '中风险' : '高风险';
+      badge.textContent = riskText;
+      badge.className = 'risk-badge risk-' + sp.riskLevel;
+    }
+
+    // 清除降级提示
+    var degBanner = document.getElementById('degraded-banner');
+    if (degBanner) degBanner.style.display = 'none';
+
+    currentEngine = 'elo';
+  }
+
+  // Phase 13: 异步加载次要数据（赔率、比赛信息）— 不阻塞首屏
+  var _secLoaded = false;
+  async function loadSecondaryData(force) {
+    if (_secLoaded && !force) return;
+    _secLoaded = true;
+    try {
+      // 比赛信息
+      var matchInfo = await cachedFetch('/api/matches/match/' + t1 + '/' + t2 + '?engine=elo', { force: false }).catch(function() { return null; });
+      if (matchInfo && matchInfo.match) {
+        var match = matchInfo.match;
+        document.getElementById('match-info-bar').style.display = 'block';
+        var stageLabels = { 'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强','QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛','THIRD_PLACE':'季军赛' };
+        document.getElementById('mi-stage').textContent = stageLabels[match.stage] || match.stage || '-';
+        document.getElementById('mi-group').textContent = match.group ? match.group + '组' : '-';
+        document.getElementById('mi-matchday').textContent = match.matchday ? '第' + match.matchday + '轮' : (match.stage && match.stage !== 'GROUP_STAGE' ? stageLabels[match.stage] || '' : '-');
+        if (match.utcDate) {
+          var d = new Date(match.utcDate);
+          var bj = new Date(d.getTime() + 8 * 3600000);
+          var pad = function(n) { return String(n).padStart(2, '0'); };
+          document.getElementById('mi-time').textContent = bj.getUTCFullYear() + '-' + pad(bj.getUTCMonth()+1) + '-' + pad(bj.getUTCDate()) + ' ' + pad(bj.getUTCHours()) + ':' + pad(bj.getUTCMinutes());
+        }
+        document.getElementById('mi-status').textContent = match.status === 'FT' ? '已完赛' : match.status === 'TIMED' ? '未开赛' : match.status;
+        document.getElementById('mi-score').textContent = (match.g1 != null) ? match.g1 + ' : ' + match.g2 : '-';
+        document.getElementById('progress-section').style.display = 'block';
+        var stageOrder = ['GROUP_STAGE','LAST_32','LAST_16','QUARTER_FINALS','SEMI_FINALS','FINAL'];
+        var currentIdx = stageOrder.indexOf(match.stage);
+        document.querySelectorAll('.progress-step').forEach(function(el, i) {
+          if (i < currentIdx) el.classList.add('completed');
+          else if (i === currentIdx) el.classList.add('current');
+          else el.classList.add('upcoming');
+        });
+      }
+
+      // 赔率（静默加载）
+      var oddsData = await cachedFetch('/api/odds/match/' + t1 + '/' + t2, { force: false }).catch(function() { return null; });
+      if (oddsData && oddsData.found && oddsData.bookmakers) {
+        renderOddsTable(oddsData, document.getElementById('odds-content'));
+      }
+    } catch (e) {
+      // 静默失败，不影响首屏
+    }
+  }
+
   async function loadMatchData(force, engine) {
     engine = engine || currentEngine;
+
+    // Phase 13: 服务端预渲染 → 首屏直接使用 Elo 数据，跳过 fetch
+    if (serverPred && engine === 'elo' && !force) {
+      populateFromServerPred(serverPred);
+      // 仅异步加载次要数据（赔率、比赛信息）
+      loadSecondaryData(force);
+      return;
+    }
+
     if (force) {
       document.getElementById('loading-spinner').style.display = 'block';
     }

@@ -240,7 +240,7 @@ Hermes_HOME/skills/worldcup-ai-analysis/
 
 ## DeepSeek (默认)
 - API Base: https://api.deepseek.com
-- 模型: deepseek-chat
+- 模型: deepseek-v4-flash
 - JSON Mode: 支持 response_format: { type: "json_object" }
 - 上下文: 32K/64K tokens
 - 注意: 系统消息中的指令需要比用户消息更简洁

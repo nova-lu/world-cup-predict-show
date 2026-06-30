@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .matrix-container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+    .matrix-header { margin-bottom: 20px; }
+    .matrix-header h1 { font-size: 1.3rem; margin: 0 0 4px; }
+    .matrix-header p { font-size: 0.78rem; color: var(--text-muted); margin: 0; }
+    .matrix-stats { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0 20px; }
+    .matrix-stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; }
+    .matrix-stat-card .stat-val { font-size: 1.4rem; font-weight: 700; }
+    .matrix-stat-card .stat-label { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* 筛选器 */
+    .matrix-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .matrix-filter-btn { padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--text-color); font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+    .matrix-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .matrix-filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* 表格 */
+    .matrix-table-wrap { overflow-x: auto; }
+    .matrix-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .matrix-table th { background: rgba(255,255,255,0.03); padding: 8px 10px; text-align: left; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border); white-space: nowrap; position: sticky; top: 0; z-index: 2; }
+    .matrix-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .matrix-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .matrix-table .team-cell { display: flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; }
+    .matrix-table .team-cell .flag-fallback { font-size: 1.2rem; }
+
+    /* 对手单元格 */
+    .opp-cell { position: relative; }
+    .opp-team { display: flex; align-items: center; gap: 4px; margin: 1px 0; padding: 2px 4px; border-radius: 3px; white-space: nowrap; }
+    .opp-team .opp-flag { font-size: 0.85rem; }
+    .opp-team .opp-name { font-size: 0.72rem; }
+    .opp-prob-bar { display: inline-block; height: 4px; border-radius: 2px; margin-top: 1px; }
+    .opp-prob-bar.fill-high { background: #4caf50; }
+    .opp-prob-bar.fill-med { background: #ff9800; }
+    .opp-prob-bar.fill-low { background: #f44336; }
+    .opp-prob-text { font-size: 0.65rem; color: var(--text-muted); margin-left: 2px; }
+    .opp-multi-toggle { font-size: 0.65rem; color: var(--accent); cursor: pointer; }
+    .opp-multi-toggle:hover { text-decoration: underline; }
+    .opp-more-list { display: none; }
+    .opp-more-list.show { display: block; }
+
+    .round-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 0.65rem; font-weight: 600; }
+    .round-badge.r32 { background: rgba(76,175,80,0.15); color: #4caf50; }
+    .round-badge.r16 { background: rgba(33,150,243,0.15); color: #42a5f5; }
+    .round-badge.qf { background: rgba(255,152,0,0.15); color: #ff9800; }
+    .round-badge.sf { background: rgba(156,39,176,0.15); color: #ab47bc; }
+    .round-badge.final { background: rgba(255,215,0,0.15); color: #ffd700; }
+
+    .loading-matrix { text-align: center; padding: 60px 20px; }
+    .loading-matrix .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-matrix p { color: var(--text-muted); font-size: 0.85rem; }
+
+    .matrix-error { text-align: center; padding: 40px 20px; color: #f44336; }
+    .matrix-error p { margin: 4px 0; }
+    .matrix-error .btn { margin-top: 12px; }
+
+    @media (max-width: 768px) {
+      .matrix-table { font-size: 0.7rem; }
+      .matrix-table th, .matrix-table td { padding: 5px 6px; }
+      .matrix-stats { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="matrix-container">
+    <div class="matrix-header">
+      <h1>🏆 2026世界杯 · 淘汰赛对手矩阵</h1>
+      <p>各队在各轮次中潜在对手及其对阵概率分布</p>
+    </div>
+
+    <div id="matrix-app">
+      <div class="loading-matrix">
+        <div class="spinner"></div>
+        <p>加载淘汰赛数据...</p>
+      </div>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+  const ELO_RATING_CACHE = {};
+
+  async function loadMatrix() {
+    const app = document.getElementById('matrix-app');
+    try {
+      const r = await fetch('/api/knockout/opponent-matrix?_t=' + Date.now());
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+
+      // teams: { slug: { info, elo, slot, path: { round32, round16, ... } } }
+      const teams = data.teams;
+      if (!teams || Object.keys(teams).length === 0) throw new Error('无队伍数据');
+
+      // 缓存队伍信息
+      Object.entries(teams).forEach(([slug, t]) => { ELO_RATING_CACHE[slug] = t.elo; });
+
+      renderMatrix(teams);
+    } catch (e) {
+      app.innerHTML = '<div class="matrix-error"><p>⚠️ 加载失败</p><p class="text-muted">' + e.message + '</p><button class="btn" onclick="loadMatrix()">重试</button></div>';
+    }
+  }
+
+  function getFlagHtml(slug) {
+    if (!slug) return '⚽';
+    // 尝试从全局数据获取旗帜
+    return '<span class="flag-fallback">⚽</span>';
+  }
+
+  function getTeamDisplay(slug, teams) {
+    const t = teams[slug];
+    return t && t.info ? t.info : { name: slug, nameEn: slug };
+  }
+
+  function renderOpponentBar(jointProb) {
+    const pct = (jointProb * 100).toFixed(0);
+    let cls = 'fill-low';
+    if (jointProb >= 0.35) cls = 'fill-high';
+    else if (jointProb >= 0.15) cls = 'fill-med';
+    return '<div class="opp-prob-bar ' + cls + '" style="width:' + pct + '%"></div><span class="opp-prob-text">' + pct + '%</span>';
+  }
+
+  function renderOpponentCell(roundData, slug, teams) {
+    if (!roundData) return '<span class="text-muted">-</span>';
+
+    // R32: 单个对手
+    if (roundData.opponent) {
+      const info = roundData.opponentInfo || getTeamDisplay(roundData.opponent, teams);
+      const winPct = (roundData.winA * 100).toFixed(0);
+      return '<div class="opp-cell">' +
+        '<div class="opp-team"><span class="opp-flag">⚽</span><span class="opp-name">' + (info.name || info.nameEn || roundData.opponent) + '</span></div>' +
+        '<div>' + renderOpponentBar(roundData.winA) + '</div>' +
+        '</div>';
+    }
+
+    // R16+: 多个潜在对手
+    if (roundData.opponents && roundData.opponents.length > 0) {
+      const topN = roundData.opponents.slice(0, 3);
+      const more = roundData.opponents.slice(3);
+      const totalJoint = roundData.totalJointProb || 0;
+
+      var html = '<div class="opp-cell">';
+      topN.forEach(function(o, i) {
+        const info = o.opponentInfo || getTeamDisplay(o.opponent, teams);
+        const condPct = (o.conditionalProb * 100).toFixed(0);
+        html += '<div class="opp-team"><span class="opp-flag">⚽</span><span class="opp-name">' + (info.name || info.nameEn || o.opponent) + '</span><span class="opp-prob-text">' + condPct + '%</span></div>';
+        html += '<div>' + renderOpponentBar(o.jointProb) + '</div>';
+      });
+
+      if (more.length > 0) {
+        var moreId = 'more-' + slug + '-' + (roundData.round || 'round');
+        html += '<span class="opp-multi-toggle" onclick="document.getElementById(\'' + moreId + '\').classList.toggle(\'show\')">+' + more.length + ' 更多</span>';
+        html += '<div class="opp-more-list" id="' + moreId + '">';
+        more.forEach(function(o) {
+          const info = o.opponentInfo || getTeamDisplay(o.opponent, teams);
+          const condPct = (o.conditionalProb * 100).toFixed(0);
+          html += '<div class="opp-team"><span class="opp-flag">⚽</span><span class="opp-name">' + (info.name || info.nameEn || o.opponent) + '</span><span class="opp-prob-text">' + condPct + '%</span></div>';
+        });
+        html += '</div>';
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    return '<span class="text-muted">-</span>';
+  }
+
+  function getRoundBadgeHtml(stage) {
+    const labels = { round32: 'R32', round16: 'R16', quarter: 'QF', semi: 'SF', final: 'Final' };
+    const cls = { round32: 'r32', round16: 'r16', quarter: 'qf', semi: 'sf', final: 'final' };
+    return '<span class="round-badge ' + (cls[stage] || '') + '">' + (labels[stage] || stage) + '</span>';
+  }
+
+  function renderMatrix(teams) {
+    const app = document.getElementById('matrix-app');
+    const slugs = Object.keys(teams).sort(function(a, b) {
+      return (teams[b].elo || 0) - (teams[a].elo || 0);
+    });
+
+    const teamCount = slugs.length;
+    let pairCount = 0;
+    slugs.forEach(function(slug) {
+      var path = teams[slug].path || {};
+      Object.values(path).forEach(function(rd) {
+        if (rd && rd.opponents) pairCount += rd.opponents.length;
+        else if (rd && rd.opponent) pairCount++;
+      });
+    });
+
+    var html = '<div class="matrix-stats">';
+    html += '<div class="matrix-stat-card"><div class="stat-val">' + teamCount + '</div><div class="stat-label">淘汰赛队伍</div></div>';
+    html += '<div class="matrix-stat-card"><div class="stat-val">' + pairCount + '</div><div class="stat-label">覆盖对战组合</div></div>';
+    html += '<div class="matrix-stat-card"><div class="stat-val">' + slugs.filter(function(s) { return teams[s].path && teams[s].path.round32; }).length + '</div><div class="stat-label">已确定R32对手</div></div>';
+    html += '</div>';
+
+    html += '<div class="matrix-table-wrap"><table class="matrix-table">';
+    html += '<thead><tr><th>队伍</th><th>Elo</th><th>R32</th><th>R16</th><th>QF</th><th>SF</th><th>Final</th></tr></thead><tbody>';
+
+    slugs.forEach(function(slug) {
+      var t = teams[slug];
+      var info = t.info || {};
+      var name = info.name || info.nameEn || slug;
+      var path = t.path || {};
+
+      html += '<tr>';
+      html += '<td><div class="team-cell"><span class="flag-fallback">⚽</span>' + name + '</div></td>';
+      html += '<td>' + (t.elo || '-') + '</td>';
+      html += '<td>' + renderOpponentCell(path.round32, slug, teams) + '</td>';
+      html += '<td>' + renderOpponentCell(path.round16, slug, teams) + '</td>';
+      html += '<td>' + renderOpponentCell(path.quarter, slug, teams) + '</td>';
+      html += '<td>' + renderOpponentCell(path.semi, slug, teams) + '</td>';
+      html += '<td>' + renderOpponentCell(path.final, slug, teams) + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    html += '<p class="text-muted" style="margin-top:12px;font-size:0.7rem">概率条 = 对手晋级此轮且你击败该对手的综合概率。对手按条件概率降序排列。</p>';
+
+    app.innerHTML = html;
+  }
+
+  loadMatrix();
+  </script>
+</body>
+</html>

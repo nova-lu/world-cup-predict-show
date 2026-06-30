@@ -8,6 +8,7 @@ import oddsRouter from './routes/odds.js';  // Phase 7: 含 Polymarket + Fusion 
 import bracketRouter from './routes/bracket.js';
 import knockoutRouter from './routes/knockout.js'; // Phase 8.2
 import adminRouter from './routes/admin.js'; // Phase 11: 管理 API
+import aiRouter from './routes/ai.js'; // Phase 14: AI 分析 API
 import { parseForceParam } from './middleware/parseForce.js';
 import { checkDataFreshness } from '../scripts/check_data_freshness.mjs';
 import { getAllTeams, getRatings } from './services/dataService.js';
@@ -39,6 +40,9 @@ app.use('/api/admin', adminRouter); // Phase 11: 管理 API
 
 // Phase 8.2: 淘汰赛过渡管线
 app.use('/api/knockout', knockoutRouter);
+
+// Phase 14: AI 分析 API
+app.use('/api/ai', aiRouter);
 
 // ML 引擎状态
 app.get('/api/ml/status', async (req, res) => {
@@ -175,13 +179,50 @@ app.get('/schedule', (req, res) => {
 });
 
 // 预测详情页
-app.get('/match/:t1/:t2', (req, res) => {
+// Phase 13: 比赛详情页（服务端预渲染 Elo 数据）
+app.get('/match/:t1/:t2', async (req, res) => {
   const { t1, t2 } = req.params;
+  let serverPrediction = null;
+
+  try {
+    const { predictMatch, getScoreDistribution } = await import('./services/predictionService.js');
+    const { getServerTopScores, computeServerRisk } = await import('./ml/inference/server-render.js');
+
+    const eloPred = predictMatch(t1, t2);
+    if (eloPred && eloPred.prob) {
+      const topScores = getServerTopScores(eloPred, 3);
+      const risk = computeServerRisk(eloPred);
+
+      serverPrediction = {
+        homeName: eloPred.home?.name || t1,
+        awayName: eloPred.away?.name || t2,
+        homeFlag: eloPred.home?.flag || '⚽',
+        awayFlag: eloPred.away?.flag || '⚽',
+        homeFlagPath: eloPred.home?.flagPath || null,
+        awayFlagPath: eloPred.away?.flagPath || null,
+        homeProb: eloPred.prob.winHome,
+        drawProb: eloPred.prob.draw,
+        awayProb: eloPred.prob.winAway,
+        homeElo: eloPred.home?.elo || 0,
+        awayElo: eloPred.away?.elo || 0,
+        xgHome: eloPred.expectedGoals?.home,
+        xgAway: eloPred.expectedGoals?.away,
+        topScores: topScores.map(s => ({ home: s.home, away: s.away, prob: +(s.prob || 0).toFixed(1) })),
+        riskLevel: risk,
+      };
+    }
+  } catch (e) {
+    console.warn('[server-render] 预渲染失败:', e.message);
+    // 不阻塞页面加载，客户端 JS 会兜底
+  }
+
   res.render('pages/match', {
     title: `${t1} vs ${t2} · 赛前预测`,
     page: 'match-detail',
     team1Slug: t1,
     team2Slug: t2,
+    serverPrediction,
+    aiEnabled: true, // Phase 14: AI 分析功能已配置
   });
 });
 
@@ -190,6 +231,14 @@ app.get('/standings', (req, res) => {
   res.render('pages/standings', {
     title: '2026世界杯 · 晋级概率榜',
     page: 'standings',
+  });
+});
+
+// Phase 13: 对手矩阵
+app.get('/opponent-matrix', (req, res) => {
+  res.render('pages/opponent-matrix', {
+    title: '2026世界杯 · 淘汰赛对手矩阵',
+    page: 'opponent-matrix',
   });
 });
 
@@ -314,6 +363,54 @@ app.get('/admin', (req, res) => {
     });
   }
 });
+
+// Phase 14: AI 分析页面
+app.get('/ai-analysis/:t1/:t2', async (req, res) => {
+  const { t1, t2 } = req.params;
+  const aiConfig = (await import('./ai/config.js')).default;
+  const aiEnabled = aiConfig.enabled();
+  // 获取中文队名
+  const { getTeamInfo } = await import('./services/dataService.js');
+  const homeInfo = getTeamInfo(t1);
+  const awayInfo = getTeamInfo(t2);
+
+  // 尝试从缓存读取已有分析结果
+  let initialAnalysis = null;
+  let initialDataSources = null;
+  let initialSourceProbabilities = null;
+  let initialRecentForm = null;
+  let initialMatchInfo = null;
+  if (aiEnabled) {
+    try {
+      const { get } = await import('./middleware/cache.js');
+      const cached = get(`ai:analysis:${t1}:${t2}`, { ttlMs: aiConfig.get().cacheTtl * 1000 });
+      if (cached.hit) {
+        initialAnalysis = cached.value.analysis;
+        initialDataSources = cached.value.dataSources;
+        initialSourceProbabilities = cached.value.sourceProbabilities || null;
+        initialRecentForm = cached.value.recentForm || null;
+        initialMatchInfo = cached.value.matchInfo || null;
+      }
+    } catch {}
+  }
+
+  console.error('[AI page] initialAnalysis:', typeof initialAnalysis, 'initialDataSources:', typeof initialDataSources);
+
+  res.render('pages/ai-analysis', {
+    title: `AI 分析 · ${t1} vs ${t2}`,
+    page: 'ai-analysis',
+    team1Slug: t1,
+    team2Slug: t2,
+    team1Name: homeInfo?.displayName || homeInfo?.name || t1,
+    team2Name: awayInfo?.displayName || awayInfo?.name || t2,
+    aiEnabled,
+    initialAnalysis: JSON.stringify(initialAnalysis),
+    initialDataSources: JSON.stringify(initialDataSources),
+    initialSourceProbabilities: JSON.stringify(initialSourceProbabilities),
+    initialRecentForm: JSON.stringify(initialRecentForm),
+    initialMatchInfo: JSON.stringify(initialMatchInfo),
+  });
+}); // ← 这里补上了 app.get 的闭合
 
 // 404
 app.use((req, res) => {

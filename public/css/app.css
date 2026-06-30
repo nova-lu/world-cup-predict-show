@@ -68,6 +68,28 @@ a:hover { text-decoration: underline; }
   text-decoration: none;
 }
 .nav-links a.active { color: var(--accent); }
+
+/* Phase 13 fix: 下拉菜单 */
+.nav-dropdown { position: relative; display: inline-flex; align-items: center; }
+.nav-dropdown-toggle { cursor: pointer; white-space: nowrap; font-size: 0.78rem; }
+.nav-dropdown-menu {
+  display: none; position: absolute; top: 100%; left: 0; min-width: 120px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 4px 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.nav-dropdown-menu a {
+  display: block; padding: 6px 14px; font-size: 0.75rem; color: var(--text-muted);
+  white-space: nowrap; border-radius: 0;
+}
+.nav-dropdown-menu a:hover { background: rgba(255,255,255,0.05); color: var(--text-color); }
+.nav-dropdown-menu a.active { color: var(--accent); }
+.nav-dropdown:hover .nav-dropdown-menu { display: block; }
+.nav-dropdown:hover .nav-dropdown-toggle { color: var(--accent); }
+/* 移动端适配 */
+.nav-links.open .nav-dropdown { flex-direction: column; align-items: stretch; }
+.nav-links.open .nav-dropdown-menu { position: static; box-shadow: none; border: none; padding-left: 16px; display: none; }
+.nav-links.open .nav-dropdown.open .nav-dropdown-menu { display: block; }
+
 .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 1.3rem; cursor: pointer; }
 
 /* ===== Main ===== */
@@ -1116,6 +1138,11 @@ a:hover { text-decoration: underline; }
   /* fallback emoji when SVG not available */
 }
 
+/* ---- AI source status ---- */
+.source-status { font-weight: 600; font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; }
+.source-status.available { color: #16a34a; background: #dcfce7; }
+.source-status.unavailable { color: #dc2626; background: #fef2f2; }
+
 /* 淘汰赛卡片专用旗帜 */
 .bracket-match .team-line .team-flag svg,
 .bracket-match .team-line .team-flag img {
@@ -1934,4 +1961,35 @@ body.page-match-detail .ml-grid {
   height: 16px;
   object-fit: contain;
   border-radius: 2px;
+}
+
+/* ===== Phase 14: AI 分析悬浮按钮 (FAB) ===== */
+.ai-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 28px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+.ai-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+}
+.ai-fab-icon { font-size: 1.3rem; }
+.ai-fab-label { font-size: 0.85rem; font-weight: 600; }
+@media (max-width: 480px) {
+  .ai-fab { bottom: 16px; right: 16px; padding: 10px 16px; }
+  .ai-fab-label { display: none; }
 }

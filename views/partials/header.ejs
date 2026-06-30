@@ -5,13 +5,35 @@
       <a href="/" class="<%= page === 'today' ? 'active' : '' %>">今日</a>
       <a href="/schedule" class="<%= page === 'schedule' ? 'active' : '' %>">赛程</a>
       <a href="/standings" class="<%= page === 'standings' ? 'active' : '' %>">晋级</a>
-      <a href="/simulator" class="<%= page === 'simulator' ? 'active' : '' %>">模拟</a>
       <a href="/knockout" class="<%= page === 'knockout' ? 'active' : '' %>">淘汰赛</a>
-      <a href="/bracket" class="<%= page === 'bracket' ? 'active' : '' %>">模拟器</a>
+      <!-- 模拟下拉 -->
+      <div class="nav-dropdown">
+        <a href="javascript:void(0)" class="nav-dropdown-toggle <%= ['simulator','bracket'].includes(page) ? 'active' : '' %>">模拟 ▾</a>
+        <div class="nav-dropdown-menu">
+          <a href="/simulator" class="<%= page === 'simulator' ? 'active' : '' %>">蒙特卡洛模拟</a>
+          <a href="/bracket" class="<%= page === 'bracket' ? 'active' : '' %>">晋级树全景</a>
+        </div>
+      </div>
       <a href="/teams" class="<%= page === 'teams' ? 'active' : '' %>">球队</a>
-      <a href="/demo" class="<%= page === 'demo' ? 'active' : '' %>">市场</a>
-      <a href="/polymarket" class="<%= page === 'polymarket' ? 'active' : '' %>">🧬 Polymarket</a>
-      <a href="/blog" class="<%= page === 'blog' ? 'active' : '' %>">分析</a>
+      <a href="/opponent-matrix" class="<%= page === 'opponent-matrix' ? 'active' : '' %>">对手矩阵</a>
+      <!-- 市场下拉 -->
+      <div class="nav-dropdown">
+        <a href="javascript:void(0)" class="nav-dropdown-toggle <%= ['demo','polymarket'].includes(page) ? 'active' : '' %>">市场 ▾</a>
+        <div class="nav-dropdown-menu">
+          <a href="/demo" class="<%= page === 'demo' ? 'active' : '' %>">赔率市场</a>
+          <a href="/polymarket" class="<%= page === 'polymarket' ? 'active' : '' %>">Polymarket</a>
+        </div>
+      </div>
+      <!-- 分析下拉 -->
+      <div class="nav-dropdown">
+        <a href="javascript:void(0)" class="nav-dropdown-toggle <%= ['blog','online-learning','backtest','methodology'].includes(page) ? 'active' : '' %>">分析 ▾</a>
+        <div class="nav-dropdown-menu">
+          <a href="/blog" class="<%= page === 'blog' ? 'active' : '' %>">分析文章</a>
+          <a href="/online-learning" class="<%= page === 'online-learning' ? 'active' : '' %>">在线学习</a>
+          <a href="/backtest" class="<%= page === 'backtest' ? 'active' : '' %>">回测</a>
+          <a href="/methodology" class="<%= page === 'methodology' ? 'active' : '' %>">方法论</a>
+        </div>
+      </div>
       <a href="/admin" class="<%= page === 'admin' ? 'active' : '' %>" style="font-weight:600">⚙️ 管理</a>
     </div>
     <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
