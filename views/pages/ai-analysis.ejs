@@ -12,15 +12,6 @@
   <%- include('../partials/header') %>
 
   <main class="ai-analysis-page">
-    <% if (!aiEnabled) { %>
-      <!-- AI 不可用时 -->
-      <div class="ai-disabled-card">
-        <div class="ai-disabled-icon">🤖</div>
-        <h2>AI 智能分析</h2>
-        <p>AI 分析功能未启用。请在 <code>.env</code> 中设置 <code>AI_API_KEY</code>。</p>
-        <a href="/match/<%= team1Slug %>/<%= team2Slug %>" class="btn btn-secondary">返回比赛详情</a>
-      </div>
-    <% } else { %>
       <!-- 主内容区：初始加载状态 -->
       <div id="ai-analysis-loading" class="ai-loading-state" <% if (initialAnalysis) { %>style="display:none"<% } %>>
         <div class="ai-loading-spinner"></div>
@@ -235,7 +226,6 @@
           <button class="btn btn-primary" onclick="refreshAnalysis()">🔄 刷新分析</button>
         </div>
       </div>
-    <% } %>
   </main>
 
   <%- include('../partials/footer') %>
