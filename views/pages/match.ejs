@@ -589,11 +589,12 @@
     // 标题行
     html += '<div class="fusion-row fusion-header"><span class="fusion-label">信源</span><span class="fusion-p">主胜</span><span class="fusion-p">平局</span><span class="fusion-p">客胜</span></div>';
 
-    // 三信源：市场(去抽水) + Polymarket + 模型
+    // 四信源：市场(去抽水) + Polymarket + 模型 + 竞彩网
     var allSources = [
       { label: '市场 (去抽水)', src: s.find(function(si) { return si.source === 'oddsApi'; }) },
       { label: 'Polymarket', src: s.find(function(si) { return si.source === 'polymarket'; }) },
       { label: '模型', src: model },
+      { label: '竞彩网', src: s.find(function(si) { return si.source === 'china-sports-lottery'; }) },
     ];
 
     allSources.forEach(function(si) {
@@ -621,13 +622,25 @@
     if (f) html += '<span>策略: ' + f.strategy + '</span>';
     if (f) html += '<span>源数: ' + f.nSources + '</span>';
 
-    // 细分分歧
+    // 细分分歧（带颜色）
     if (data.marketDivergence) {
       var d = data.marketDivergence;
-      html += '</div><h3>细分分歧</h3>';
-      html += '<div class="div-grid"><div>主胜差 <span class="div-val">' + (d.maxMinSpread.home * 100).toFixed(1) + '%</span></div>';
-      html += '<div>平局差 <span class="div-val">' + (d.maxMinSpread.draw * 100).toFixed(1) + '%</span></div>';
-      html += '<div>客胜差 <span class="div-val">' + (d.maxMinSpread.away * 100).toFixed(1) + '%</span></div>';
+      function divColor(val) {
+        var pct = val * 100;
+        if (pct < 5) return '#22c55e';
+        if (pct < 10) return '#eab308';
+        return '#ef4444';
+      }
+      function divLabel(val) {
+        var pct = val * 100;
+        if (pct < 5) return '低分歧';
+        if (pct < 10) return '中分歧';
+        return '高分歧';
+      }
+      html += '</div><h3>市场分歧指标</h3>';
+      html += '<div class="div-grid"><div>主胜差 <span class="div-val" style="color:' + divColor(d.maxMinSpread.home) + '">' + (d.maxMinSpread.home * 100).toFixed(1) + '%</span> <span class="div-badge" style="background:' + divColor(d.maxMinSpread.home) + '20;color:' + divColor(d.maxMinSpread.home) + ';border:1px solid ' + divColor(d.maxMinSpread.home) + '40">' + divLabel(d.maxMinSpread.home) + '</span></div>';
+      html += '<div>平局差 <span class="div-val" style="color:' + divColor(d.maxMinSpread.draw) + '">' + (d.maxMinSpread.draw * 100).toFixed(1) + '%</span> <span class="div-badge" style="background:' + divColor(d.maxMinSpread.draw) + '20;color:' + divColor(d.maxMinSpread.draw) + ';border:1px solid ' + divColor(d.maxMinSpread.draw) + '40">' + divLabel(d.maxMinSpread.draw) + '</span></div>';
+      html += '<div>客胜差 <span class="div-val" style="color:' + divColor(d.maxMinSpread.away) + '">' + (d.maxMinSpread.away * 100).toFixed(1) + '%</span> <span class="div-badge" style="background:' + divColor(d.maxMinSpread.away) + '20;color:' + divColor(d.maxMinSpread.away) + ';border:1px solid ' + divColor(d.maxMinSpread.away) + '40">' + divLabel(d.maxMinSpread.away) + '</span></div>';
       html += '<div>源数 <span class="div-val">' + d.nSources + '</span></div></div>';
     }
 

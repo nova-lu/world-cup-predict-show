@@ -1,5 +1,5 @@
-import { getTrainingData } from './server/ml/data/loader.js';
-import { buildFeatureBatch, exportToCSV, splitDataset } from './server/ml/data/features.js';
+import { getTrainingData } from '../server/ml/data/loader.js';
+import { buildFeatureBatch, exportToCSV, splitDataset } from '../server/ml/data/features.js';
 
 const matches = getTrainingData({ minYear: 1950, filterLevel: 'P2' });
 console.log('Total matches:', matches.length);

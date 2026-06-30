@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<%- include('../partials/header') %>
+
+<main class="admin-page">
+  <h1>⚙️ 运营管理仪表盘 <button class="admin-btn-sm admin-btn-danger-sm" onclick="flushCache()" style="vertical-align:middle;font-size:0.75rem;padding:3px 10px">🗑️ 清空缓存</button></h1>
+
+  <!-- Tab 导航 -->
+  <nav class="admin-tabs">
+    <button class="admin-tab active" data-tab="elo-ranking">🏆 ELO 排名</button>
+    <button class="admin-tab" data-tab="elo-history">📜 更新历史</button>
+    <button class="admin-tab" data-tab="data-freshness">📊 数据新鲜度</button>
+  </nav>
+
+  <!-- ===== Tab 1: ELO 排名 ===== -->
+  <div class="admin-tab-content active" id="tab-elo-ranking">
+    <%
+      const ranked = teams || [];
+      const maxElo = ranked.length > 0 ? ranked[0].elo : 0;
+      const minElo = ranked.length > 0 ? ranked[ranked.length - 1].elo : 0;
+      const avgElo = ranked.length > 0 ? Math.round(ranked.reduce((s, t) => s + (t.elo || 0), 0) / ranked.length) : 0;
+      const bestTeam = ranked.length > 0 ? ranked[0] : null;
+      const worstTeam = ranked.length > 0 ? ranked[ranked.length - 1] : null;
+    %>
+    <div class="admin-stats-bar">
+      <div class="stat-card"><span class="stat-value"><%= ranked.length %></span><span class="stat-label">队伍数</span></div>
+      <div class="stat-card"><span class="stat-value" style="color:#ffd700"><%= bestTeam ? bestTeam.elo : '-' %></span><span class="stat-label"><%= bestTeam ? bestTeam.nameCn || bestTeam.nameEn : '' %></span></div>
+      <div class="stat-card"><span class="stat-value" style="color:#888"><%= worstTeam ? worstTeam.elo : '-' %></span><span class="stat-label"><%= worstTeam ? worstTeam.nameCn || worstTeam.nameEn : '' %></span></div>
+      <div class="stat-card"><span class="stat-value"><%= avgElo %></span><span class="stat-label">平均分</span></div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table" id="elo-ranking-table">
+        <thead>
+          <tr><th>#</th><th>球队</th><th>ELO 评分</th><th>小组</th></tr>
+        </thead>
+        <tbody>
+          <% ranked.forEach(function(t, i) { %>
+            <% var eloClass = t.elo >= 1950 ? 'elo-gold' : t.elo >= 1850 ? 'elo-green' : t.elo >= 1750 ? '' : 'elo-gray'; %>
+            <tr class="<%= eloClass %>" onclick="location.href='/teams/<%= t.slug %>'" style="cursor:pointer">
+              <td><%= i + 1 %></td>
+              <td class="team-cell">
+                <% if (t.flag) { %><img src="<%= t.flag %>" alt="" class="team-flag-sm"><% } %>
+                <%= t.nameCn || t.nameEn %>
+              </td>
+              <td class="elo-cell"><%= t.elo != null ? t.elo : '-' %></td>
+              <td><%= t.group ? (t.group.replace('Group ', '') + '组') : '-' %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== Tab 2: 更新历史 ===== -->
+  <div class="admin-tab-content" id="tab-elo-history">
+    <div class="admin-toolbar">
+      <button class="admin-btn admin-btn-primary" onclick="triggerEloUpdate()">🔄 执行批量更新</button>
+      <button class="admin-btn admin-btn-warning" onclick="showShrinkModal()">📉 ELO 回缩</button>
+      <span class="admin-btn-hint" id="elo-update-status"></span>
+    </div>
+
+    <div id="elo-history-loading" class="admin-loading">加载更新历史...</div>
+    <div id="elo-history-error" class="admin-error" style="display:none"></div>
+    <div id="elo-history-content" style="display:none">
+      <table class="admin-table">
+        <thead><tr><th>更新时间</th><th>比赛场次</th><th>日期范围</th><th>Top Movers</th><th>操作</th></tr></thead>
+        <tbody id="elo-history-body"></tbody>
+      </table>
+      <p id="elo-history-empty" style="display:none;text-align:center;color:var(--text-muted);padding:40px">暂无更新记录</p>
+    </div>
+  </div>
+
+  <!-- ===== Tab 3: 数据新鲜度 ===== -->
+  <div class="admin-tab-content" id="tab-data-freshness">
+    <div class="freshness-cards" id="freshness-cards">
+      <div class="loading-card"><div class="admin-loading">加载数据新鲜度...</div></div>
+    </div>
+    <div class="admin-toolbar">
+      <button class="admin-btn admin-btn-primary" onclick="exportFeatures()">📦 一键导出特征</button>
+      <button class="admin-btn admin-btn-secondary" onclick="refreshFreshness()">🔄 刷新</button>
+      <span class="admin-btn-hint" id="freshness-status"></span>
+    </div>
+    <div id="freshness-alert" class="admin-alert" style="display:none"></div>
+
+    <!-- 竞彩数据状态 -->
+    <div class="admin-section" style="margin-top:28px;border-top:1px solid var(--border);padding-top:20px">
+      <h3 style="margin:0 0 12px;font-size:0.9rem">🇨🇳 竞彩网数据状态</h3>
+      <div id="china-lottery-status">
+        <div class="admin-loading">加载中...</div>
+      </div>
+      <div class="admin-toolbar" style="margin-top:10px">
+        <button class="admin-btn admin-btn-sm admin-btn-secondary" onclick="loadChinaLotteryStatus()">🔄 刷新</button>
+        <button class="admin-btn admin-btn-sm admin-btn-primary" onclick="fetchChinaLottery()">📥 从竞彩网抓取</button>
+        <span class="admin-btn-hint" id="china-lottery-fetch-status"></span>
+      </div>
+      <p style="font-size:0.74rem;color:var(--text-muted);margin-top:8px">点击「从竞彩网抓取」从中国体育彩票官方 API 获取最新赔率数据</p>
+    </div>
+  </div>
+
+  <!-- ===== Modal: 回缩确认 ===== -->
+  <div class="modal-overlay" id="shrink-modal" style="display:none" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h3>ELO 回缩</h3>
+      <p>输入回缩速率（0.005 ~ 0.05，推荐 0.015）：</p>
+      <input type="number" id="shrink-rate" value="0.015" min="0.005" max="0.05" step="0.001" class="modal-input">
+      <div class="modal-actions">
+        <button class="admin-btn admin-btn-cancel" onclick="closeModal()">取消</button>
+        <button class="admin-btn admin-btn-warning" onclick="confirmShrink()">确认回缩</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: Manifest 详情 ===== -->
+  <div class="modal-overlay" id="manifest-modal" style="display:none" onclick="closeModal(event)">
+    <div class="modal-content modal-lg" onclick="event.stopPropagation()">
+      <h3>📄 Manifest 详情</h3>
+      <div id="manifest-detail-content"></div>
+      <div class="modal-actions">
+        <button class="admin-btn admin-btn-cancel" onclick="closeModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+<script src="/js/admin.js"></script>
+</body>
+</html>

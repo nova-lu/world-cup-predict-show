@@ -10,6 +10,7 @@
 import { fetchOddsForMatch, fetchAllAvailableOdds } from '../../../services/oddsApi.js';
 import { getPrematch1X2, fetchWorldCupEvents } from './polymarket.js';
 import mlConfig from '../../config.js';
+import { slugToCnName } from './china_sports_lottery.js';
 
 /**
  * 获取比赛的所有可用信源概率
@@ -102,57 +103,43 @@ export async function fetchAllSources(t1, t2) {
     }
   }
 
-  // 3. 竞彩网离线数据（最后回退）
-  if (sources.length === 0) {
-    try {
-      const mx = await import('./china_sports_lottery.js');
-      if (mx) {
-        const records = mx.loadLatest();
-        if (records && records.length) {
-          // 中文队名映射查找
-          const TEAM_NAME_MAP = {
-            'argentina': ['阿根廷'], 'france': ['法国'], 'brazil': ['巴西'], 'portugal': ['葡萄牙'],
-            'spain': ['西班牙'], 'germany': ['德国'], 'england': ['英格兰'], 'netherlands': ['荷兰'],
-            'italy': ['意大利'], 'croatia': ['克罗地亚'], 'belgium': ['比利时'], 'denmark': ['丹麦'],
-            'switzerland': ['瑞士'], 'uruguay': ['乌拉圭'], 'japan': ['日本'], 'korea-republic': ['韩国', '南韩'],
-            'usa': ['美国'], 'mexico': ['墨西哥'], 'canada': ['加拿大'], 'morocco': ['摩洛哥'],
-            'senegal': ['塞内加尔'], 'nigeria': ['尼日利亚'], 'cameroon': ['喀麦隆'], 'ghana': ['加纳'],
-            'türkiye': ['土耳其'], 'turkey': ['土耳其'], 'poland': ['波兰'], 'serbia': ['塞尔维亚'],
-            'sweden': ['瑞典'], 'norway': ['挪威'], 'ukraine': ['乌克兰'], 'austria': ['奥地利'],
-            'scotland': ['苏格兰'], 'wales': ['威尔士'], 'hungary': ['匈牙利'], 'greece': ['希腊'],
-            'romania': ['罗马尼亚'], 'czech-republic': ['捷克'], 'slovakia': ['斯洛伐克'],
-            'slovenia': ['斯洛文尼亚'], 'australia': ['澳大利亚'], 'iran': ['伊朗'], 'saudi-arabia': ['沙特'],
-            'qatar': ['卡塔尔'], 'united-arab-emirates': ['阿联酋'], 'iraq': ['伊拉克'],
-            'ecuador': ['厄瓜多尔'], 'peru': ['秘鲁'], 'chile': ['智利'], 'colombia': ['哥伦比亚'],
-            'paraguay': ['巴拉圭'], 'venezuela': ['委内瑞拉'], 'costa-rica': ['哥斯达黎加'],
-            'jamaica': ['牙买加'], 'honduras': ['洪都拉斯'], 'panama': ['巴拿马'],
-            'dpr-korea': ['朝鲜'], 'new-zealand': ['新西兰'],
-          };
-          const cnHome = (TEAM_NAME_MAP[t1] || [''])[0];
-          const cnAway = (TEAM_NAME_MAP[t2] || [''])[0];
-          if (cnHome && cnAway) {
-            const match = mx.getMatch(records, cnHome, cnAway);
-            if (match) {
-              const normalized = mx.normalizeToUnified(match);
-              if (normalized) {
-                sources.push({
-                  source: 'china-sports-lottery',
-                  probabilities: {
-                    homeWin: Math.round(normalized.homeWin * 10000) / 10000,
-                    draw: Math.round(normalized.draw * 10000) / 10000,
-                    awayWin: Math.round(normalized.awayWin * 10000) / 10000,
-                  },
-                  metadata: { _cached: true, _offline: true },
-                });
-                console.log(`[fusion] 竞彩网离线数据命中: ${cnHome} vs ${cnAway}`);
-              }
+  // 3. 竞彩网离线数据（始终尝试加载）
+  // 作为独立信源始终参与，不依赖其他信源是否可用
+  try {
+    const mx = await import('./china_sports_lottery.js');
+    if (mx) {
+      const records = mx.loadLatest();
+      if (records && records.length) {
+        const cnHome = slugToCnName(t1);
+        const cnAway = slugToCnName(t2);
+        if (cnHome && cnAway) {
+          const match = mx.getMatch(records, cnHome, cnAway);
+          if (match) {
+            const normalized = mx.normalizeToUnified(match);
+            if (normalized) {
+              sources.push({
+                source: 'china-sports-lottery',
+                probabilities: {
+                  homeWin: Math.round(normalized.homeWin * 10000) / 10000,
+                  draw: Math.round(normalized.draw * 10000) / 10000,
+                  awayWin: Math.round(normalized.awayWin * 10000) / 10000,
+                },
+                metadata: {
+                  _offline: true,
+                  matchId: normalized.metadata?.matchId || '',
+                  odds: normalized.odds,
+                  allPools: normalized.metadata?.allPools || [],
+                  returnRate: normalized.returnRate,
+                },
+              });
+              console.log(`[fusion] 竞彩网离线数据命中: ${cnHome} vs ${cnAway}`);
             }
           }
         }
       }
-    } catch (e) {
-      console.warn('[fusion] 竞彩网离线回退失败:', e.message);
     }
+  } catch (e) {
+    console.warn('[fusion] 竞彩网离线加载失败:', e.message);
   }
 
   return sources;

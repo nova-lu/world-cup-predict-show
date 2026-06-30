@@ -7,8 +7,10 @@ import teamsRouter from './routes/teams.js';
 import oddsRouter from './routes/odds.js';  // Phase 7: 含 Polymarket + Fusion 路由
 import bracketRouter from './routes/bracket.js';
 import knockoutRouter from './routes/knockout.js'; // Phase 8.2
+import adminRouter from './routes/admin.js'; // Phase 11: 管理 API
 import { parseForceParam } from './middleware/parseForce.js';
 import { checkDataFreshness } from '../scripts/check_data_freshness.mjs';
+import { getAllTeams, getRatings } from './services/dataService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -21,6 +23,9 @@ app.set('views', path.join(__dirname, '..', 'views'));
 // 静态文件
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// JSON body parser (for POST requests)
+app.use(express.json());
+
 // 全局解析 force=1 参数（仅 /api 路由）
 app.use('/api', parseForceParam);
 
@@ -30,6 +35,7 @@ app.use('/api/standings', standingsRouter);
 app.use('/api/teams', teamsRouter);
 app.use(oddsRouter);
 app.use('/api/bracket', bracketRouter);
+app.use('/api/admin', adminRouter); // Phase 11: 管理 API
 
 // Phase 8.2: 淘汰赛过渡管线
 app.use('/api/knockout', knockoutRouter);
@@ -283,6 +289,30 @@ app.get('/online-learning', (req, res) => {
     title: '2026世界杯 · 在线学习看板',
     page: 'online-learning',
   });
+});
+
+// Phase 11: 管理后台
+app.get('/admin', (req, res) => {
+  try {
+    const ratings = getRatings();
+    const teams = getAllTeams().map(t => ({
+      nameCn: t.name, nameEn: t.nameEn, slug: t.slug, flag: t.flag, group: t.group,
+      elo: ratings[t.slug] || null,
+    })).sort((a, b) => (b.elo || 0) - (a.elo || 0));
+
+    res.render('pages/admin', {
+      title: '管理后台',
+      page: 'admin',
+      teams,
+    });
+  } catch (e) {
+    console.error('[admin] 加载 team 数据失败:', e.message);
+    res.render('pages/admin', {
+      title: '管理后台',
+      page: 'admin',
+      teams: [],
+    });
+  }
 });
 
 // 404
