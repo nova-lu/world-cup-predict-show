@@ -31,7 +31,7 @@ function parseEnvFile(content) {
 function loadDotEnvIntoProcess() {
   console.log(`[config] 尝试读取 .env: ${envPath}`);
   if (!existsSync(envPath)) {
-    console.warn(`[config] ✗ .env 文件不存在: ${envPath}`);
+    console.log(`[config] .env 文件不存在（预期行为，使用环境变量）: ${envPath}`);
     return;
   }
 
@@ -50,19 +50,13 @@ function loadDotEnvIntoProcess() {
 }
 
 function loadApiKey() {
-  // 1. 优先检查环境变量
+  // 从环境变量获取（包含 .env 已注入的变量）
   if (process.env.FOOTBALL_API_KEY) {
     console.log('[config] ✓ 从环境变量获取 FOOTBALL_API_KEY');
     return process.env.FOOTBALL_API_KEY;
   }
 
-  // 2. 若上一步不存在，尝试从已加载的 .env 中读取
-  if (process.env.FOOTBALL_API_KEY) {
-    console.log(`[config] ✓ FOOTBALL_API_KEY 已从 .env 加载 (${process.env.FOOTBALL_API_KEY.length} 字符)`);
-    return process.env.FOOTBALL_API_KEY;
-  }
-
-  console.warn('[config] ✗ .env 中未找到 FOOTBALL_API_KEY 这一行');
+  console.warn('[config] ✗ 未找到 FOOTBALL_API_KEY，将使用本地数据降级');
   return null;
 }
 
