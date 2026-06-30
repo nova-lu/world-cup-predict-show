@@ -40,7 +40,7 @@ router.get('/api/odds/match/:t1/:t2', oddsEnabled, async (req, res) => {
     if (!odds) {
       return res.json({ found: false, message: '未找到该场比赛的赔率数据' });
     }
-    res.json({ found: true, ...odds });
+    res.json({ found: true, ...odds, match: { t1, t2 }, bookmakerDetails: odds.bookmakers || [] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

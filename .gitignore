@@ -6,3 +6,5 @@ test_files/
 debug_files/
 check_files/
 data/cache/*.json
+# Polymarket 运行时缓存（自动生成，不要提交）
+data/odds/polymarket-cache.json

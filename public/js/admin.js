@@ -18,7 +18,7 @@
 
       // 懒加载 Tab 数据
       if (tab === 'elo-history' && !content.dataset.loaded) loadEloHistory();
-      if (tab === 'data-freshness' && !content.dataset.loaded) loadFreshness();
+      if (tab === 'data-freshness' && !content.dataset.loaded) { loadFreshness(); loadChinaLotteryStatus(); }
     });
   });
 
@@ -315,6 +315,53 @@
     }).catch(function (err) {
       if (btn) { btn.disabled = false; btn.textContent = '🗑️ 清空缓存'; }
       alert('❌ 清空缓存失败: ' + err.message);
+    });
+  };
+
+  // ===== 竞彩数据状态 =====
+  window.loadChinaLotteryStatus = function () {
+    var el = document.getElementById('china-lottery-status');
+    el.innerHTML = '<div class="admin-loading">加载中...</div>';
+
+    apiGet('/api/admin/odds/china-lottery/status').then(function (data) {
+      if (data.error) {
+        el.innerHTML = '<div class="admin-error">' + data.error + '</div>';
+        return;
+      }
+      if (!data.available) {
+        el.innerHTML = '<div class="admin-muted">❌ 竞彩数据不可用。' + (data.message || '') + '</div>';
+        return;
+      }
+      el.innerHTML =
+        '<div style="display:flex;gap:16px;flex-wrap:wrap">' +
+        '<div class="stat-card" style="padding:8px 14px"><span class="stat-value" style="font-size:1rem">' + data.matchCount + '</span><span class="stat-label">可用比赛</span></div>' +
+        '<div class="stat-card" style="padding:8px 14px"><span class="stat-value" style="font-size:1rem">' + data.files + '</span><span class="stat-label">数据文件</span></div>' +
+        '<div class="stat-card" style="padding:8px 14px"><span class="stat-value" style="font-size:1rem">' + (data.lastDate || '-') + '</span><span class="stat-label">最新日期</span></div>' +
+        '</div>' +
+        '<div style="font-size:0.74rem;color:var(--text-muted);margin-top:6px">最新文件: ' + (data.lastFile || '-') + ' | 更新于: ' + formatDate(data.lastModified) + '</div>';
+    }).catch(function (err) {
+      el.innerHTML = '<div class="admin-error">加载失败: ' + err.message + '</div>';
+    });
+  };
+
+  // ===== 抓取竞彩数据 =====
+  window.fetchChinaLottery = function () {
+    var btn = event && event.target;
+    var statusEl = document.getElementById('china-lottery-fetch-status');
+    if (btn) btn.disabled = true;
+    showStatus(statusEl, '正在从竞彩网抓取...', null);
+
+    apiPost('/api/admin/odds/china-lottery/fetch').then(function (data) {
+      if (btn) btn.disabled = false;
+      if (data.success) {
+        showStatus(statusEl, '✅ ' + data.message, 'success');
+        loadChinaLotteryStatus(); // 刷新状态
+      } else {
+        showStatus(statusEl, '❌ 抓取失败: ' + (data.error || data.message), 'error');
+      }
+    }).catch(function (err) {
+      if (btn) btn.disabled = false;
+      showStatus(statusEl, '❌ 请求失败: ' + err.message, 'error');
     });
   };
 

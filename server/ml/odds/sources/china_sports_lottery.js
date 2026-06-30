@@ -347,6 +347,19 @@ export async function fetchAllMatches() {
   return results;
 }
 
+/**
+ * 将内部 slug 转为中文队名
+ * @param {string} slug - 内部 slug (如 'argentina')
+ * @returns {string|null} 中文队名 (如 '阿根廷')，未找到则返回 slug 本身
+ */
+export function slugToCnName(slug) {
+  if (!slug) return null;
+  const entry = Object.entries(CN_NAME_TO_SLUG).find(([, v]) => v === slug);
+  return entry ? entry[0] : slug;
+}
+
+export { CN_NAME_TO_SLUG };
+
 export default {
   loadFromFile,
   loadByDate,

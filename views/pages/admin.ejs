@@ -89,6 +89,20 @@
       <span class="admin-btn-hint" id="freshness-status"></span>
     </div>
     <div id="freshness-alert" class="admin-alert" style="display:none"></div>
+
+    <!-- 竞彩数据状态 -->
+    <div class="admin-section" style="margin-top:28px;border-top:1px solid var(--border);padding-top:20px">
+      <h3 style="margin:0 0 12px;font-size:0.9rem">🇨🇳 竞彩网数据状态</h3>
+      <div id="china-lottery-status">
+        <div class="admin-loading">加载中...</div>
+      </div>
+      <div class="admin-toolbar" style="margin-top:10px">
+        <button class="admin-btn admin-btn-sm admin-btn-secondary" onclick="loadChinaLotteryStatus()">🔄 刷新</button>
+        <button class="admin-btn admin-btn-sm admin-btn-primary" onclick="fetchChinaLottery()">📥 从竞彩网抓取</button>
+        <span class="admin-btn-hint" id="china-lottery-fetch-status"></span>
+      </div>
+      <p style="font-size:0.74rem;color:var(--text-muted);margin-top:8px">点击「从竞彩网抓取」从中国体育彩票官方 API 获取最新赔率数据</p>
+    </div>
   </div>
 
   <!-- ===== Modal: 回缩确认 ===== -->

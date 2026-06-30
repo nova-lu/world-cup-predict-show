@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "verify": "node verify.cjs"
+    "verify": "node verify.cjs",
+    "fetch-odds": "node scripts/fetch_china_lottery.mjs"
   },
   "dependencies": {
     "cross-env": "^10.1.0",

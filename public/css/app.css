@@ -698,7 +698,7 @@ a:hover { text-decoration: underline; }
 /* ===== Odds Table ===== */
 .odds-table { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
 .odds-row {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+  display: grid; grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 0.7fr;
   padding: 8px 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border);
   transition: background 0.1s;
 }
@@ -1530,6 +1530,16 @@ a:hover { text-decoration: underline; }
   color: var(--text-muted);
 }
 
+.div-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .div-val {
   display: block;
   font-size: 1rem;
@@ -1776,6 +1786,14 @@ body.page-match-detail .ml-grid {
   background: rgba(255,68,68,0.05);
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255,68,68,0.2);
+}
+.admin-muted {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 24px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 .loading-card {
   grid-column: 1 / -1;

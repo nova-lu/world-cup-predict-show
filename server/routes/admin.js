@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(__dirname, '..', '..');
 const MANIFESTS_DIR = resolve(PROJECT_ROOT, 'data', 'elo-manifests');
+const CHINA_LOTTERY_DIR = resolve(PROJECT_ROOT, 'data', 'odds', 'china-sports-lottery');
 
 const router = Router();
 
@@ -205,7 +206,93 @@ router.post('/data/export-features', (req, res) => {
       success: false,
       error: '特征导出失败',
       message: e.message,
-      stderr: e.stderr ? e.stderr.toString().split('\n').slice(-5).join('\n') : '',
+      stderr: e.stderr ? e.stderr.toString().split('\\n').slice(-5).join('\\n') : '',
+    });
+  }
+});
+
+// ========== 竞彩数据状态 ==========
+
+/**
+ * GET /api/admin/odds/china-lottery/status
+ * 返回竞彩离线数据的状态
+ */
+router.get('/odds/china-lottery/status', (req, res) => {
+  try {
+    if (!existsSync(CHINA_LOTTERY_DIR)) {
+      return res.json({ available: false, files: 0, matchCount: 0, message: '目录不存在' });
+    }
+
+    const files = readdirSync(CHINA_LOTTERY_DIR)
+      .filter(f => /^\d{8}\.json$/.test(f))
+      .sort()
+      .reverse();
+
+    if (files.length === 0) {
+      return res.json({ available: false, files: 0, matchCount: 0, lastDate: null });
+    }
+
+    const latest = join(CHINA_LOTTERY_DIR, files[0]);
+    const raw = readFileSync(latest, 'utf-8');
+    const data = JSON.parse(raw);
+    const matches = Array.isArray(data) ? data : (data.matches || []);
+
+    res.json({
+      available: true,
+      files: files.length,
+      matchCount: matches.length,
+      lastDate: files[0].replace(/^(\d{4})(\d{2})(\d{2})\.json$/, '$1-$2-$3'),
+      lastFile: files[0],
+      lastModified: statSync(latest).mtime.toISOString(),
+    });
+  } catch (e) {
+    res.status(500).json({ error: '读取竞彩数据失败', message: e.message });
+  }
+});
+
+/**
+ * POST /api/admin/odds/china-lottery/fetch
+ * 触发抓取竞彩网最新赔率
+ */
+router.post('/odds/china-lottery/fetch', (req, res) => {
+  const scriptPath = resolve(PROJECT_ROOT, 'scripts', 'fetch_china_lottery.mjs');
+  if (!existsSync(scriptPath)) {
+    return res.status(500).json({ success: false, error: '脚本文件不存在' });
+  }
+
+  try {
+    // execSync on Windows Node.js may crash after script completion (uv assertion bug)
+    // so we use try-catch and check stdout for success
+    let stdout = '';
+    try {
+      stdout = execSync(`node "${scriptPath}"`, {
+        cwd: PROJECT_ROOT,
+        timeout: 30000,
+        encoding: 'utf-8',
+      });
+    } catch (e) {
+      stdout = e.stdout || '';
+    }
+
+    const lines = stdout.split('\n').filter(l => l.includes('[China Lottery]'));
+    const hasData = stdout.includes('成功获取');
+    const updated = !stdout.includes('数据无变化，跳过');
+
+    if (!hasData) {
+      throw new Error(stdout.slice(0, 300) || '脚本无输出');
+    }
+
+    res.json({
+      success: true,
+      message: updated ? '赔率数据已更新' : '数据已是最新，无需更新',
+      output: lines.slice(0, 5),
+    });
+  } catch (e) {
+    const errMsg = (e.stderr || e.stdout || e.message || '未知错误').toString().slice(0, 500);
+    res.status(500).json({
+      success: false,
+      error: '抓取失败',
+      message: errMsg,
     });
   }
 });
