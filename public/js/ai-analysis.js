@@ -20,7 +20,7 @@
     setTimeout(() => {
       if (phase14Data.initialDataSources) renderSources(phase14Data.initialDataSources);
     }, 200);
-  } else if (phase14Data.aiEnabled) {
+  } else {
     // 无缓存：调用 API
     fetchAnalysis();
   }
