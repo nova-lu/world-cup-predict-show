@@ -1,11 +1,6 @@
 // ===== AI 分析引擎配置 =====
 // 仅从 .env 和 process.env 读取配置，不依赖任何外部文件
 
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 let cachedConfig = null;
 
 function loadConfig() {
