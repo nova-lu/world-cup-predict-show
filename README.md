@@ -20,6 +20,7 @@
 | **🧬 Polymarket 融合** | 预测市场赔率接入，加时/点球预测 |
 | **🎯 球队详情** | 单队晋级路径分析 + 对手矩阵 |
 | **📚 在线学习** | 动态权重 + 误差反馈 + 回测系统 |
+| **📈 回测复盘** | Elo / ML / Ensemble 三引擎历史回测（2002-2026），含校准分析、引擎对比、报告存档 |
 | **✅ CI/CD 管线** | GitHub Actions + Docker 容器化 + 一键部署 |
 | **🏥 健康检查** | `GET /api/health` 端点，监控服务器状态 |
 
@@ -109,7 +110,11 @@ node server/index.js
 | `GET /api/odds/fusion/status` | 融合引擎状态 |
 | `GET /api/bracket` | 淘汰赛树（含 MC 概率） |
 | `GET /api/ml/status` | ML 引擎状态 |
-| `GET /api/ml/backtest` | ML 回测结果 |
+| `GET /api/ml/backtest` | ML 回测结果（支持 `?check=1` 缓存查询、`?force=1` 强制刷新） |
+| `GET /api/ml/backtest/status` | 回测运行状态（`{ running: true/false }`） |
+| `POST /api/ml/backtest/cancel` | 取消正在运行的回测 |
+| `GET /api/ml/backtest/reports` | 已生成的回测报告列表 |
+| `GET /api/ml/backtest/report/:filename` | 加载指定回测报告 |
 | `GET /api/ml/freshness` | 数据新鲜度状态 |
 | `GET /api/cache/stats` | 缓存统计 |
 | `POST /api/ai/analyze/:t1/:t2` | AI 分析比赛（8数据源聚合 + LLM推理） |
@@ -140,7 +145,7 @@ node server/index.js
 | `/opponent-matrix` | 淘汰赛对手矩阵 |
 | `/polymarket` | Polymarket 预测市场 |
 | `/online-learning` | 在线学习仪表盘 |
-| `/backtest` | ML 回测看板 |
+| `/backtest` | ML 回测看板（2026实时 / 历史回测 / 报告存档） |
 | `/blog` | 分析文章 |
 | `/methodology` | 方法论说明 |
 | `/admin` | 管理后台 |
@@ -254,6 +259,27 @@ worldcup_new_2026/
 - ✅ 32强 / 第三名竞争页面空数据显示修复
 - ✅ 球队名统一显示中文
 - ✅ Polymarket 标题自动翻译为中文
+
+### 回测系统（Phase 16）
+- ✅ 历史回测覆盖 2002-2026 七届世界杯（458场比赛）
+- ✅ Elo / ML / Ensemble 三引擎并行回测
+- ✅ 完整指标体系：准确率、Brier、LogLoss、ECE、AUC-ROC、ROI
+- ✅ 校准分析（10-bin ECE 含等级标签）+ 基线对比（随机/Always Home）
+- ✅ 三重输出报告（JSON + CSV + Markdown）
+- ✅ 前端三 Tab（2026实时 / 历史回测 / 报告存档）
+- ✅ 可视化渲染（引擎对比柱状图、年度趋势折线图、校准柱状图）
+- ✅ 报告存档可视化查看器（非原始 JSON）
+- ✅ 单例锁 + 取消按钮（禁止并发回测 + 运行时可中断）
+- ✅ 缓存查询（`?check=1`）避免重复触发回测
+
+### 待开发：回测增强（Phase 17）
+- ⏳ Elo 时间点快照（用比赛当时的 Elo 评分而非当前值）
+- ⏳ ML 验证集隔离（时间序列交叉验证防数据泄露）
+- ⏳ 2026 预测快照持久化（FT 触发保存开赛前预测）
+- ⏳ 赔率基线（竞彩网 + Polymarket 市场赔率对比）
+- ⏳ 场景分析（大小球、BTTS、比分精度）
+- ⏳ 错误聚类 + 引擎优劣势分析
+- ⏳ MD 报告 9 章完整输出 + 前端引擎对比独立视图
 
 ---
 

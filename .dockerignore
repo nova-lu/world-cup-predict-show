@@ -23,10 +23,12 @@ __pycache__/
 README.md
 
 # Cache directories
-cache/*
+data/cache/**/*.json
+data/cache/*.json
 
 # Model files (large, rebuilt/sourced in production build)
-models/*/*.pkl
+models/**/*.pkl
+models/**/*.joblib
 models/*.pkl
 models/*.joblib
 models/*/*.joblib

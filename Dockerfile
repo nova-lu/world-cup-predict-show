@@ -47,9 +47,11 @@ COPY scripts/ ./scripts/
 COPY public/ ./public/
 COPY views/ ./views/
 COPY data/ ./data/
+COPY world-cup-data/ ./world-cup-data/
+COPY histroy-match-data/ ./histroy-match-data/
 
-# Create models directory (populated at runtime, not committed to git)
-RUN mkdir -p ./models/
+# Create runtime directories (for backtest reports, predictions, etc.)
+RUN mkdir -p ./models/ ./data/backtest/reports ./data/backtest/predictions
 
 # Exclude .env — must be injected via environment variables at runtime
 # (not copying .env; if present locally, it won't be in the image)

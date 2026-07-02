@@ -85,6 +85,8 @@
 
  #### 预测重建策略
 
+ > **🔗 Phase 17 — T1**: Elo 时间点快照系统未集成。当前 predictor.js 使用当前 Elo 评分而非历史快照。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
+
  回测的核心挑战是：**对于一场历史比赛，我们无法"穿越"到过去，只能基于当前模型的参数重建预测**。
 
  有两种策略：
@@ -154,6 +156,8 @@
  回测时无需"重建"——预测已在生产环境中生成并存档在响应中。
 
  **但需要设计持久化机制**: 目前的预测是"运行即生成、用完即丢弃"的。回测要求我们捕获预测快照，与赛果配对存储。
+
+> **🔗 Phase 17 — T3**: 2026 预测持久化机制未实现。`data/backtest/predictions/` 目录为空，routes/matches.js 无 FT 触发保存。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
 
  推荐方案:
 
@@ -372,6 +376,8 @@
 
  ### 4.3 基线对比
 
+ > **🔗 Phase 17 — T4**: 赔率共识基线 + Polymarket 基线未实现。当前仅随机基线和 Always Home 基线。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
+
  | 基线 | 预期准确率 | 预期 Brier | 说明 |
  |------|-----------|-----------|------|
  | 随机猜测 | 33.3% | 0.667 | 三结果均匀分布 |
@@ -425,6 +431,7 @@
     - 模型退化风险信号（如近 10 场准确率骤降）
 
  8. 场景分析
+> **🔗 Phase 17 — T5**: 大小球/BTTS/比分/加时点球分析未实现。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
     - 大小球预测准确性
     - BTTS (双方进球) 预测
     - 比分预测准确性
@@ -448,6 +455,8 @@
  ### 5.3 关键分析维度的 SQL/伪代码逻辑
 
  #### 错误聚类
+
+ > **🔗 Phase 17 — T6**: 错误聚类分析（Elo 差梯度分组）未实现。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
 
  ```sql
  -- 找出系统性地预测错误的模式
@@ -481,6 +490,8 @@
  ```
 
  #### 引擎优势场景
+
+ > **🔗 Phase 17 — T6**: 引擎优势分析未实现。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
 
  ```sql
  SELECT scenario, COUNT(*) as n, AVG(elo_better) as elo_wins, AVG(ml_better) as ml_wins
@@ -516,6 +527,7 @@
  | 输出: matchList 标准化数组 | 包含所有需要回测的比赛及真实结果 |
 
  **任务 2 — Elo 时间点快照系统**
+ > **🔗 Phase 17 — T1**: 此任务未完成。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
 
  | 交付物 | 说明 |
  |--------|------|
@@ -540,6 +552,7 @@
  | 逐场指标与聚合指标函数 | 支持按分组聚合 |
 
  **任务 5 — 基线计算**
+ > **🔗 Phase 17 — T4**: 赔率基线 + Polymarket 基线未完成。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
 
  | 交付物 | 说明 |
  |--------|------|
@@ -550,6 +563,7 @@
  #### D5-D6: 报告生成与分析
 
  **任务 6 — 报告生成器**
+ > **🔗 Phase 17 — T7**: 报告仅覆盖5章（共9章），缺失引擎对比/场景分析/结论建议章节。详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
 
  | 交付物 | 说明 |
  |--------|------|
@@ -583,7 +597,7 @@
  | 4 | server/ml/backtest/reporter.js | 新建 | 报告生成（JSON/CSV/MD） |
  | 5 | scripts/run_backtest.js | 新建 | 一键执行入口 |
  | 6 | server/ml/backtest/engine.js | 修改 | 集成真实推理 |
- | 7 | server/routes/matches.js | 修改 | 新增预测持久化中间件 |
+ | 7 | server/routes/matches.js | 修改 | 新增预测持久化中间件\n> **🔗 Phase 17 — T3**: 此项未完成，详见 `PHASE17-BACKTEST-ENHANCEMENT.md` |
  | 8 | data/backtest/predictions/ | 新建目录 | 预测快照存储 |
  | 9 | views/pages/backtest.ejs | 修改 | 增加历史回测 Tab |
  | 10 | public/js/backtest-history.js | 新建 | 历史回测前端交互 |
@@ -670,6 +684,8 @@
 
  ### 8.3 2026 预测持久化集成
 
+ > **🔗 Phase 17 — T3**: 此项未完成，详见 `PHASE17-BACKTEST-ENHANCEMENT.md`
+
  在 `server/routes/matches.js` 中，当比赛状态变为 FT 时，将之前的预测记录持久化:
 
  ```
@@ -680,5 +696,5 @@
 
  ---
 
- > 最后更新: 2026-07-02
- > 本文档定义 Phase 16 回测复盘的整体方法论与实施规划，后续开发迭代以本文档为指引。
+ > 最后更新: 2026-07-03
+ > 本文档定义 Phase 16 回测复盘的整体方法论与实施规划。标记为 **🔗 Phase 17** 的未完成项已移至 `docs/PHASE17-BACKTEST-ENHANCEMENT.md` 跟踪。

@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import matchesRouter from './routes/matches.js';
 import standingsRouter from './routes/standings.js';
@@ -114,13 +115,74 @@ app.get('/api/ml/freshness', (req, res) => {
 // ML 回测结果
 app.get('/api/ml/backtest', async (req, res) => {
   try {
-    const { runBacktest } = await import('./ml/backtest/engine.js');
-    const results = await runBacktest(req.forceRefresh);
-    res.json(results);
+    const { runBacktest, getLastResult } = await import('./ml/backtest/engine.js');
+
+    // ?check=1: 只检查缓存，不触发回测
+    if (req.query.check === '1') {
+      const cached = getLastResult();
+      if (cached) return res.json(cached);
+      return res.json({ success: false, summary: { total: 0, byYear: [] }, message: 'no cache' });
+    }
+
+    if (req.query.force === '1') {
+      const results = await runBacktest({ force: true });
+      return res.json(results);
+    }
+    const cached = getLastResult();
+    if (cached) return res.json(cached);
+    const results = await runBacktest({});
+    return res.json(results);
   } catch (e) {
-    res.json({ status: 'error', engine: 'ml', message: e.message });
+    res.status(500).json({ success: false, error: e.message });
   }
 });
+
+// 回测报告列表
+app.get('/api/ml/backtest/reports', async (req, res) => {
+  try {
+    const { getReportList } = await import('./ml/backtest/engine.js');
+    res.json({ reports: getReportList() });
+  } catch (e) {
+    res.json({ reports: [], error: e.message });
+  }
+});
+
+// 加载指定回测报告
+app.get('/api/ml/backtest/report/:filename', async (req, res) => {
+  try {
+    const safeName = path.basename(req.params.filename);
+    const reportPath = path.resolve(__dirname, '../data/backtest/reports', safeName);
+    if (!fs.existsSync(reportPath)) {
+      return res.status(404).json({ error: '报告不存在' });
+    }
+    const data = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 回测运行状态查询
+app.get('/api/ml/backtest/status', async (req, res) => {
+  try {
+    const { isRunning } = await import('./ml/backtest/engine.js');
+    res.json({ running: isRunning() });
+  } catch (e) {
+    res.json({ running: false, error: e.message });
+  }
+});
+
+// 取消正在运行的回测
+app.post('/api/ml/backtest/cancel', async (req, res) => {
+  try {
+    const { cancelBacktest } = await import('./ml/backtest/engine.js');
+    const result = cancelBacktest();
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ cancelled: false, error: e.message });
+  }
+});
+
 app.get('/api/cache/stats', (req, res) => {
   import('./middleware/cache.js').then(mod => {
     const s = mod.stats();
