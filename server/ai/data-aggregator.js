@@ -427,6 +427,28 @@ export async function aggregateMatchData(t1, t2) {
     result.knockoutPrediction = { available: false };
   }
 
+  // ---- 8.5 小组积分上下文 ----
+  try {
+    const homeInfo2 = getTeamInfo(t1);
+    const awayInfo2 = getTeamInfo(t2);
+    if (homeInfo2 && awayInfo2 && homeInfo2.group && awayInfo2.group && homeInfo2.group === awayInfo2.group) {
+      const { getMatches } = await import('../services/dataService.js');
+      const matches = getMatches() || [];
+      const grp = homeInfo2.group;
+      const grpMatches = matches.filter(m =>
+        (m.t1 === t1 || m.t2 === t1 || m.t1 === t2 || m.t2 === t2) &&
+        (m.group === grp || (!m.group && m.stage === 'group'))
+      );
+      result.groupContext = {
+        group: grp,
+        teams: [t1, t2],
+        matchCount: grpMatches.length,
+      };
+    }
+  } catch (e) {
+    // 非必须，静默忽略
+  }
+
   // ---- 9. 比赛结果 ----
   if (matchInfo && matchInfo.status === 'completed' && matchInfo.homeScore !== undefined) {
     result.result = {
