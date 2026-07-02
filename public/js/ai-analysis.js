@@ -138,9 +138,15 @@
 
   // ===== 第3屏: 赛程与实时数据 =====
   function renderSchedule(mi) {
-    $('ai-stage-detail').textContent = mi.stage || '--';
+    const stageLabels = {
+      round32: '32强晋级赛', round16: '16强晋级赛', quarter: '1/4决赛',
+      semi: '半决赛', final: '决赛', knockout: '淘汰赛',
+      LAST_32: '32强晋级赛', LAST_16: '16强晋级赛',
+      QUARTER_FINAL: '1/4决赛', SEMI_FINAL: '半决赛', FINAL: '决赛',
+    };
+    $('ai-stage-detail').textContent = stageLabels[mi.stage] || mi.stage || '--';
     $('ai-match-date').textContent = mi.date || '--';
-    const statusMap = { scheduled: '📅 未开赛', ongoing: '🔄 进行中', completed: '✅ 已结束', postponed: '⏳ 延期', cancelled: '❌ 取消' };
+    const statusMap = { scheduled: '📅 未开赛', TIMED: '📅 待发生', ongoing: '🔄 进行中', completed: '✅ 已结束', postponed: '⏳ 延期', cancelled: '❌ 取消' };
     $('ai-match-status').textContent = statusMap[mi.status] || mi.status || '--';
   }
 
@@ -189,12 +195,31 @@
     if (rf.home) {
       $('ai-h-gf').textContent = rf.home.gf || 0;
       $('ai-h-ga').textContent = rf.home.ga || 0;
-      if (rf.home.formStr) $('ai-h-form').textContent = rf.home.formStr;
+      if (rf.home.formStr) $('ai-h-form').textContent = translateForm(rf.home.formStr);
+      // 更新"近N场"标签
+      const hc = parseInt(rf.home.count) || 0;
+      if (hc > 0 && hc < 5) {
+        const labels = document.querySelectorAll('#ai-h-gf-label');
+        labels.forEach(l => l.textContent = `(共${hc}场)`);
+        const ps = document.querySelectorAll('.history-card:first-child p');
+        ps.forEach(p => {
+          if (p.textContent.includes('近5场进球')) p.innerHTML = p.innerHTML.replace('近5场', '近' + hc + '场');
+          if (p.textContent.includes('近5场失球')) p.innerHTML = p.innerHTML.replace('近5场', '近' + hc + '场');
+        });
+      }
     }
     if (rf.away) {
       $('ai-a-gf').textContent = rf.away.gf || 0;
       $('ai-a-ga').textContent = rf.away.ga || 0;
-      if (rf.away.formStr) $('ai-a-form').textContent = rf.away.formStr;
+      if (rf.away.formStr) $('ai-a-form').textContent = translateForm(rf.away.formStr);
+      const ac = parseInt(rf.away.count) || 0;
+      if (ac > 0 && ac < 5) {
+        const ps = document.querySelectorAll('.history-card:last-child p');
+        ps.forEach(p => {
+          if (p.textContent.includes('近5场进球')) p.innerHTML = p.innerHTML.replace('近5场', '近' + ac + '场');
+          if (p.textContent.includes('近5场失球')) p.innerHTML = p.innerHTML.replace('近5场', '近' + ac + '场');
+        });
+      }
     }
   }
 
@@ -257,6 +282,13 @@
   function fmtPctShort(v) {
     if (v == null || isNaN(v)) return '--';
     return (v * 100).toFixed(1);
+  }
+
+  // W/D/L → 胜/平/负
+  function translateForm(str) {
+    if (!str) return '';
+    const map = { W: '胜', D: '平', L: '负' };
+    return str.split('').map(c => map[c] || c).join('');
   }
 
   function showLoading(show) {

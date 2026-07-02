@@ -40,7 +40,29 @@ let _allMatches = null;
 async function loadAllMatches() {
   if (_allMatches) return _allMatches;
   const { getMatches } = await import('../services/dataService.js');
-  _allMatches = getMatches();
+  _allMatches = getMatches() || [];
+  // 合并 API 缓存中的赛程（含淘汰赛对阵、日期、阶段）
+  try {
+    const { readFileSync, existsSync } = await import('node:fs');
+    const { join, dirname } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const cachePath = join(dirname(fileURLToPath(import.meta.url)), '../../data/cache/api_matches.json');
+    if (existsSync(cachePath)) {
+      const apiRaw = JSON.parse(readFileSync(cachePath, 'utf-8'));
+      const apiMatches = apiRaw?.value || [];
+      if (Array.isArray(apiMatches)) {
+        // 去重：已有的（从 wc2026-results.json 来的）不重复添加
+        const existing = new Set(_allMatches.map(m => `${m.t1}:${m.t2}`));
+        for (const am of apiMatches) {
+          if (am.t1 && am.t2 && !existing.has(`${am.t1}:${am.t2}`)) {
+            _allMatches.push(am);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // api_matches.json 不存在或不可读也没关系，静默忽略
+  }
   return _allMatches;
 }
 
@@ -61,6 +83,34 @@ async function findMatchInfo(t1, t2) {
   return null;
 }
 
+// 从淘汰赛对阵中查找比赛信息
+async function findKnockoutMatchInfo(t1, t2) {
+  try {
+    const { getKnockoutBracket } = await import('../services/bracketBuilder.js');
+    const bracket = await getKnockoutBracket();
+    if (!bracket?.rounds) return null;
+    for (const [stageKey, matches] of Object.entries(bracket.rounds)) {
+      if (!Array.isArray(matches)) continue;
+      for (const m of matches) {
+        if (!m.home || !m.away) continue;
+        if ((m.home === t1 && m.away === t2) || (m.home === t2 && m.away === t1)) {
+          const stageLabel = { round32: '32强', round16: '16强', quarter: '1/4决赛', semi: '半决赛', final: '决赛' };
+          return {
+            date: m.date || m.kickoff || null,
+            stage: stageKey,
+            status: m.status || 'scheduled',
+            group: null,
+            round: stageLabel[stageKey] || stageKey,
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[AI-aggregator] findKnockoutMatchInfo 失败:', e.message);
+  }
+  return null;
+}
+
 /**
  * 聚合所有数据源
  * @param {string} t1 - 主队 slug
@@ -73,8 +123,20 @@ export async function aggregateMatchData(t1, t2) {
   const homeInfo = getTeamInfo(t1) || { name: t1, nameEn: t1, slug: t1, flag: '⚽', flagPath: null };
   const awayInfo = getTeamInfo(t2) || { name: t2, nameEn: t2, slug: t2, flag: '⚽', flagPath: null };
 
-  // 查找比赛信息
-  const matchInfo = await findMatchInfo(t1, t2);
+  // 查找比赛信息：先查小组赛，再查淘汰赛
+  let matchInfo = await findMatchInfo(t1, t2);
+  if (!matchInfo) {
+    matchInfo = await findKnockoutMatchInfo(t1, t2);
+  }
+
+  // 仍然找不到 → 启发式推断（不同小组=淘汰赛）
+  if (!matchInfo) {
+    const hGrp = homeInfo.group;
+    const aGrp = awayInfo.group;
+    if (hGrp && aGrp && hGrp !== aGrp) {
+      matchInfo = { stage: 'knockout', group: null, status: 'scheduled', date: null };
+    }
+  }
 
   const result = {
     matchInfo: {
@@ -83,6 +145,8 @@ export async function aggregateMatchData(t1, t2) {
       stage: matchInfo?.stage || null,
       group: matchInfo?.group || null,
       date: matchInfo?.date || null,
+      time: matchInfo?.time || matchInfo?.utcDate || null,
+      utcDate: matchInfo?.utcDate || null,
       status: matchInfo?.status || 'scheduled',
     },
     eloPrediction: null,
@@ -104,10 +168,11 @@ export async function aggregateMatchData(t1, t2) {
         homeRating: eloPred.home?.elo || 0,
         awayRating: eloPred.away?.elo || 0,
         homeBonus: eloPred.home?.bonus || 0,
+        // predictionService.js ×100 存百分比（如 49.4 ÷ 100 → 0.494）
         probabilities: {
-          homeWin: +(eloPred.prob?.winHome || 0).toFixed(3),
-          draw: +(eloPred.prob?.draw || 0).toFixed(3),
-          awayWin: +(eloPred.prob?.winAway || 0).toFixed(3),
+          homeWin: +((eloPred.prob?.winHome || 0) / 100).toFixed(4),
+          draw: +((eloPred.prob?.draw || 0) / 100).toFixed(4),
+          awayWin: +((eloPred.prob?.winAway || 0) / 100).toFixed(4),
         },
         expectedGoals: {
           home: +(eloPred.expectedGoals?.home || 0).toFixed(2),
@@ -122,7 +187,7 @@ export async function aggregateMatchData(t1, t2) {
   // ---- 2. ML ----
   if (mlPredictor && typeof mlPredictor.predictMatch === 'function') {
     try {
-      const mlPred = mlPredictor.predictMatch(t1, t2);
+      const mlPred = await mlPredictor.predictMatch(t1, t2);
       if (mlPred) {
         result.mlPrediction = {
           available: true,
@@ -292,6 +357,7 @@ export async function aggregateMatchData(t1, t2) {
 
     result.recentForm = {
       home: {
+        count: homeMatches.length,
         last5: homeMatches.map(m => ({
           opponent: m.t1 === t1 ? m.t2 : m.t1,
           result: m.g1 != null && m.g2 != null
@@ -307,6 +373,7 @@ export async function aggregateMatchData(t1, t2) {
         }).join(''),
       },
       away: {
+        count: awayMatches.length,
         last5: awayMatches.map(m => ({
           opponent: m.t1 === t2 ? m.t2 : m.t1,
           result: m.g1 != null && m.g2 != null
@@ -329,14 +396,28 @@ export async function aggregateMatchData(t1, t2) {
   // ---- 8. 淘汰赛加时/点球 ----
   if (knockoutEngine && typeof knockoutEngine.knockoutMatchProb === 'function') {
     try {
-      const kp = knockoutEngine.knockoutMatchProb(t1, t2);
-      if (kp) {
-        result.knockoutPrediction = {
-          available: true,
-          regWin: +(kp.regWin || kp.regularTime || 0).toFixed(3),
-          etWin: +(kp.etWin || kp.extraTime || 0).toFixed(3),
-          pkWin: +(kp.pkWin || kp.penalty || 0).toFixed(3),
-        };
+      // 需要 Elo 评分而非球队 slug
+      const eloPred = result.eloPrediction;
+      if (eloPred) {
+        const kp = knockoutEngine.knockoutMatchProb(
+          eloPred.homeRating,
+          eloPred.awayRating,
+          0,
+          result.matchInfo.stage || 'round32'
+        );
+        if (kp) {
+          const regDraw = kp.regDraw || 0;
+          const etDraw = kp.etDraw || 0;
+          result.knockoutPrediction = {
+            available: true,
+            // 常规时间内决出胜负的概率
+            regWin: +(1 - regDraw).toFixed(3),
+            // 进入加时的概率（加时赛决出胜负，不包含点球）
+            etWin: +(regDraw - etDraw).toFixed(3),
+            // 进入点球的概率
+            pkWin: +(etDraw).toFixed(3),
+          };
+        }
       }
     } catch (e) {
       console.warn('[AI-aggregator] 淘汰赛预测失败:', e.message);

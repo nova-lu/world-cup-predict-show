@@ -154,6 +154,70 @@ export function knockoutMatchProb(ratingA, ratingB, homeBonusA = 0, stage = 'rou
   };
 }
 
+/**
+ * 从预期进球直接计算淘汰赛概率分布（不依赖 Elo 评分）
+ * 用于 ML / Ensemble 引擎，直接传入 engine 算出的 xG
+ * @param {number} eA - 球队 A 预期进球
+ * @param {number} eB - 球队 B 预期进球
+ * @param {string} stage - 轮次
+ * @param {number} eloDiff - Elo 差值（用于点球偏置，仅 Elo 模式有意义）
+ */
+export function knockoutMatchProbFromXG(eA, eB, stage = 'round32', eloDiff = 0) {
+  const MAX_GOALS = 8;
+  const pA = [];
+  const pB = [];
+  for (let k = 0; k <= MAX_GOALS; k++) {
+    pA.push(poissonPmfSimple(k, eA));
+    pB.push(poissonPmfSimple(k, eB));
+  }
+
+  let regWinA = 0, regWinB = 0, draw = 0;
+  for (let a = 0; a <= MAX_GOALS; a++) {
+    for (let b = 0; b <= MAX_GOALS; b++) {
+      const p = pA[a] * pB[b];
+      if (a > b) regWinA += p;
+      else if (a < b) regWinB += p;
+      else draw += p;
+    }
+  }
+
+  // 加时赛进球率压缩
+  const etEA = eA * ET_BONUS.attack * (1 / ET_BONUS.defense);
+  const etEB = eB * ET_BONUS.attack * (1 / ET_BONUS.defense);
+
+  const SAMPLES = 5000;
+  let etWinA = 0, etWinB = 0, etDraw = 0;
+  const localRng = createSeededRng(42);
+  for (let i = 0; i < SAMPLES; i++) {
+    const a = poissonSample(etEA, localRng);
+    const b = poissonSample(etEB, localRng);
+    if (a > b) etWinA++;
+    else if (a < b) etWinB++;
+    else etDraw++;
+  }
+  etWinA = (draw * etWinA) / SAMPLES;
+  etWinB = (draw * etWinB) / SAMPLES;
+  const etPend = (draw * etDraw) / SAMPLES;
+
+  // 点球：~50/50 + Elo 微调（ML 模式偏置较小）
+  const pkProbA = 0.5 + eloDiff / 4000 * PENALTY.eloWeight;
+  const pkWinA = etPend * pkProbA;
+  const pkWinB = etPend * (1 - pkProbA);
+
+  return {
+    winA: regWinA + etWinA + pkWinA,
+    winB: regWinB + etWinB + pkWinB,
+    regWinA, regWinB,
+    regDraw: draw,
+    etWinA, etWinB,
+    etDraw: draw * etDraw / SAMPLES,
+    pkWinA, pkWinB,
+    expectedGoalsA: eA,
+    expectedGoalsB: eB,
+    stage,
+  };
+}
+
 function poissonPmfSimple(k, lambda) {
   if (lambda <= 0) return k === 0 ? 1 : 0;
   let p = Math.exp(-lambda);
@@ -169,4 +233,4 @@ function createSeededRng(seed) {
   };
 }
 
-export default { simulateKnockoutMatch, knockoutMatchProb };
+export default { simulateKnockoutMatch, knockoutMatchProb, knockoutMatchProbFromXG };

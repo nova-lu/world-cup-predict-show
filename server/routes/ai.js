@@ -49,6 +49,16 @@ router.post('/analyze/:t1/:t2', async (req, res) => {
     console.error('[AI route] aggregateMatchData done, elo:', !!aggregated.eloPrediction, 'ml:', aggregated.mlPrediction?.available, 'matchInfo:', !!aggregated.matchInfo);
     summary = summarizeData(aggregated);
     console.error('[AI route] summarizeData done, sources:', summary.sources);
+    // 详细日志：淘汰赛预测
+    console.log('[AI route] knockoutPrediction:', JSON.stringify(aggregated.knockoutPrediction));
+    // 详细日志：近期表现
+    console.log('[AI route] recentForm:', JSON.stringify(aggregated.recentForm));
+    // 详细日志：Elo 评分
+    console.log('[AI route] eloPrediction:', JSON.stringify(aggregated.eloPrediction));
+    // 详细日志：ML 预测
+    console.log('[AI route] mlPrediction avail:', aggregated.mlPrediction?.available);
+    // 详细日志：比赛信息
+    console.log('[AI route] matchInfo stage:', aggregated.matchInfo?.stage);
   } catch (e) {
     console.error('[AI route] 数据聚合失败:', e.message);
     console.error('[AI route] 数据聚合失败 stack:', e.stack?.slice(0,500));
@@ -107,8 +117,8 @@ router.post('/analyze/:t1/:t2', async (req, res) => {
     const awayGf = aggregated.recentForm.away.last5.reduce((s, m) => s + (m.gf || 0), 0);
     const awayGa = aggregated.recentForm.away.last5.reduce((s, m) => s + (m.ga || 0), 0);
     recentForm = {
-      home: { gf: homeGf, ga: homeGa, formStr: aggregated.recentForm.home.form || '' },
-      away: { gf: awayGf, ga: awayGa, formStr: aggregated.recentForm.away.form || '' },
+      home: { gf: homeGf, ga: homeGa, formStr: aggregated.recentForm.home.form || '', count: aggregated.recentForm.home.count || 0 },
+      away: { gf: awayGf, ga: awayGa, formStr: aggregated.recentForm.away.form || '', count: aggregated.recentForm.away.count || 0 },
     };
   }
 
@@ -131,11 +141,21 @@ router.post('/analyze/:t1/:t2', async (req, res) => {
     console.error('[AI route] building prompt...');
     const prompt = buildPrompt(aggregated);
     console.error('[AI route] prompt built, length:', prompt.length);
+    // 输出 prompt 前 2000 字符（LLM 上下文）
+    console.log('[AI route] PROMPT_START:', prompt.slice(0, 2000));
+    console.log('[AI route] PROMPT_END:', prompt.slice(-1000));
 
     // 调用 LLM
     console.error('[AI route] calling LLM...');
     const analysis = await callLLM(prompt);
     console.error('[AI route] LLM returned, keys:', Object.keys(analysis).join(','));
+    // 输出 LLM 返回的完整结构
+    console.log('[AI route] LLM_RESPONSE extraTime:', JSON.stringify(analysis.extraTime));
+    console.log('[AI route] LLM_RESPONSE penaltyShootout:', JSON.stringify(analysis.penaltyShootout));
+    console.log('[AI route] LLM_RESPONSE scorePrediction:', JSON.stringify(analysis.scorePrediction));
+    console.log('[AI route] LLM_RESPONSE probabilities:', JSON.stringify(analysis.probabilities));
+    console.log('[AI route] LLM_RESPONSE confidence:', analysis.confidence);
+    console.log('[AI route] LLM_RESPONSE reasoning:', analysis.reasoning?.slice(0, 500));
 
     // 验证 LLM 返回结构完整性
     const validated = validateAnalysis(analysis);

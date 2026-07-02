@@ -365,4 +365,155 @@
     });
   };
 
+  // ===== Tab: 比赛数据 =====
+  window.loadMatchData = function () {
+    var tab = document.getElementById('tab-match-results');
+    var loading = document.getElementById('match-data-loading');
+    var errorEl = document.getElementById('match-data-error');
+    var content = document.getElementById('match-data-content');
+
+    loading.style.display = 'block';
+    errorEl.style.display = 'none';
+    content.style.display = 'none';
+
+    apiGet('/api/admin/matches').then(function (data) {
+      loading.style.display = 'none';
+      tab.dataset.loaded = '1';
+      content.style.display = 'block';
+
+      // 更新时间
+      document.getElementById('match-updated-time').textContent = '更新时间: ' + formatDate(data.updated || new Date().toISOString());
+
+      // 概览统计
+      document.getElementById('md-total').textContent = data.totalMatches || 0;
+      var complete = (data.groupSummary || []).filter(function (g) { return g.complete; }).length;
+      var total = (data.groupSummary || []).length;
+      document.getElementById('md-complete').textContent = complete + '/' + total + '组';
+      document.getElementById('md-scheduled').textContent = (data.groupSummary || []).filter(function (g) { return !g.complete; }).length + '组缺';
+      var missingCount = (data.groupIssues || []).filter(function (i) { return i.severity === 'error' && i.message.includes('缺'); }).length;
+      document.getElementById('md-missing').textContent = missingCount;
+
+      // 小组完整度
+      var groupBody = document.getElementById('match-group-body');
+      groupBody.innerHTML = '';
+      (data.groupSummary || []).forEach(function (g) {
+        var tr = document.createElement('tr');
+        var completeIcon = g.complete ? '✅' : '❌';
+        var statusClass = g.complete ? 'text-green' : 'text-red';
+        tr.innerHTML =
+          '<td>' + g.group.replace('Group ', '') + '组</td>' +
+          '<td>' + g.teams + '队</td>' +
+          '<td>' + g.matches + '</td>' +
+          '<td class="' + statusClass + '">' + completeIcon + ' ' + Math.round(g.complete ? 100 : (parseInt(g.matches.split('/')[0]) / parseInt(g.matches.split('/')[1]) * 100)) + '%</td>' +
+          '<td><button class="admin-btn-sm admin-btn-secondary-sm" onclick="showGroupMatches(\'' + g.group + '\')">📋 查看 </button></td>';
+        groupBody.appendChild(tr);
+      });
+
+      // 球队记录
+      var teamBody = document.getElementById('match-team-body');
+      teamBody.innerHTML = '';
+      (data.perTeam || []).sort(function (a, b) { return b.matchesPlayed - a.matchesPlayed; }).forEach(function (t) {
+        var tr = document.createElement('tr');
+        var ok = t.matchesPlayed >= 3 ? '✅' : '⚠️';
+        tr.innerHTML =
+          '<td>' + t.team + '</td>' +
+          '<td>' + (t.group || '-') + '组</td>' +
+          '<td>' + t.matchesPlayed + '/3</td>' +
+          '<td>' + ok + '</td>' +
+          '<td style="font-size:0.75rem;color:var(--text-muted)">' + t.opponents + '对手</td>';
+        teamBody.appendChild(tr);
+      });
+
+      // 缺失场次补全模板
+      var missingItems = (data.groupIssues || []).filter(function (i) { return i.message.includes('缺少对阵'); });
+      if (missingItems.length > 0) {
+        document.getElementById('match-missing-section').style.display = 'block';
+        var templates = data.groupIssues.filter(function (i) { return i.message.includes('缺少对阵'); }).map(function (i) {
+          var parts = i.message.split('缺少对阵: ');
+          if (parts.length < 2) return '';
+          return '    // ' + parts[0].trim() + ': ' + parts[1];
+        }).filter(Boolean).join('\n');
+        var example = '{\n  "date": "2026-06-XX",\n  "round": "Matchday N",\n  "group": "Group X",\n  "team1": "TeamName",\n  "team2": "TeamName",\n  "t1": "team-slug",\n  "t2": "team-slug",\n  "g1": null,\n  "g2": null,\n  "pens1": null,\n  "pens2": null,\n  "status": "Scheduled"\n}';
+        document.getElementById('match-missing-template').textContent =
+          '// 缺失场次:\n' + templates + '\n\n// 补全模板:\n' + example;
+      } else {
+        document.getElementById('match-missing-section').style.display = 'none';
+      }
+
+      var statusEl = document.getElementById('match-data-status');
+      showStatus(statusEl, '✅ 数据已加载', 'success');
+    }).catch(function (err) {
+      loading.style.display = 'none';
+      errorEl.style.display = 'block';
+      errorEl.textContent = '加载比赛数据失败: ' + err.message;
+    });
+  };
+
+  window.runValidation = function () {
+    var statusEl = document.getElementById('match-data-status');
+    showStatus(statusEl, '正在验证...', null);
+    loadMatchData();
+  };
+
+  window.copyMissingTemplate = function () {
+    var pre = document.getElementById('match-missing-template');
+    if (!pre || !pre.textContent) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(pre.textContent).then(function () {
+        var statusEl = document.getElementById('match-data-status');
+        showStatus(statusEl, '✅ 已复制到剪贴板', 'success');
+      }).catch(function () {
+        // fallback
+        var range = document.createRange();
+        range.selectNode(pre);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        showStatus(document.getElementById('match-data-status'), '✅ 已复制', 'success');
+      });
+    } else {
+      var range = document.createRange();
+      range.selectNode(pre);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      document.execCommand('copy');
+      window.getSelection().removeAllRanges();
+      showStatus(document.getElementById('match-data-status'), '✅ 已复制', 'success');
+    }
+  };
+
+  window.showGroupMatches = function (groupSlug) {
+    // 用验证脚本 --json 获取该组详情
+    apiGet('/api/admin/matches').then(function (data) {
+      var issues = data.groupIssues.filter(function (i) { return i.message.includes(groupSlug.replace('Group ', '')) || i.message.charAt(0) === groupSlug.slice(-1); });
+      var detailContent = document.getElementById('manifest-detail-content');
+      detailContent.innerHTML = '<h4>' + groupSlug.replace('Group ', 'Group ') + ' 详情</h4>';
+      detailContent.innerHTML += '<p>' + (data.groupSummary || []).filter(function (g) { return g.group === groupSlug; }).map(function (g) {
+        return '已赛: ' + g.matches + ' | ' + (g.complete ? '✅ 完整' : '❌ 不完整');
+      }).join('') + '</p>';
+      if (issues.length > 0) {
+        detailContent.innerHTML += '<h4>缺失对阵:</h4><ul>' + issues.map(function (i) {
+          var msg = i.message;
+          if (msg.includes('缺少对阵: ')) msg = msg.split('缺少对阵: ')[1];
+          return '<li>' + msg + '</li>';
+        }).join('') + '</ul>';
+      }
+      document.getElementById('manifest-modal').style.display = 'flex';
+    }).catch(function (err) {
+      alert('加载失败: ' + err.message);
+    });
+  };
+
+  // 自动加载 match-data tab 的懒加载
+  document.querySelectorAll('.admin-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var tab = btn.getAttribute('data-tab');
+      if (tab === 'match-results') {
+        var content = document.getElementById('tab-match-results');
+        if (!content.dataset.loaded) setTimeout(loadMatchData, 300);
+      }
+    });
+  });
+
 })();

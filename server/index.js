@@ -207,7 +207,7 @@ app.get('/match/:t1/:t2', async (req, res) => {
         awayElo: eloPred.away?.elo || 0,
         xgHome: eloPred.expectedGoals?.home,
         xgAway: eloPred.expectedGoals?.away,
-        topScores: topScores.map(s => ({ home: s.home, away: s.away, prob: +(s.prob || 0).toFixed(1) })),
+        topScores: topScores.map(s => ({ home: s.home, away: s.away, prob: Math.round((s.probability || s.prob || 0) * 100) })),
         riskLevel: risk,
       };
     }

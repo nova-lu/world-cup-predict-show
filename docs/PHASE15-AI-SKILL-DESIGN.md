@@ -190,7 +190,7 @@ Hermes_HOME/skills/worldcup-ai-analysis/
   "btts": { "yes": 0-1, "no": 0-1 },
   "extraTime": { "probability": 0-1 },
   "penaltyShootout": { "probability": 0-1 },
-  "reasoning": "string (中文, 3-5句)",
+  "reasoning": "string (中文, 5-10句)",
   "keyFactors": ["string"],
   "riskFactors": ["string"]
 }

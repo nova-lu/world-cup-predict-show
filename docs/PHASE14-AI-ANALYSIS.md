@@ -270,9 +270,9 @@ Elo 预期进球: {homeName} {xgHome}, {awayName} {xgAway}
   "btts": { "yes": 0.XX, "no": 0.XX },
   "extraTime": { "probability": 0.XX },
   "penaltyShootout": { "probability": 0.XX },
-  "reasoning": "3-5句中文分析，说明关键影响因素...",
-  "keyFactors": ["因子1", "因子2", "因子3"],
-  "riskFactors": ["风险1", "风险2"]
+  "reasoning": "5-10句中文分析，说明关键影响因素...",
+  "keyFactors": ["因子1", "因子2", "因子3", "因子4"],
+  "riskFactors": ["风险1", "风险2", "风险3"]
 }
 ```
 

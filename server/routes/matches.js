@@ -459,18 +459,31 @@ router.get('/compare/:t1/:t2', async (req, res) => {
   res.json({ ...comparison, topScores: scores });
 });
 
-// Phase 8.1: 淘汰赛加时/点球预测
+// Phase 8.1: 淘汰赛加时/点球预测（支持按引擎传 xG）
 router.get('/knockout-pred/:t1/:t2', async (req, res) => {
   try {
     const { t1, t2 } = req.params;
     const stage = req.query.stage || 'round32';
+    const engine = req.query.engine || 'elo';
+
+    // 如果有前端传来的 xG，直接用（ML/Ensemble 引擎）
+    if (req.query.xgh && req.query.xga) {
+      const eA = parseFloat(req.query.xgh) || 0;
+      const eB = parseFloat(req.query.xga) || 0;
+      const eloDiff = parseFloat(req.query.eloDiff) || 0;
+      const { knockoutMatchProbFromXG } = await import('../services/knockoutEngine.js');
+      const prob = knockoutMatchProbFromXG(eA, eB, stage, eloDiff);
+      return res.json({ t1, t2, stage, engine, ...prob });
+    }
+
+    // 默认 Elo 计算
     const { knockoutMatchProb } = await import('../services/knockoutEngine.js');
     const ratings = getRatings();
     const rA = ratings[t1] || 1500;
     const rB = ratings[t2] || 1500;
     const hb = (t1 === 'mexico' || t1 === 'usa' || t1 === 'canada') ? 75 / 2 : 0;
     const prob = knockoutMatchProb(rA, rB, hb, stage);
-    res.json({ t1, t2, stage, ...prob });
+    res.json({ t1, t2, stage, engine: 'elo', ...prob });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

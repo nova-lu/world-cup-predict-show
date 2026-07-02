@@ -4,6 +4,29 @@
 function fmtPct(v, digits = 1) { return (v * 100).toFixed(digits) + '%'; }
 function fmtNum(v, digits = 2) { return Number(v).toFixed(digits); }
 
+// 格式化比赛日期：UTC → 北京时间
+function formatMatchDate(mi) {
+  if (!mi) return '待定';
+  // 优先 utcDate（精确时间）
+  if (mi.utcDate) {
+    try {
+      const d = new Date(mi.utcDate);
+      if (!isNaN(d.getTime())) {
+        const bjt = new Date(d.getTime() + 8 * 3600000);
+        const mm = String(bjt.getMonth() + 1).padStart(2, '0');
+        const dd = String(bjt.getDate()).padStart(2, '0');
+        const hh = String(bjt.getHours()).padStart(2, '0');
+        const miMin = String(bjt.getMinutes()).padStart(2, '0');
+        return `${mm}-${dd} ${hh}:${miMin} (北京时间)`;
+      }
+    } catch (_) {}
+  }
+  // 次选 date + time
+  if (mi.date && mi.time) return `${mi.date} ${mi.time}`;
+  if (mi.date) return mi.date;
+  return '待定';
+}
+
 function buildEloSection(d) {
   if (!d) return '# 数据源 1 - ELO 评分系统\nElo 数据不可用。\n';
   return `# 数据源 1 - ELO 评分系统
@@ -89,20 +112,26 @@ function buildFormSection(d) {
   if (!d) return '# 数据源 7 - 近期状态\n近期状态数据暂无。\n';
   const h = d.home || {};
   const a = d.away || {};
+  const homeCount = h.count || 0;
+  const awayCount = a.count || 0;
   let s = '# 数据源 7 - 近期状态\n';
   s += `主队近况: ${h.form || 'N/A'}\n`;
   if (h.last5 && h.last5.length) {
-    s += '主队近5场:\n';
+    s += `主队近${homeCount}场:\n`;
     h.last5.forEach(m => {
       s += `  vs ${m.opponent}: ${m.result} (进${m.gf}失${m.ga})\n`;
     });
+  } else {
+    s += '主队近期无完赛记录。\n';
   }
   s += `客队近况: ${a.form || 'N/A'}\n`;
   if (a.last5 && a.last5.length) {
-    s += '客队近5场:\n';
+    s += `客队近${awayCount}场:\n`;
     a.last5.forEach(m => {
       s += `  vs ${m.opponent}: ${m.result} (进${m.gf}失${m.ga})\n`;
     });
+  } else {
+    s += '客队近期无完赛记录。\n';
   }
   return s;
 }
@@ -125,7 +154,9 @@ export function buildPrompt(data) {
   const mi = data.matchInfo;
   const homeName = mi.homeTeam.name;
   const awayName = mi.awayTeam.name;
-  const stageLabel = mi.stage || '未知阶段';
+  const stageLabel = mi.stage 
+    ? ({ round32: '32强', round16: '16强', quarter: '1/4决赛', semi: '半决赛', final: '决赛', knockout: '淘汰赛', LAST_32: '32强', LAST_16: '16强', QUARTER_FINAL: '1/4决赛', SEMI_FINAL: '半决赛', FINAL: '决赛' }[mi.stage] || mi.stage)
+    : '未知阶段';
 
   return `# 角色设定
 你是顶级的足球比赛数据分析师。请基于以下所有数据源，对这场比赛进行综合分析。
@@ -134,7 +165,7 @@ export function buildPrompt(data) {
 # 比赛信息
 - 赛事: 2026 FIFA World Cup
 - 阶段: ${mi.stage} (${stageLabel})
-- 日期: ${mi.date || '待定'}
+- 日期: ${formatMatchDate(mi)}
 - 球队: ${homeName} (主) vs ${awayName} (客)
 ${data.result ? `- 赛果: ${data.result.homeScore} - ${data.result.awayScore}` : ''}
 
@@ -166,9 +197,9 @@ ${buildKnockoutSection(data.knockoutPrediction)}
   "btts": { "yes": 0.XX, "no": 0.XX },
   "extraTime": { "probability": 0.XX },
   "penaltyShootout": { "probability": 0.XX },
-  "reasoning": "3-5句中文分析，说明关键影响因(#0)和(#1)等",
-  "keyFactors": ["因子1", "因子2", "因子3"],
-  "riskFactors": ["风险1", "风险2"]
+  "reasoning": "全面易懂的中文分析（约10句）覆盖各数据源，说明双方优劣势和比赛走势预判。用平实的语言，避免专业术语堆砌。",
+  "keyFactors": ["因子1", "因子2", "因子3", "因子4"],
+  "riskFactors": ["风险1", "风险2", "风险3"]
 }`;
 }
 

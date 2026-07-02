@@ -17,6 +17,24 @@ const CHINA_LOTTERY_DIR = resolve(PROJECT_ROOT, 'data', 'odds', 'china-sports-lo
 
 const router = Router();
 
+// ========== 比赛数据管理 ==========
+
+/**
+ * GET /api/admin/matches
+ * 返回比赛数据完整性报告
+ */
+router.get('/matches', (req, res) => {
+  try {
+    // 调用验证脚本获取 JSON 输出
+    const scriptPath = resolve(PROJECT_ROOT, 'scripts', 'validate-results.mjs');
+    const raw = execSync(`node "${scriptPath}" --json`, { encoding: 'utf-8', timeout: 10000 });
+    const report = JSON.parse(raw.trim());
+    res.json(report);
+  } catch (e) {
+    res.status(500).json({ error: '获取比赛数据失败', message: e.message });
+  }
+});
+
 // ========== ELO Manifests ==========
 
 /**

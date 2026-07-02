@@ -15,6 +15,7 @@
   <!-- Tab 导航 -->
   <nav class="admin-tabs">
     <button class="admin-tab active" data-tab="elo-ranking">🏆 ELO 排名</button>
+    <button class="admin-tab" data-tab="match-results">⚽ 比赛数据</button>
     <button class="admin-tab" data-tab="elo-history">📜 更新历史</button>
     <button class="admin-tab" data-tab="data-freshness">📊 数据新鲜度</button>
   </nav>
@@ -59,7 +60,56 @@
     </div>
   </div>
 
-  <!-- ===== Tab 2: 更新历史 ===== -->
+  <!-- ===== Tab 2: 比赛数据 ===== -->
+  <div class="admin-tab-content" id="tab-match-results">
+    <div class="admin-toolbar">
+      <div class="admin-toolbar-left">
+        <button class="admin-btn admin-btn-primary" onclick="loadMatchData()">🔄 刷新数据</button>
+        <span class="admin-btn-hint" id="match-data-status"></span>
+      </div>
+      <div class="admin-toolbar-right">
+        <span style="font-size:0.8rem;color:var(--text-muted)" id="match-updated-time">更新时间: --</span>
+        <button class="admin-btn admin-btn-sm admin-btn-success" onclick="runValidation()">✅ 验证</button>
+      </div>
+    </div>
+
+    <!-- 概览统计 -->
+    <div id="match-data-overview" class="admin-stats-bar" style="margin-bottom:16px">
+      <div class="stat-card"><span class="stat-value" id="md-total">--</span><span class="stat-label">总场次</span></div>
+      <div class="stat-card"><span class="stat-value" id="md-complete">--</span><span class="stat-label">已完赛</span></div>
+      <div class="stat-card"><span class="stat-value" id="md-scheduled">--</span><span class="stat-label">未赛</span></div>
+      <div class="stat-card"><span class="stat-value" id="md-missing">--</span><span class="stat-label">缺失场次</span></div>
+    </div>
+
+    <!-- 小组完整性列表 -->
+    <div id="match-data-loading" class="admin-loading">加载比赛数据...</div>
+    <div id="match-data-error" class="admin-error" style="display:none"></div>
+    <div id="match-data-content" style="display:none">
+      <h3 style="font-size:0.9rem;margin:0 0 8px">各小组完整性</h3>
+      <table class="admin-table" id="match-group-table">
+        <thead><tr><th>小组</th><th>球队</th><th>已赛/总场</th><th>完整度</th><th>操作</th></tr></thead>
+        <tbody id="match-group-body"></tbody>
+      </table>
+
+      <h3 style="font-size:0.9rem;margin:20px 0 8px">各球队完赛记录</h3>
+      <div class="admin-table-wrap" style="max-height:400px;overflow-y:auto">
+        <table class="admin-table">
+          <thead><tr><th>球队</th><th>小组</th><th>完赛场次</th><th>状态</th><th>比分记录</th></tr></thead>
+          <tbody id="match-team-body"></tbody>
+        </table>
+      </div>
+
+      <!-- 缺失场次补全建议 -->
+      <div id="match-missing-section" style="display:none">
+        <h3 style="font-size:0.9rem;margin:20px 0 8px">❌ 缺失场次 — 补全模板</h3>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px">复制以下模板到 <code>data/wc2026-results.json</code> 中「matches」数组末尾，填写比分后保存</p>
+        <pre id="match-missing-template" style="background:#1a1a2e;padding:12px;border-radius:6px;font-size:0.75rem;overflow-x:auto;white-space:pre-wrap;color:#ccc;max-height:400px;overflow-y:auto"></pre>
+        <button class="admin-btn admin-btn-sm admin-btn-primary" onclick="copyMissingTemplate()" style="margin-top:6px">📋 复制模板</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Tab 3: 更新历史 ===== -->
   <div class="admin-tab-content" id="tab-elo-history">
     <div class="admin-toolbar">
       <button class="admin-btn admin-btn-primary" onclick="triggerEloUpdate()">🔄 执行批量更新</button>
