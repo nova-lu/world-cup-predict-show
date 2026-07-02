@@ -79,6 +79,31 @@
       padding: 1px 5px;
       border-radius: 3px;
     }
+    .qualified-team.real {
+      border-left: 3px solid var(--accent-green, #22c55e);
+    }
+    .qualified-team.predicted {
+      border-left: 3px solid var(--accent, #3b82f6);
+    }
+    .badge-real {
+      display: inline-block;
+      background: rgba(34,197,94,0.15);
+      color: #22c55e;
+      font-size: 0.6rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+    }
+    .badge-pred {
+      display: inline-block;
+      background: rgba(59,130,246,0.15);
+      color: #5b9ef4;
+      font-size: 0.6rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+    }
+    .ko-match-row.confirmed .stage { color: var(--accent-green, #22c55e); }
 
     /* Third-rank table */
     .third-table {
@@ -225,6 +250,7 @@
         <div class="ko-tab active" data-panel="bracket">🌳 晋级树</div>
         <div class="ko-tab" data-panel="matches">⚽ 比赛列表</div>
         <div class="ko-tab" data-panel="qualified">✅ 32强队伍</div>
+        <div class="ko-tab" data-panel="r16-teams">🔵 16强队伍</div>
         <div class="ko-tab" data-panel="third">📊 第三名竞争</div>
       </div>
 
@@ -260,6 +286,17 @@
             12个小组前2名（24队）+ 最佳8个小组第三名
           </p>
           <div class="qualified-grid" id="ko-qualified"></div>
+        </div>
+      </div>
+
+      <!-- Panel 3b: R16 teams -->
+      <div class="ko-panel" id="panel-r16-teams">
+        <div class="ko-section">
+          <h2>🔵 晋级 16 强的球队</h2>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px">
+            32强淘汰赛胜者（含已完赛的真实结果和未赛比赛的模拟预测）
+          </p>
+          <div class="qualified-grid" id="ko-r16-teams"></div>
         </div>
       </div>
 
@@ -396,26 +433,41 @@
     grid.innerHTML = html;
   }
 
-  // ===== 渲染比赛列表 =====
-  function renderMatchList(roundData) {
+  // ===== 渲染比赛列表（使用真实比赛数据） =====
+  function renderMatchList(bracketRoundData, teamsProb) {
     var finished = [], upcoming = [];
     ['round32', 'round16', 'quarter', 'semi', 'final'].forEach(function(stage) {
-      (roundData[stage] || []).forEach(function(m) {
-        if (m.finished) finished.push(m);
-        else if (m.homeInfo && m.awayInfo) upcoming.push(m);
+      (bracketRoundData[stage] || []).forEach(function(m) {
+        if (m.finished && m.g1 != null) finished.push(m);
+        else if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
+          upcoming.push(m);
+        }
       });
     });
+
+    // 构建已完赛胜者集合（用来标记"已确认"的即将开赛）
+    var realWinners = {};
+    finished.forEach(function(m) { if (m.winner) realWinners[m.winner] = true; });
+
+    function teamInfo(slug) {
+      if (!slug) return null;
+      var t = teamsProb[slug];
+      if (!t) return { name: slug, flag: '⚽', flagPath: null };
+      return t;
+    }
 
     var stageNames = { round32: '32强', round16: '16强', quarter: '8强', semi: '4强', final: '决赛' };
 
     function matchRow(m) {
-      var stageName = stageNames[Object.keys(stageNames).find(function(k) { return (roundData[k] || []).indexOf(m) >= 0; })] || '';
-      var home = m.homeInfo, away = m.awayInfo;
+      var stageName = stageNames[Object.keys(stageNames).find(function(k) { return (bracketRoundData[k] || []).indexOf(m) >= 0; })] || '';
+      var home = teamInfo(m.home), away = teamInfo(m.away);
       var winnerSlug = m.winner;
-      var homeW = winnerSlug && home && m.home === winnerSlug;
-      var awayW = winnerSlug && away && m.away === winnerSlug;
-      var clickUrl = (home && away) ? '/match/' + m.home + '/' + m.away : '#';
-      var h = '<div class="ko-match-row" onclick="window.location=\'' + clickUrl + '\'">';
+      var homeW = winnerSlug && m.home === winnerSlug;
+      var awayW = winnerSlug && m.away === winnerSlug;
+      // 确定是否"已确认"（双方都是已完赛R32的胜者）
+      var isConfirmed = realWinners[m.home] && realWinners[m.away];
+      var clickUrl = '/match/' + m.home + '/' + m.away;
+      var h = '<div class="ko-match-row' + (isConfirmed ? ' confirmed' : '') + '" onclick="window.location=\'' + clickUrl + '\'">';
       h += '<span class="stage">' + stageName + '</span>';
       h += '<span class="teams">' + flagHtml(home, 'sm') + '<span style="' + (homeW ? 'font-weight:700' : '') + '">' + (home?.name || m.home) + '</span>';
       h += ' <span style="color:var(--text-muted)">vs</span> ';
@@ -424,13 +476,51 @@
         h += '<span class="score">' + m.g1 + '-' + m.g2 + '</span>';
       } else {
         h += '<span class="time">' + (m.time || '即将') + '</span>';
+        if (isConfirmed) h += '<span class="badge-real" style="font-size:0.62rem">已确认</span>';
+        else h += '<span class="badge-pred" style="font-size:0.62rem">预测</span>';
       }
       h += '</div>';
       return h;
     }
 
-    document.getElementById('ko-finished').innerHTML = finished.length ? finished.map(matchRow).join('') : '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无已完赛淘汰赛</div>';
-    document.getElementById('ko-upcoming').innerHTML = upcoming.length ? upcoming.map(matchRow).join('') : '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无可预测的淘汰赛</div>';
+    document.getElementById('ko-finished').innerHTML = finished.length
+      ? finished.map(matchRow).join('')
+      : '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无已完赛淘汰赛</div>';
+    document.getElementById('ko-upcoming').innerHTML = upcoming.length
+      ? upcoming.map(matchRow).join('')
+      : '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无可预测的淘汰赛</div>';
+  }
+
+  // ===== 渲染16强队伍（区分真实晋级 vs MC预测） =====
+  function renderR16Teams(bracketRoundData, teamsProb) {
+    var container = document.getElementById('ko-r16-teams');
+    var r32 = bracketRoundData.round32 || [];
+    // 区分：已完赛R32的胜者是"真实晋级"，未赛比赛的胜者是"MC预测"
+    var realWinners = {}, predWinners = {};
+    r32.forEach(function(m) {
+      if (m.winner) {
+        if (m.finished && m.g1 != null) realWinners[m.winner] = true;
+        else predWinners[m.winner] = true;
+      }
+    });
+    var allSlugs = Object.keys(realWinners).concat(Object.keys(predWinners));
+    if (!allSlugs.length) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无16强数据</div>';
+      return;
+    }
+    var html = '';
+    allSlugs.forEach(function(slug) {
+      var isReal = realWinners[slug];
+      var t = teamsProb[slug] || {};
+      var info = { flagPath: t.flagPath, flag: t.flag, name: t.name || slug };
+      html += '<div class="qualified-team ' + (isReal ? 'real' : 'predicted') + '">' +
+        flagHtml(info, 'md') +
+        '<span>' + (t.name || slug) + '</span>' +
+        '<span class="rank-label">' + (t.round16 ? t.round16.toFixed(1) + '%' : '') + '</span>' +
+        (isReal ? '<span class="badge-real">✅ 已晋级</span>' : '<span class="badge-pred">🔮 预测</span>') +
+        '</div>';
+    });
+    container.innerHTML = html;
   }
 
   // ===== 渲染32强球队 =====
@@ -518,7 +608,13 @@
 
       // Render panels
       renderBracketTree(roundData, teamsProb);
-      renderMatchList(roundData);
+      if (bracketRes && bracketRes.rounds) {
+        renderMatchList(bracketRes.rounds, teamsProb);
+        renderR16Teams(bracketRes.rounds, teamsProb);
+      } else {
+        document.getElementById('ko-finished').innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无比赛数据</div>';
+        document.getElementById('ko-upcoming').innerHTML = '';
+      }
 
       // Qualified teams
       if (qualifiersRes && qualifiersRes.qualifiers && qualifiersRes.qualifiers.allTeams) {

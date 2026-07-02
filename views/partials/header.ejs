@@ -4,7 +4,14 @@
     <div class="nav-links">
       <a href="/" class="<%= page === 'today' ? 'active' : '' %>">今日</a>
       <a href="/schedule" class="<%= page === 'schedule' ? 'active' : '' %>">赛程</a>
-      <a href="/standings" class="<%= page === 'standings' ? 'active' : '' %>">晋级</a>
+      <!-- 晋级数据下拉（小组赛 + 对手矩阵） -->
+      <div class="nav-dropdown">
+        <a href="javascript:void(0)" class="nav-dropdown-toggle <%= ['standings','opponent-matrix'].includes(page) ? 'active' : '' %>">晋级 ▾</a>
+        <div class="nav-dropdown-menu">
+          <a href="/standings" class="<%= page === 'standings' ? 'active' : '' %>">小组赛晋级数据</a>
+          <a href="/opponent-matrix" class="<%= page === 'opponent-matrix' ? 'active' : '' %>">对手矩阵</a>
+        </div>
+      </div>
       <a href="/knockout" class="<%= page === 'knockout' ? 'active' : '' %>">淘汰赛</a>
       <!-- 模拟下拉 -->
       <div class="nav-dropdown">
@@ -15,7 +22,6 @@
         </div>
       </div>
       <a href="/teams" class="<%= page === 'teams' ? 'active' : '' %>">球队</a>
-      <a href="/opponent-matrix" class="<%= page === 'opponent-matrix' ? 'active' : '' %>">对手矩阵</a>
       <!-- 市场下拉 -->
       <div class="nav-dropdown">
         <a href="javascript:void(0)" class="nav-dropdown-toggle <%= ['demo','polymarket'].includes(page) ? 'active' : '' %>">市场 ▾</a>

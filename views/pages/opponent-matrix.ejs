@@ -61,6 +61,33 @@
     .matrix-error p { margin: 4px 0; }
     .matrix-error .btn { margin-top: 12px; }
 
+    /* R32真实结果状态 */
+    .cell-qualified {
+      background: rgba(34,197,94,0.06) !important;
+      position: relative;
+    }
+    .cell-eliminated {
+      background: rgba(239,68,68,0.06) !important;
+      position: relative;
+    }
+    .team-status {
+      display: inline-block;
+      font-size: 0.6rem;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+    }
+    .team-status.qualified {
+      background: rgba(34,197,94,0.15);
+      color: #22c55e;
+    }
+    .team-status.eliminated {
+      background: rgba(239,68,68,0.15);
+      color: #ef4444;
+    }
+    .team-cell.qualified-team { color: #22c55e; }
+    .team-cell.eliminated-team { color: #ef4444; opacity: 0.7; }
+
     @media (max-width: 768px) {
       .matrix-table { font-size: 0.7rem; }
       .matrix-table th, .matrix-table td { padding: 5px 6px; }
@@ -93,18 +120,32 @@
   async function loadMatrix() {
     const app = document.getElementById('matrix-app');
     try {
-      const r = await fetch('/api/knockout/opponent-matrix?_t=' + Date.now());
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const data = await r.json();
+      const [mr, schedR] = await Promise.all([
+        fetch('/api/knockout/opponent-matrix?_t=' + Date.now()),
+        fetch('/api/matches/schedule?force=1&_t=' + Date.now())
+      ]);
+      if (!mr.ok) throw new Error('矩阵 HTTP ' + mr.status);
+      const data = await mr.json();
 
-      // teams: { slug: { info, elo, slot, path: { round32, round16, ... } } }
       const teams = data.teams;
       if (!teams || Object.keys(teams).length === 0) throw new Error('无队伍数据');
 
       // 缓存队伍信息
       Object.entries(teams).forEach(([slug, t]) => { ELO_RATING_CACHE[slug] = t.elo; });
 
-      renderMatrix(teams);
+      // 获取真实R32已完赛结果
+      var realFT = {};
+      if (schedR.ok) {
+        var sched = await schedR.json();
+        (sched.matches || []).forEach(function(m) {
+          if (m.status === 'FT' && m.stage !== 'GROUP_STAGE' && m.g1 != null && m.g2 != null) {
+            if (m.g1 > m.g2) { realFT[m.t1] = 'won'; realFT[m.t2] = 'lost'; }
+            else if (m.g2 > m.g1) { realFT[m.t1] = 'lost'; realFT[m.t2] = 'won'; }
+          }
+        });
+      }
+
+      renderMatrix(teams, realFT);
     } catch (e) {
       app.innerHTML = '<div class="matrix-error"><p>⚠️ 加载失败</p><p class="text-muted">' + e.message + '</p><button class="btn" onclick="loadMatrix()">重试</button></div>';
     }
@@ -129,12 +170,29 @@
     return '<div class="opp-prob-bar ' + cls + '" style="width:' + pct + '%"></div><span class="opp-prob-text">' + pct + '%</span>';
   }
 
-  function renderOpponentCell(roundData, slug, teams) {
+  function renderOpponentCell(roundData, slug, teams, resultStatus) {
     if (!roundData) return '<span class="text-muted">-</span>';
 
     // R32: 单个对手
     if (roundData.opponent) {
       const info = roundData.opponentInfo || getTeamDisplay(roundData.opponent, teams);
+      // 如果真实比赛已完赛，覆写概率
+      if (resultStatus === 'won') {
+        return '<div class="opp-cell">' +
+          '<div class="opp-team"><span class="opp-flag">⚽</span><span class="opp-name">' + (info.name || info.nameEn || roundData.opponent) + '</span></div>' +
+          '<div class="opp-prob-bar fill-high" style="width:100%;height:8px;border-radius:4px;background:#22c55e"></div>' +
+          '<span class="opp-prob-text" style="color:#22c55e;font-weight:700">100%</span>' +
+          '<div style="font-size:0.6rem;color:#22c55e;margin-top:2px">✅ 已晋级</div>' +
+          '</div>';
+      }
+      if (resultStatus === 'lost') {
+        return '<div class="opp-cell">' +
+          '<div class="opp-team"><span class="opp-flag">⚽</span><span class="opp-name">' + (info.name || info.nameEn || roundData.opponent) + '</span></div>' +
+          '<div class="opp-prob-bar fill-low" style="width:0%;height:8px;border-radius:4px;background:#666"></div>' +
+          '<span class="opp-prob-text" style="color:#ef4444;font-weight:700">0%</span>' +
+          '<div style="font-size:0.6rem;color:#ef4444;margin-top:2px">❌ 未晋级</div>' +
+          '</div>';
+      }
       const winPct = (roundData.winA * 100).toFixed(0);
       return '<div class="opp-cell">' +
         '<div class="opp-team"><span class="opp-flag">⚽</span><span class="opp-name">' + (info.name || info.nameEn || roundData.opponent) + '</span></div>' +
@@ -181,7 +239,7 @@
     return '<span class="round-badge ' + (cls[stage] || '') + '">' + (labels[stage] || stage) + '</span>';
   }
 
-  function renderMatrix(teams) {
+  function renderMatrix(teams, realFT) {
     const app = document.getElementById('matrix-app');
     const slugs = Object.keys(teams).sort(function(a, b) {
       return (teams[b].elo || 0) - (teams[a].elo || 0);
@@ -197,25 +255,36 @@
       });
     });
 
-    var html = '<div class="matrix-stats">';
-    html += '<div class="matrix-stat-card"><div class="stat-val">' + teamCount + '</div><div class="stat-label">淘汰赛队伍</div></div>';
-    html += '<div class="matrix-stat-card"><div class="stat-val">' + pairCount + '</div><div class="stat-label">覆盖对战组合</div></div>';
-    html += '<div class="matrix-stat-card"><div class="stat-val">' + slugs.filter(function(s) { return teams[s].path && teams[s].path.round32; }).length + '</div><div class="stat-label">已确定R32对手</div></div>';
-    html += '</div>';
+    var qualifiedCount = Object.keys(realFT).filter(function(s) { return realFT[s] === 'won'; }).length;
+    var eliminatedCount = Object.keys(realFT).filter(function(s) { return realFT[s] === 'lost'; }).length;
 
-    html += '<div class="matrix-table-wrap"><table class="matrix-table">';
-    html += '<thead><tr><th>队伍</th><th>Elo</th><th>R32</th><th>R16</th><th>QF</th><th>SF</th><th>Final</th></tr></thead><tbody>';
+    var html = '<div class="matrix-stats">' +
+      '<div class="matrix-stat-card"><div class="stat-val">' + teamCount + '</div><div class="stat-label">淘汰赛队伍</div></div>' +
+      '<div class="matrix-stat-card"><div class="stat-val">' + pairCount + '</div><div class="stat-label">覆盖对战组合</div></div>' +
+      '<div class="matrix-stat-card"><div class="stat-val">' + teamCount + '</div><div class="stat-label">32强队伍总数</div></div>' +
+      (qualifiedCount ? '<div class="matrix-stat-card" style="border-left:3px solid #22c55e"><div class="stat-val" style="color:#22c55e">' + qualifiedCount + '</div><div class="stat-label">✅ 已晋级R16</div></div>' : '') +
+      (eliminatedCount ? '<div class="matrix-stat-card" style="border-left:3px solid #ef4444"><div class="stat-val" style="color:#ef4444">' + eliminatedCount + '</div><div class="stat-label">❌ 已淘汰</div></div>' : '') +
+      '</div>';
+
+    html += '<div class="matrix-table-wrap"><table class="matrix-table">' +
+      '<thead><tr><th>队伍</th><th>Elo</th><th>R32</th><th>R16</th><th>QF</th><th>SF</th><th>Final</th></tr></thead><tbody>';
 
     slugs.forEach(function(slug) {
       var t = teams[slug];
       var info = t.info || {};
       var name = info.name || info.nameEn || slug;
       var path = t.path || {};
+      var status = realFT[slug]; // 'won', 'lost', or undefined
+      var rowCls = status === 'won' ? ' class="cell-qualified"' : (status === 'lost' ? ' class="cell-eliminated"' : '');
 
-      html += '<tr>';
-      html += '<td><div class="team-cell"><span class="flag-fallback">⚽</span>' + name + '</div></td>';
+      html += '<tr' + rowCls + '>';
+      html += '<td><div class="team-cell' + (status === 'won' ? ' qualified-team' : (status === 'lost' ? ' eliminated-team' : '')) + '">' +
+        '<span class="flag-fallback">⚽</span>' + name +
+        (status === 'won' ? '<span class="team-status qualified">✅ 已晋级</span>' : '') +
+        (status === 'lost' ? '<span class="team-status eliminated">❌ 未晋级</span>' : '') +
+        '</div></td>';
       html += '<td>' + (t.elo || '-') + '</td>';
-      html += '<td>' + renderOpponentCell(path.round32, slug, teams) + '</td>';
+      html += '<td>' + renderOpponentCell(path.round32, slug, teams, status) + '</td>';
       html += '<td>' + renderOpponentCell(path.round16, slug, teams) + '</td>';
       html += '<td>' + renderOpponentCell(path.quarter, slug, teams) + '</td>';
       html += '<td>' + renderOpponentCell(path.semi, slug, teams) + '</td>';
@@ -224,7 +293,7 @@
     });
 
     html += '</tbody></table></div>';
-    html += '<p class="text-muted" style="margin-top:12px;font-size:0.7rem">概率条 = 对手晋级此轮且你击败该对手的综合概率。对手按条件概率降序排列。</p>';
+    html += '<p class="text-muted" style="margin-top:12px;font-size:0.7rem">✅ 已晋级 = R32已完赛并获胜进入R16 · ❌ 未晋级 = R32已完赛且被淘汰 · 概率条 = 对手晋级此轮且你击败该对手的综合概率</p>';
 
     app.innerHTML = html;
   }

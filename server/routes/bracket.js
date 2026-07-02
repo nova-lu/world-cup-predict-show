@@ -5,22 +5,22 @@ const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
 const groupConfig = GROUP_LETTERS.map(g => ({ group: g, label: g + '组' }));
 
 const round32Matches = [
-  { id: 'r32-1', label: 'R32·1', home: '1A', away: '3RD:E', slot: 'W73' },
+  { id: 'r32-1', label: 'R32·1', home: '1A', away: '3RD_RANK:1', slot: 'W73' },
   { id: 'r32-2', label: 'R32·2', home: '2D', away: '2G', slot: 'W74' },
   { id: 'r32-3', label: 'R32·3', home: '1C', away: '2F', slot: 'W75' },
   { id: 'r32-4', label: 'R32·4', home: '2E', away: '2I', slot: 'W76' },
-  { id: 'r32-5', label: 'R32·5', home: '1I', away: '3RD:F', slot: 'W77' },
+  { id: 'r32-5', label: 'R32·5', home: '1I', away: '3RD_RANK:2', slot: 'W77' },
   { id: 'r32-6', label: 'R32·6', home: '2A', away: '2B', slot: 'W78' },
   { id: 'r32-7', label: 'R32·7', home: '1H', away: '2J', slot: 'W79' },
   { id: 'r32-8', label: 'R32·8', home: '2K', away: '2L', slot: 'W80' },
-  { id: 'r32-9', label: 'R32·9', home: '1B', away: '3RD:J', slot: 'W81' },
-  { id: 'r32-10', label: 'R32·10', home: '1L', away: '3RD:K', slot: 'W82' },
-  { id: 'r32-11', label: 'R32·11', home: '1G', away: '3RD:I', slot: 'W83' },
-  { id: 'r32-12', label: 'R32·12', home: '1E', away: '3RD:D', slot: 'W84' },
+  { id: 'r32-9', label: 'R32·9', home: '1B', away: '3RD_RANK:3', slot: 'W81' },
+  { id: 'r32-10', label: 'R32·10', home: '1L', away: '3RD_RANK:4', slot: 'W82' },
+  { id: 'r32-11', label: 'R32·11', home: '1G', away: '3RD_RANK:5', slot: 'W83' },
+  { id: 'r32-12', label: 'R32·12', home: '1E', away: '3RD_RANK:6', slot: 'W84' },
   { id: 'r32-13', label: 'R32·13', home: '1F', away: '2C', slot: 'W85' },
-  { id: 'r32-14', label: 'R32·14', home: '1D', away: '3RD:B', slot: 'W86' },
+  { id: 'r32-14', label: 'R32·14', home: '1D', away: '3RD_RANK:7', slot: 'W86' },
   { id: 'r32-15', label: 'R32·15', home: '1J', away: '2H', slot: 'W87' },
-  { id: 'r32-16', label: 'R32·16', home: '1K', away: '3RD:L', slot: 'W88' },
+  { id: 'r32-16', label: 'R32·16', home: '1K', away: '3RD_RANK:8', slot: 'W88' },
 ];
 
 const round16Matches = [
@@ -66,8 +66,12 @@ function buildTeamProb(result) {
 /**
  * 用 MC 概率模拟完整淘汰赛树
  * 逐个轮次解析：R32胜者→R16→QF→SF→决赛
+ * 优先使用真实完赛结果，未赛的比赛用 MC 概率比较
+ * @param {Array} resolvedR32 - 已解析的 32 强对阵
+ * @param {Object} teamProb - MC 球队晋级概率
+ * @param {Object} [realResults] - 真实完赛结果 { slot: { winner, home, away, g1, g2 } }
  */
-function simulateFullBracket(resolvedR32, teamProb) {
+function simulateFullBracket(resolvedR32, teamProb, realResults = {}) {
   const matchBySlot = {};
 
   // 晋级概率键
@@ -81,10 +85,19 @@ function simulateFullBracket(resolvedR32, teamProb) {
     return hp >= ap ? homeSlug : awaySlug;
   }
 
-  // 第1步：确定 R32 胜者（比 round16 概率）
+  // 第1步：确定 R32 胜者（优先真实结果）
   const round32 = resolvedR32.map(m => {
+    const real = realResults[m.slot];
+    if (real && real.finished) {
+      const result = { ...m, winner: real.winner, home: real.home || m.home, away: real.away || m.away,
+        g1: real.g1, g2: real.g2, finished: true, simulated: false,
+        winnerProb: Math.max(teamProb[real.winner]?.round16 || 0, 0) };
+      matchBySlot[result.slot] = result;
+      return result;
+    }
     const winner = pickWinner(m.home, m.away, 0);
-    const result = { ...m, winner, simulated: true, winnerProb: Math.max(teamProb[winner]?.round16 || 0, 0) };
+    const result = { ...m, winner, simulated: true, finished: false,
+      winnerProb: Math.max(teamProb[winner]?.round16 || 0, 0) };
     matchBySlot[result.slot] = result;
     return result;
   });
@@ -143,40 +156,128 @@ export default async function bracketRouter(req, res) {
     let roundData, teamProbData, mcSims;
     let source = 'simulated';
     let message = '';
+    let realCount = 0;
 
-    // 尝试获取实时小组数据
+    // 获取 MC 概率数据（用于未赛比赛的模拟）
+    const mc = await import('../services/monteCarloService.js');
+    const mcResult = await mc.runMonteCarlo(10000, req.forceRefresh || false);
+    teamProbData = buildTeamProb(mcResult);
+    mcSims = mcResult.simulations;
+
+    // 获取真实比赛数据
     try {
-      const { resolveKnockoutQualifiers, mapBracketSlots } = await import('../services/groupResolver.js');
-      const qualifiers = await resolveKnockoutQualifiers(req.forceRefresh);
-      const groupCount = Object.keys(qualifiers.groups || {}).length;
+      const { fetchAllMatches } = await import('../services/footballApi.js');
+      const allMatches = await fetchAllMatches(req.forceRefresh || false);
 
-      if (groupCount >= 12 && qualifiers.totalQualified >= 32) {
-        // 确定真实 32强
-        const resolvedR32 = mapBracketSlots(round32Matches, qualifiers.groups, qualifiers.thirdPlaces);
+      // 提取 R32 比赛（LAST_32）
+      const r32Real = (allMatches || [])
+        .filter(m => m.stage === 'LAST_32' && m.t1 && m.t2)
+        .map(m => ({
+          t1: m.t1, t2: m.t2,
+          stage: 'round32',
+          g1: m.g1, g2: m.g2,
+          status: m.status,
+          finished: m.status === 'FT',
+          winner: m.status === 'FT' ? (m.g1 > m.g2 ? m.t1 : m.t2) : null,
+        }));
 
-        // 获取 MC 概率数据
-        const mc = await import('../services/monteCarloService.js');
-        const mcResult = await mc.runMonteCarlo(10000, false);
-        teamProbData = buildTeamProb(mcResult);
-        mcSims = mcResult.simulations;
+      if (r32Real.length === 16) {
+        console.log('[Bracket] 使用真实 R32 对阵数据');
 
-        // 完整模拟淘汰赛
-        roundData = simulateFullBracket(resolvedR32, teamProbData);
+        // 将 16 场 R32 分配到 slot W73-W88
+        // 使用 bracket 结构树：W73+W75→W89, W74+W77→W90, W76+W78→W91,
+        // W79+W80→W92, W81+W83→W93, W82+W84→W94, W85+W87→W95, W86+W88→W96
+        const slotPairs = [
+          ['W73', 'W75'], ['W74', 'W77'], ['W76', 'W78'],
+          ['W79', 'W80'], ['W81', 'W83'], ['W82', 'W84'],
+          ['W85', 'W87'], ['W86', 'W88'],
+        ];
 
+        // 确定每个 R32 比赛在 bracket 树中的"邻居"（同一个 R16 对手）
+        // 通过 real R16 matches 的已知配对来分组
+        const r16Known = (allMatches || [])
+          .filter(m => m.stage === 'LAST_16' && m.t1 && m.t2)
+          .map(m => [m.t1, m.t2]);
+
+        // 按已知 R16 配对将 R32 比赛分组
+        const pairedGroups = [];
+        const usedInGroup = new Set();
+
+        for (const [r16a, r16b] of r16Known) {
+          const group = r32Real.filter(m =>
+            !usedInGroup.has(m.t1 + ':' + m.t2) &&
+            (m.t1 === r16a || m.t2 === r16a || m.t1 === r16b || m.t2 === r16b)
+          );
+          if (group.length === 2) {
+            group.forEach(m => usedInGroup.add(m.t1 + ':' + m.t2));
+            pairedGroups.push(group);
+          }
+        }
+
+        // 未分组的比赛单独配对
+        const remaining = r32Real.filter(m => !usedInGroup.has(m.t1 + ':' + m.t2));
+        for (let i = 0; i < remaining.length; i += 2) {
+          if (i + 1 < remaining.length) {
+            pairedGroups.push([remaining[i], remaining[i + 1]]);
+          } else {
+            pairedGroups.push([remaining[i]]);
+          }
+        }
+
+        // 分配到 slot
+        const resolvedR32 = [];
+        for (let i = 0; i < Math.min(pairedGroups.length, slotPairs.length); i++) {
+          const group = pairedGroups[i];
+          const [slot1, slot2] = slotPairs[i];
+          const labels = [`R32·${i * 2 + 1}`, `R32·${i * 2 + 2}`];
+
+          // 每组第一场比赛 → slot1
+          if (group[0]) {
+            const m = group[0];
+            resolvedR32.push({
+              id: `r32-${i * 2 + 1}`, label: `R32·${i * 2 + 1}`,
+              home: m.t1, away: m.t2, slot: slot1, stage: 'round32',
+              winner: m.winner, g1: m.g1, g2: m.g2,
+              finished: m.finished, resolved: true,
+            });
+          }
+
+          // 每组第二场比赛 → slot2
+          if (group[1]) {
+            const m = group[1];
+            resolvedR32.push({
+              id: `r32-${i * 2 + 2}`, label: `R32·${i * 2 + 2}`,
+              home: m.t1, away: m.t2, slot: slot2, stage: 'round32',
+              winner: m.winner, g1: m.g1, g2: m.g2,
+              finished: m.finished, resolved: true,
+            });
+          }
+        }
+
+        // 构建 realResults 映射供 simulateFullBracket 使用
+        const realResults = {};
+        for (const m of resolvedR32) {
+          if (m.finished && m.winner) {
+            realResults[m.slot] = {
+              home: m.home, away: m.away,
+              winner: m.winner, g1: m.g1, g2: m.g2,
+              finished: true,
+            };
+          }
+        }
+        realCount = Object.keys(realResults).length;
+
+        // 模拟完整淘汰赛
+        roundData = simulateFullBracket(resolvedR32, teamProbData, realResults);
         source = 'simulated';
-        message = `MCS模拟 · 32强基于实时小组数据 · ${mcSims}次模拟晋级路径`;
+        message = `MCS模拟 · 真实R32对阵 · ${mcSims}次模拟 · ${realCount}场已完赛使用真实结果`;
       }
     } catch (realErr) {
-      console.log('[Bracket] 真实数据不可用:', realErr.message);
+      console.log('[Bracket] 真实比赛数据不可用:', realErr.message);
     }
 
-    // 降级：纯 MC 模拟
+    // 降级：无真实数据时用纯 MC 模拟
     if (!roundData) {
-      const mc = await import('../services/monteCarloService.js');
-      const mcResult = await mc.runMonteCarlo(10000, req.forceRefresh);
-      teamProbData = buildTeamProb(mcResult);
-      mcSims = mcResult.simulations;
-
       const simR32 = round32Matches.map(m => {
         let home = m.home, away = m.away;
         const homeGrp = home.match(/^(\d+)([A-Z])$/);
@@ -195,20 +296,28 @@ export default async function bracketRouter(req, res) {
             .sort((a, b) => (b[1].round32 || 0) - (a[1].round32 || 0));
           if (cs.length >= pos) away = cs[pos - 1][0];
         }
-        const awayThird = away.match(/^3RD:([A-Z])$/i);
-        if (awayThird) {
-          const grp = awayThird[1];
-          const third = Object.entries(teamProbData)
-            .filter(([, t]) => t.group === grp && (t.round32 || 0) > 0)
+        const thirdRank = away.match(/^3RD_RANK:(\d+)$/i);
+        if (thirdRank) {
+          const rank = parseInt(thirdRank[1]);
+          const sortedThirds = Object.entries(teamProbData)
+            .filter(([, t]) => (t.round32 || 0) > 0)
             .sort((a, b) => (b[1].round32 || 0) - (a[1].round32 || 0));
-          if (third.length > 0) away = third[0][0];
+          if (sortedThirds.length >= rank) away = sortedThirds[rank - 1][0];
+        } else {
+          const awayThird = away.match(/^3RD:([A-Z])$/i);
+          if (awayThird) {
+            const grp = awayThird[1];
+            const third = Object.entries(teamProbData)
+              .filter(([, t]) => t.group === grp && (t.round32 || 0) > 0)
+              .sort((a, b) => (b[1].round32 || 0) - (a[1].round32 || 0));
+            if (third.length > 0) away = third[0][0];
+          }
         }
         return { ...m, home, away };
       });
-
-      roundData = simulateFullBracket(simR32, teamProbData);
+      roundData = simulateFullBracket(simR32, teamProbData, {});
       source = 'simulated';
-      message = `MCS纯模拟 · 无实时数据 · ${mcSims}次模拟推算`;
+      message = `MCS纯模拟 · 无真实比赛数据 · ${mcSims}次模拟推算`;
     }
 
     res.json({

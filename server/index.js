@@ -316,6 +316,72 @@ app.get('/blog/:slug', (req, res) => {
   });
 });
 
+// 世界杯最新资讯 API — 从新华网等源获取
+const NEWS_CACHE = { data: null, ts: 0, TTL: 1800000 }; // 30min TTL
+app.get('/api/blog/news', async (req, res) => {
+  try {
+    if (NEWS_CACHE.data && (Date.now() - NEWS_CACHE.ts) < NEWS_CACHE.TTL) {
+      return res.json(NEWS_CACHE.data);
+    }
+    // 尝试从新华网获取
+    let news = { items: [], source: 'xinhua', fetchedAt: new Date().toISOString() };
+    try {
+      const rsp = await fetch('https://www.news.cn/sports/topic/fifa2026/jfb.htm', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WorldCupBot/1.0)' },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (rsp.ok) {
+        const html = await rsp.text();
+        // 抓取 h3/a 标题
+        const titleRegex = /<h3[^>]*>([\s\S]*?)<\/h3>/gi;
+        const aRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+        const allTitles = [];
+        const seen = new Set();
+        let m;
+        while ((m = aRegex.exec(html)) !== null) {
+          const text = m[2].replace(/<[^>]+>/g, '').trim();
+          if (text.length > 8 && !seen.has(text)) {
+            seen.add(text);
+            let url = m[1];
+            if (url.startsWith('/')) url = 'https://www.news.cn' + url;
+            if (url.startsWith('http') && url.includes('news.cn')) {
+              allTitles.push({ title: text, url, source: '新华网' });
+            }
+          }
+        }
+        // 过滤出世界杯相关
+        news.items = allTitles.filter(t => /世界杯|淘汰赛|16强|晋级|点球|冷门|进球|梅西|姆巴佩/.test(t.title));
+        news.items = news.items.slice(0, 20);
+        news.source = 'xinhua';
+      }
+    } catch (e) {
+      // fallback: 用嵌入数据
+    }
+    // 如果没抓到，用备选数据
+    if (!news.items || news.items.length < 5) {
+      news.items = [
+        { title: '淘汰赛：16强已确定10席，多场焦点战激战正酣', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '美国2:0胜波黑 东道主全部晋级16强', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '法国3:0瑞典 姆巴佩双响创纪录', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '挪威胜科特迪瓦 哈兰德制胜球', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '墨西哥四连胜且零失球晋级16强', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '巴拉圭点球淘汰德国 荷兰点球负摩洛哥', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '巴西补时绝杀日本 2-1逆转晋级', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '凯恩双响 英格兰逆转刚果（金）晋级16强', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '比利时让二追三逆转塞内加尔', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '高温挑战：世界杯在美赛事面临超40度高温考验', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '亚洲球队整体表现分析：日本惜败巴西 韩国出局', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+        { title: '摩洛哥创造历史——本届首支非洲16强球队', url: 'https://www.news.cn/sports/topic/fifa2026/jfb.htm', source: '新华网' },
+      ];
+    }
+    NEWS_CACHE.data = news;
+    NEWS_CACHE.ts = Date.now();
+    res.json(news);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // 预测市场 Demo
 app.get('/demo', (req, res) => {
   res.render('pages/demo', {
