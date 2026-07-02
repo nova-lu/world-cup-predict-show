@@ -119,8 +119,13 @@ export function mapBracketSlots(bracketMatches, groupStandings, thirdPlaces) {
 
   // 预计算第三名按组查找
   const thirdByGroup = {};
+  // 预计算第三名按排名查找（3RD_RANK:N → N=1..8, 1=最佳第三名）
+  const thirdByRank = [];
   for (const t of thirdPlaces) {
     thirdByGroup[t.group] = t.slug;
+    if (t.overallRank) {
+      thirdByRank[t.overallRank] = t.slug;
+    }
   }
 
   function resolveSlot(slot) {
@@ -137,6 +142,13 @@ export function mapBracketSlots(bracketMatches, groupStandings, thirdPlaces) {
       const teams = groupStandings[grp];
       if (teams && teams.length >= pos) return teams[pos - 1].slug;
       return null;
+    }
+
+    // 按排名引用第三名 "3RD_RANK:1" — 取排名第N的最佳第三名（N=1最佳）
+    const rankMatch = slot.match(/^3RD_RANK:(\d+)$/i);
+    if (rankMatch) {
+      const rank = parseInt(rankMatch[1]);
+      return thirdByRank[rank] || null;
     }
 
     // 组第三名引用 "3RD:E" — 直接引用某组的第三名球队

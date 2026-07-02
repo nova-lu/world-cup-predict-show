@@ -1,114 +1,124 @@
 /**
- * 回测引擎
- * server/ml/backtest/engine.js
- *
- * 对多届历史世界杯运行 ML 预测并评估准确率。
- * 从已缓存的特征数据中提取历史比赛进行回测。
+ * 回测引擎主模块
+ * 整合 collector → predictor → metrics → reporter
+ * 支持单例运行 + 取消
  */
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import * as collector from './collector.js';
+import * as metrics from './metrics.js';
+import * as reporter from './reporter.js';
 import mlConfig from '../config.js';
-import { loadMatches } from '../data/loader.js';
-import { buildFeatureBatch } from '../data/features.js';
 
-// 缓存结果
-let backtestCache = null;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPORTS_DIR = path.resolve(__dirname, '../../../data/backtest/reports');
 
-/**
- * 运行回测
- * @param {boolean} force - 强制刷新
- * @returns {Promise<object>}
- */
-export async function runBacktest(force = false) {
-  if (backtestCache && !force) return backtestCache;
+let _lastResult = null;
+let _running = false;
+let _cancelled = false;
 
-  const tournaments = mlConfig.backtest.tournaments; // [2002, 2006, 2010, 2014, 2018, 2022]
-  const results = [];
+export function isRunning() { return _running; }
+export function isCancelled() { return _cancelled; }
 
-  // 加载世界杯比赛（仅世界杯正赛）
-  const wcMatches = loadMatches(mlConfig.data.matchesCsv, {
-    filterLevel: 'P0',
-    minYear: Math.min(...tournaments),
-    maxYear: Math.max(...tournaments),
-  });
+export function cancelBacktest() {
+  if (!_running) return { cancelled: false, reason: '没有正在运行的回测' };
+  _cancelled = true;
+  console.log('[backtest/engine] ⛔ 已请求取消回测');
+  return { cancelled: true, message: '正在停止...' };
+}
 
-  // 按届筛选
-  for (const year of tournaments) {
-    const yearMatches = wcMatches.filter(m => m.year === year);
-    // 仅取世界杯正赛（非预选赛）
-    const wcOnly = yearMatches.filter(m => m.tournament === 'FIFA World Cup');
+export async function runBacktest(opts = {}) {
+  if (_running) throw new Error('回测正在运行中，请等待完成或先取消');
+  _running = true;
+  _cancelled = false;
 
-    results.push({
-      year,
-      totalMatches: wcOnly.length,
-      matches: wcOnly.map(m => ({
-        match_id: m.match_id,
-        home_team: m.home_team,
-        away_team: m.away_team,
-        home_score: m.home_score,
-        away_score: m.away_score,
-        result: m.home_score > m.away_score ? 'W' : (m.home_score < m.away_score ? 'L' : 'D'),
-        round: m.round,
-      })),
-    });
+  const force = opts.force === true || opts.forceRefresh === true;
+  const mlEnabled = opts.mlEnabled !== false;
+  const saveReport = opts.saveReport !== false;
+
+  try {
+    console.log('[backtest/engine] 开始回测...');
+    if (_cancelled) throw new BacktestCancelledError();
+
+    const { matches, summary } = await collector.getCached({ force });
+    console.log(`[backtest/engine] 收集到 ${matches.length} 场比赛, 覆盖 ${summary.byYear.length} 届`);
+
+    if (_cancelled) throw new BacktestCancelledError();
+    if (matches.length === 0) return { success: false, error: '没有可回测的比赛数据', summary };
+
+    const predictor = await import('./predictor.js');
+    let records;
+    try {
+      records = await predictor.predictBatch(matches, { mlEnabled });
+    } catch (e) {
+      if (e instanceof BacktestCancelledError) throw e;
+      console.error('[backtest/engine] 预测生成失败:', e.message);
+      return { success: false, error: `预测失败: ${e.message}`, summary };
+    }
+
+    if (_cancelled) throw new BacktestCancelledError();
+
+    const engines = ['elo'];
+    if (mlEnabled) engines.push('ml', 'ensemble');
+
+    const overall = {}, yearly = {}, stageBreakdown = {}, errorAnalysis = {};
+    for (const eng of engines) {
+      overall[eng] = metrics.computeAggregate(records, eng);
+      yearly[eng] = metrics.computeByYear(records, eng);
+      stageBreakdown[eng] = metrics.computeByStage(records, eng);
+      errorAnalysis[eng] = metrics.computeErrorAnalysis(records, eng);
+    }
+
+    const result = { success: true, summary, overall, yearly, stageBreakdown, errorAnalysis, records };
+
+    if (saveReport && !_cancelled) {
+      try {
+        reporter.generateReport(result);
+      } catch (e) {
+        console.warn('[backtest/engine] 报告生成失败:', e.message);
+      }
+    }
+
+    _lastResult = result;
+    console.log('[backtest/engine] 回测完成');
+    return result;
+  } catch (e) {
+    if (e instanceof BacktestCancelledError) {
+      console.log('[backtest/engine] ⛔ 回测已被用户取消');
+      return { success: false, cancelled: true, message: '回测已被用户取消', summary: await getCachedSummary() };
+    }
+    throw e;
+  } finally {
+    _running = false;
+    _cancelled = false;
   }
-
-  backtestCache = {
-    status: 'ok',
-    engine: `ml-${mlConfig.version}`,
-    tournaments: results.map(r => ({
-      year: r.year,
-      matchesPredicted: r.totalMatches,
-      // 占位值 — 实际值需运行推理后填充
-      accuracy: null,
-      logLoss: null,
-      brierScore: null,
-      rmse: null,
-      topScoreHitRate: null,
-      simpleAccuracy: estimateAccuracy(r.year),
-    })),
-    overall: {
-      accuracy: null,
-      logLoss: null,
-      brierScore: null,
-      rmse: null,
-      totalMatches: results.reduce((s, r) => s + r.totalMatches, 0),
-    },
-    note: '回测指标需要运行完整推理。当前显示初步估算值。',
-  };
-
-  return backtestCache;
 }
 
-/**
- * 简化的准确率估算（基于历史数据统计）
- */
-function estimateAccuracy(year) {
-  // 世界杯历史平均主场/强队胜率约 55%
-  const baseAccuracy = {
-    2002: 0.56, 2006: 0.54, 2010: 0.55,
-    2014: 0.57, 2018: 0.53, 2022: 0.58,
-  };
-  return baseAccuracy[year] || 0.55;
+class BacktestCancelledError extends Error {
+  constructor() { super('回测已被用户取消'); this.name = 'BacktestCancelledError'; }
 }
 
-/**
- * 获取单届世界杯的原始预测结果（待扩展）
- */
-export async function getTournamentPredictions(year) {
-  const wcMatches = loadMatches(mlConfig.data.matchesCsv, {
-    filterLevel: 'P0',
-    minYear: year,
-    maxYear: year,
-  });
+async function getCachedSummary() {
+  try {
+    const { matches, summary } = await collector.getCached({ force: false });
+    return summary;
+  } catch { return { total: 0, byYear: [] }; }
+}
 
-  const wcOnly = wcMatches.filter(m => m.tournament === 'FIFA World Cup');
+export function getLastResult() { return _lastResult; }
 
-  // 构建特征并运行推理
-  const features = await buildFeatureBatch(wcOnly);
-
-  return {
-    year,
-    total: wcOnly.length,
-    features: features.length,
-    // 占位—实际预测推理需要 Python 子进程
-  };
+export function getReportList() {
+  try {
+    if (!fs.existsSync(REPORTS_DIR)) return [];
+    return fs.readdirSync(REPORTS_DIR)
+      .filter(f => f.endsWith('.json') && !f.includes('detail'))
+      .sort().reverse().slice(0, 10)
+      .map(f => ({
+        filename: f,
+        path: path.join(REPORTS_DIR, f),
+        size: fs.statSync(path.join(REPORTS_DIR, f)).size,
+        generatedAt: fs.statSync(path.join(REPORTS_DIR, f)).mtime.toISOString(),
+      }));
+  } catch { return []; }
 }

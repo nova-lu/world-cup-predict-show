@@ -261,6 +261,21 @@
   // ===== Phase 10 Task D: Tab 懒加载缓存 =====
   const lazyCache = {};
 
+  // 统一比分概率格式化：处理 prob/probability 字段，decimal/percentage 格式
+  function fmtScoreProb(s) {
+    var v = s.probability != null ? s.probability : s.prob;
+    if (v == null || isNaN(v)) return '0.0%';
+    if (typeof v === 'number' && v < 1) return (v * 100).toFixed(1) + '%';
+    return v + '%';
+  }
+  // 返回数值百分比（用于进度条宽度）
+  function fmtScoreProbNum(s) {
+    var v = s.probability != null ? s.probability : s.prob;
+    if (v == null || isNaN(v)) return 0;
+    if (typeof v === 'number' && v < 1) return (v * 100).toFixed(0);
+    return Math.min(v, 100);
+  }
+
   // SVG 旗帜渲染
   function flagHtml(info, size) {
     size = size || 'sm';
@@ -290,8 +305,8 @@
     document.getElementById('win-away-pct').textContent = sp.awayProb + '%';
 
     // xG
-    document.getElementById('xg-home-name').textContent = sp.homeName;
-    document.getElementById('xg-away-name').textContent = sp.awayName;
+    document.getElementById('xg-home-name').innerHTML = flagHtml({ flag: sp.homeFlag, flagPath: sp.homeFlagPath, name: sp.homeName }, 'sm') + ' ' + sp.homeName;
+    document.getElementById('xg-away-name').innerHTML = flagHtml({ flag: sp.awayFlag, flagPath: sp.awayFlagPath, name: sp.awayName }, 'sm') + ' ' + sp.awayName;
     document.getElementById('xg-home-val').textContent = sp.xgHome;
     document.getElementById('xg-away-val').textContent = sp.xgAway;
     const maxXg = Math.max(sp.xgHome, sp.xgAway, 1.5);
@@ -312,7 +327,7 @@
       sp.topScores.forEach(function(s) {
         var sc = document.createElement('div');
         sc.className = 'score-chip';
-        sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + s.prob + '%</span>';
+        sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + fmtScoreProb(s) + '</span>';
         grid.appendChild(sc);
       });
     }
@@ -355,6 +370,10 @@
         }
         document.getElementById('mi-status').textContent = match.status === 'FT' ? '已完赛' : match.status === 'TIMED' ? '未开赛' : match.status;
         document.getElementById('mi-score').textContent = (match.g1 != null) ? match.g1 + ' : ' + match.g2 : '-';
+        // 淘汰赛分解（首屏 Elo）
+        if (match.stage && match.stage !== 'GROUP_STAGE') {
+          fetchKnockoutPrediction(t1, t2, match.stage, 'elo', { home: serverPred.xgHome, away: serverPred.xgAway });
+        }
         document.getElementById('progress-section').style.display = 'block';
         var stageOrder = ['GROUP_STAGE','LAST_32','LAST_16','QUARTER_FINALS','SEMI_FINALS','FINAL'];
         var currentIdx = stageOrder.indexOf(match.stage);
@@ -434,6 +453,7 @@
       document.getElementById('match-title').innerHTML =
         flagHtml(pred.home, 'md') + ' ' + homeName + ' vs ' + awayName + ' ' + flagHtml(pred.away, 'md');
 
+      document.getElementById('error-message').style.display = 'none';
       document.getElementById('prediction-detail').style.display = 'block';
 
       // 降级提示
@@ -504,9 +524,9 @@
         document.getElementById('mi-status').textContent = match.status === 'FT' ? '已完赛' : match.status === 'TIMED' ? '未开赛' : match.status;
         document.getElementById('mi-score').textContent = (match.g1 != null) ? match.g1 + ' : ' + match.g2 : '-';
 
-        // Phase 8.1: 淘汰赛加时/点球分解
+        // Phase 8.1: 淘汰赛加时/点球分解（按引擎传入 xG）
         if (match.stage && match.stage !== 'GROUP_STAGE') {
-          fetchKnockoutPrediction(t1, t2, match.stage);
+          fetchKnockoutPrediction(t1, t2, match.stage, engine, pred.expectedGoals);
         }
 
         document.getElementById('progress-section').style.display = 'block';
@@ -529,12 +549,7 @@
         scoresData.slice(0, 3).forEach(function(s) {
           var sc = document.createElement('div');
           sc.className = 'score-chip';
-          if (isEl) {
-            sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + s.prob + '%</span>';
-          } else {
-            var pct = ((s.probability != null ? s.probability : s.prob / 100 || 0) * 100).toFixed(1);
-            sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + pct + '%</span>';
-          }
+          sc.innerHTML = '<span class="score-result">' + s.home + ':' + s.away + '</span><span class="score-prob">' + fmtScoreProb(s) + '</span>';
           grid.appendChild(sc);
         });
       }
@@ -560,7 +575,7 @@
         topScores.slice(0, 3).forEach(s => {
           const div = document.createElement('div');
           div.className = 'ml-score-row';
-          div.innerHTML = `<span class="ml-score-result">${s.home} : ${s.away}</span><span class="ml-score-prob-bar"><span class="ml-score-bar" style="width:${(s.probability * 1000)}%"></span></span><span class="ml-score-prob">${(s.probability * 100).toFixed(1)}%</span>`;
+          div.innerHTML = `<span class="ml-score-result">${s.home} : ${s.away}</span><span class="ml-score-prob-bar"><span class="ml-score-bar" style="width:${(fmtScoreProbNum(s))}%"></span></span><span class="ml-score-prob">${(s.probability * 100).toFixed(1)}%</span>`;
           scoresList.appendChild(div);
         });
 
@@ -619,6 +634,8 @@
           }
         }
       }
+      // 确保数据加载成功后错误提示已隐藏
+      document.getElementById('error-message').style.display = 'none';
 
     } catch (err) {
       document.getElementById('loading-spinner').style.display = 'none';
@@ -896,24 +913,39 @@
     return html;
   }
 
-  // Phase 8.1: 淘汰赛加时/点球分解
-  async function fetchKnockoutPrediction(t1, t2, stage) {
+  // Phase 8.1: 淘汰赛加时/点球分解（按引擎区分）
+  const knockoutCache = {};
+  async function fetchKnockoutPrediction(t1, t2, stage, engine, xg) {
     try {
       const stageMap = {
         'LAST_32':'round32','LAST_16':'round16',
         'QUARTER_FINALS':'quarter','SEMI_FINALS':'semi','FINAL':'final'
       };
       const s = stageMap[stage] || 'round32';
-      const r = await fetch(`/api/matches/knockout-pred/${t1}/${t2}?stage=${s}`);
+      const cacheKey = engine + ':' + t1 + ':' + t2;
+      if (knockoutCache[cacheKey]) {
+        updateKnockoutUI(knockoutCache[cacheKey]);
+        return;
+      }
+      let url = `/api/matches/knockout-pred/${t1}/${t2}?stage=${s}&engine=${engine}`;
+      // ML/Ensemble 传入 xG 以区分引擎
+      if (engine !== 'elo' && xg) {
+        url += `&xgh=${xg.home}&xga=${xg.away}`;
+      }
+      const r = await fetch(url);
       if (!r.ok) return;
       const kp = await r.json();
-      document.getElementById('knockout-breakdown').style.display = 'block';
-      document.getElementById('kb-reg').textContent = ((kp.regWinA + kp.regWinB) * 100).toFixed(1) + '%';
-      document.getElementById('kb-et').textContent = ((kp.etWinA + kp.etWinB) * 100).toFixed(1) + '%';
-      document.getElementById('kb-pk').textContent = ((kp.pkWinA + kp.pkWinB) * 100).toFixed(1) + '%';
+      knockoutCache[cacheKey] = kp;
+      updateKnockoutUI(kp);
     } catch (e) {
       console.warn('淘汰赛数据加载失败:', e.message);
     }
+  }
+  function updateKnockoutUI(kp) {
+    document.getElementById('knockout-breakdown').style.display = 'block';
+    document.getElementById('kb-reg').textContent = ((kp.regWinA + kp.regWinB) * 100).toFixed(1) + '%';
+    document.getElementById('kb-et').textContent = ((kp.etWinA + kp.etWinB) * 100).toFixed(1) + '%';
+    document.getElementById('kb-pk').textContent = ((kp.pkWinA + kp.pkWinB) * 100).toFixed(1) + '%';
   }
 
   // 引擎切换：清除懒加载缓存，重新加载全部数据
@@ -922,6 +954,10 @@
     // 清除旧引擎的懒加载缓存
     Object.keys(lazyCache).forEach(function(k) {
       if (k.indexOf(currentEngine + ':') === 0) delete lazyCache[k];
+    });
+    // 清除旧引擎的淘汰赛缓存
+    Object.keys(knockoutCache).forEach(function(k) {
+      if (k.indexOf(currentEngine + ':') === 0) delete knockoutCache[k];
     });
     // 清除懒加载 Tab 的 loaded 标记和内容（重新显示骨架）
     document.querySelectorAll('.tab-content[data-lazy]').forEach(function(tc) {

@@ -1,0 +1,459 @@
+matchId,date,year,stage,homeTeam,awayTeam,actualOutcome,homeScore,awayScore,elo_homeWin,elo_draw,elo_awayWin,elo_xgHome,elo_xgAway,elo_confidence,elo_correct
+wc2026-mexico-south-africa,2026-06-11,2026,Group A,Mexico,South Africa,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-south-korea-czech-republic,2026-06-11,2026,Group A,South Korea,Czech Republic,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-canada-bosnia-and-herzegovina,2026-06-12,2026,Group B,Canada,Bosnia & Herzegovina,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-usa-paraguay,2026-06-12,2026,Group D,USA,Paraguay,HOME,4,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-qatar-switzerland,2026-06-13,2026,Group B,Qatar,Switzerland,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-brazil-morocco,2026-06-13,2026,Group C,Brazil,Morocco,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-haiti-scotland,2026-06-13,2026,Group C,Haiti,Scotland,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-germany-curacao,2026-06-14,2026,Group E,Germany,Curaçao,HOME,7,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-ivory-coast-ecuador,2026-06-14,2026,Group E,Ivory Coast,Ecuador,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-netherlands-japan,2026-06-14,2026,Group F,Netherlands,Japan,DRAW,2,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-sweden-tunisia,2026-06-14,2026,Group F,Sweden,Tunisia,HOME,5,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-belgium-egypt,2026-06-15,2026,Group G,Belgium,Egypt,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-iran-new-zealand,2026-06-15,2026,Group G,Iran,New Zealand,DRAW,2,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-saudi-arabia-uruguay,2026-06-15,2026,Group H,Saudi Arabia,Uruguay,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-spain-cape-verde,2026-06-15,2026,Group H,Spain,Cape Verde,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-france-senegal,2026-06-16,2026,Group I,France,Senegal,HOME,3,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-iraq-norway,2026-06-16,2026,Group I,Iraq,Norway,AWAY,1,4,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-argentina-algeria,2026-06-16,2026,Group J,Argentina,Algeria,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-austria-jordan,2026-06-16,2026,Group J,Austria,Jordan,HOME,3,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-portugal-dr-congo,2026-06-17,2026,Group K,Portugal,DR Congo,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-uzbekistan-colombia,2026-06-17,2026,Group K,Uzbekistan,Colombia,AWAY,1,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-england-croatia,2026-06-17,2026,Group L,England,Croatia,HOME,4,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-ghana-panama,2026-06-17,2026,Group L,Ghana,Panama,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-czech-republic-south-africa,2026-06-18,2026,Group A,Czech Republic,South Africa,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-mexico-south-korea,2026-06-18,2026,Group A,Mexico,South Korea,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-canada-qatar,2026-06-18,2026,Group B,Canada,Qatar,HOME,6,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-switzerland-bosnia-and-herzegovina,2026-06-18,2026,Group B,Switzerland,Bosnia & Herzegovina,HOME,4,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-brazil-haiti,2026-06-19,2026,Group C,Brazil,Haiti,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-scotland-morocco,2026-06-19,2026,Group C,Scotland,Morocco,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-turkey-paraguay,2026-06-19,2026,Group D,Turkey,Paraguay,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-usa-australia,2026-06-19,2026,Group D,USA,Australia,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-ecuador-curacao,2026-06-20,2026,Group E,Ecuador,Curaçao,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-germany-ivory-coast,2026-06-20,2026,Group E,Germany,Ivory Coast,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-netherlands-sweden,2026-06-20,2026,Group F,Netherlands,Sweden,HOME,5,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-tunisia-japan,2026-06-20,2026,Group F,Tunisia,Japan,AWAY,0,4,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-belgium-iran,2026-06-21,2026,Group G,Belgium,Iran,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-new-zealand-egypt,2026-06-21,2026,Group G,New Zealand,Egypt,AWAY,1,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-spain-saudi-arabia,2026-06-21,2026,Group H,Spain,Saudi Arabia,HOME,4,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-uruguay-cape-verde,2026-06-21,2026,Group H,Uruguay,Cape Verde,DRAW,2,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-france-iraq,2026-06-22,2026,Group I,France,Iraq,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-norway-senegal,2026-06-22,2026,Group I,Norway,Senegal,HOME,3,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-argentina-austria,2026-06-22,2026,Group J,Argentina,Austria,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-jordan-algeria,2026-06-22,2026,Group J,Jordan,Algeria,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-colombia-dr-congo,2026-06-23,2026,Group K,Colombia,DR Congo,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-portugal-uzbekistan,2026-06-23,2026,Group K,Portugal,Uzbekistan,HOME,5,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-england-ghana,2026-06-23,2026,Group L,England,Ghana,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-panama-croatia,2026-06-23,2026,Group L,Panama,Croatia,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-mexico-czech-republic,2026-06-24,2026,Group A,Mexico,Czech Republic,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-south-africa-south-korea,2026-06-24,2026,Group A,South Africa,South Korea,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-bosnia-and-herzegovina-qatar,2026-06-24,2026,Group B,Bosnia & Herzegovina,Qatar,HOME,3,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-canada-switzerland,2026-06-24,2026,Group B,Canada,Switzerland,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-morocco-haiti,2026-06-24,2026,Group C,Morocco,Haiti,HOME,4,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-scotland-brazil,2026-06-24,2026,Group C,Scotland,Brazil,AWAY,0,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-paraguay-australia,2026-06-25,2026,Group D,Paraguay,Australia,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-usa-turkey,2026-06-25,2026,Group D,USA,Turkey,AWAY,2,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-curacao-ivory-coast,2026-06-25,2026,Group E,Curaçao,Ivory Coast,AWAY,0,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-ecuador-germany,2026-06-25,2026,Group E,Ecuador,Germany,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-japan-sweden,2026-06-25,2026,Group F,Japan,Sweden,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-tunisia-netherlands,2026-06-25,2026,Group F,Tunisia,Netherlands,AWAY,1,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-egypt-iran,2026-06-26,2026,Group G,Egypt,Iran,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-new-zealand-belgium,2026-06-26,2026,Group G,New Zealand,Belgium,AWAY,1,5,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-cape-verde-saudi-arabia,2026-06-26,2026,Group H,Cape Verde,Saudi Arabia,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-uruguay-spain,2026-06-26,2026,Group H,Uruguay,Spain,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-norway-france,2026-06-26,2026,Group I,Norway,France,AWAY,1,4,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-senegal-iraq,2026-06-26,2026,Group I,Senegal,Iraq,HOME,5,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-algeria-austria,2026-06-27,2026,Group J,Algeria,Austria,DRAW,3,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-jordan-argentina,2026-06-27,2026,Group J,Jordan,Argentina,AWAY,1,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-colombia-portugal,2026-06-27,2026,Group K,Colombia,Portugal,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-dr-congo-uzbekistan,2026-06-27,2026,Group K,DR Congo,Uzbekistan,HOME,3,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-croatia-ghana,2026-06-27,2026,Group L,Croatia,Ghana,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-panama-england,2026-06-27,2026,Group L,Panama,England,AWAY,0,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-south-africa-canada,2026-06-28,2026,Round of 32,South Africa,Canada,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-brazil-japan,2026-06-29,2026,Round of 32,Brazil,Japan,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-germany-paraguay,2026-06-29,2026,Round of 32,Germany,Paraguay,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-netherlands-morocco,2026-06-29,2026,Round of 32,Netherlands,Morocco,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-france-sweden,2026-06-30,2026,Round of 32,France,Sweden,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-ivory-coast-norway,2026-06-30,2026,Round of 32,Ivory Coast,Norway,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-mexico-ecuador,2026-06-30,2026,Round of 32,Mexico,Ecuador,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-belgium-senegal,2026-07-01,2026,Round of 32,Belgium,Senegal,HOME,3,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-england-dr-congo,2026-07-01,2026,Round of 32,England,DR Congo,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2026-usa-bosnia-and-herzegovina,2026-07-01,2026,Round of 32,USA,Bosnia & Herzegovina,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-france-senegal,2002-05-31,2002,GROUP_STAGE,France,Senegal,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-republic-of-ireland-cameroon,2002-06-01,2002,GROUP_STAGE,Republic of Ireland,Cameroon,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-uruguay-denmark,2002-06-01,2002,GROUP_STAGE,Uruguay,Denmark,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-germany-saudi-arabia,2002-06-01,2002,GROUP_STAGE,Germany,Saudi Arabia,HOME,8,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-argentina-nigeria,2002-06-02,2002,GROUP_STAGE,Argentina,Nigeria,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-paraguay-south-africa,2002-06-02,2002,GROUP_STAGE,Paraguay,South Africa,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-england-sweden,2002-06-02,2002,GROUP_STAGE,England,Sweden,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-spain-slovenia,2002-06-02,2002,GROUP_STAGE,Spain,Slovenia,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-croatia-mexico,2002-06-03,2002,GROUP_STAGE,Croatia,Mexico,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-brazil-t-rkiye,2002-06-03,2002,GROUP_STAGE,Brazil,Türkiye,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-italy-ecuador,2002-06-03,2002,GROUP_STAGE,Italy,Ecuador,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-china-pr-costa-rica,2002-06-04,2002,GROUP_STAGE,China PR,Costa Rica,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-japan-belgium,2002-06-04,2002,GROUP_STAGE,Japan,Belgium,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-korea-republic-poland,2002-06-04,2002,GROUP_STAGE,Korea Republic,Poland,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-russia-tunisia,2002-06-05,2002,GROUP_STAGE,Russia,Tunisia,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-united-states-portugal,2002-06-05,2002,GROUP_STAGE,United States,Portugal,HOME,3,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-germany-republic-of-ireland,2002-06-05,2002,GROUP_STAGE,Germany,Republic of Ireland,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-denmark-senegal,2002-06-06,2002,GROUP_STAGE,Denmark,Senegal,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-cameroon-saudi-arabia,2002-06-06,2002,GROUP_STAGE,Cameroon,Saudi Arabia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-france-uruguay,2002-06-06,2002,GROUP_STAGE,France,Uruguay,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-sweden-nigeria,2002-06-07,2002,GROUP_STAGE,Sweden,Nigeria,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-spain-paraguay,2002-06-07,2002,GROUP_STAGE,Spain,Paraguay,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-argentina-england,2002-06-07,2002,GROUP_STAGE,Argentina,England,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-south-africa-slovenia,2002-06-08,2002,GROUP_STAGE,South Africa,Slovenia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-italy-croatia,2002-06-08,2002,GROUP_STAGE,Italy,Croatia,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-brazil-china-pr,2002-06-08,2002,GROUP_STAGE,Brazil,China PR,HOME,4,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-mexico-ecuador,2002-06-09,2002,GROUP_STAGE,Mexico,Ecuador,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-costa-rica-t-rkiye,2002-06-09,2002,GROUP_STAGE,Costa Rica,Türkiye,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-japan-russia,2002-06-09,2002,GROUP_STAGE,Japan,Russia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-korea-republic-united-states,2002-06-10,2002,GROUP_STAGE,Korea Republic,United States,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-tunisia-belgium,2002-06-10,2002,GROUP_STAGE,Tunisia,Belgium,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-portugal-poland,2002-06-10,2002,GROUP_STAGE,Portugal,Poland,HOME,4,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-denmark-france,2002-06-11,2002,GROUP_STAGE,Denmark,France,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-senegal-uruguay,2002-06-11,2002,GROUP_STAGE,Senegal,Uruguay,DRAW,3,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-saudi-arabia-republic-of-ireland,2002-06-11,2002,GROUP_STAGE,Saudi Arabia,Republic of Ireland,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-cameroon-germany,2002-06-11,2002,GROUP_STAGE,Cameroon,Germany,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-sweden-argentina,2002-06-12,2002,GROUP_STAGE,Sweden,Argentina,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-nigeria-england,2002-06-12,2002,GROUP_STAGE,Nigeria,England,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-south-africa-spain,2002-06-12,2002,GROUP_STAGE,South Africa,Spain,AWAY,2,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-slovenia-paraguay,2002-06-12,2002,GROUP_STAGE,Slovenia,Paraguay,AWAY,1,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-costa-rica-brazil,2002-06-13,2002,GROUP_STAGE,Costa Rica,Brazil,AWAY,2,5,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-t-rkiye-china-pr,2002-06-13,2002,GROUP_STAGE,Türkiye,China PR,HOME,3,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-mexico-italy,2002-06-13,2002,GROUP_STAGE,Mexico,Italy,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-ecuador-croatia,2002-06-13,2002,GROUP_STAGE,Ecuador,Croatia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-tunisia-japan,2002-06-14,2002,GROUP_STAGE,Tunisia,Japan,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-belgium-russia,2002-06-14,2002,GROUP_STAGE,Belgium,Russia,HOME,3,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-portugal-korea-republic,2002-06-14,2002,GROUP_STAGE,Portugal,Korea Republic,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-poland-united-states,2002-06-14,2002,GROUP_STAGE,Poland,United States,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2002-germany-paraguay,2002-06-15,2002,LAST_16,Germany,Paraguay,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-denmark-england,2002-06-15,2002,LAST_16,Denmark,England,AWAY,0,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-sweden-senegal,2002-06-16,2002,LAST_16,Sweden,Senegal,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-spain-republic-of-ireland,2002-06-16,2002,LAST_16,Spain,Republic of Ireland,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-mexico-united-states,2002-06-17,2002,LAST_16,Mexico,United States,AWAY,0,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-brazil-belgium,2002-06-17,2002,LAST_16,Brazil,Belgium,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-japan-t-rkiye,2002-06-18,2002,LAST_16,Japan,Türkiye,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-korea-republic-italy,2002-06-18,2002,LAST_16,Korea Republic,Italy,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-england-brazil,2002-06-21,2002,QUARTER_FINAL,England,Brazil,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-germany-united-states,2002-06-21,2002,QUARTER_FINAL,Germany,United States,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-spain-korea-republic,2002-06-22,2002,QUARTER_FINAL,Spain,Korea Republic,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-senegal-t-rkiye,2002-06-22,2002,QUARTER_FINAL,Senegal,Türkiye,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-germany-korea-republic,2002-06-25,2002,SEMI_FINAL,Germany,Korea Republic,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2002-germany-brazil,2002-06-30,2002,FINAL,Germany,Brazil,AWAY,0,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-germany-costa-rica,2006-06-09,2006,GROUP_STAGE,Germany,Costa Rica,HOME,4,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-poland-ecuador,2006-06-09,2006,GROUP_STAGE,Poland,Ecuador,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-england-paraguay,2006-06-10,2006,GROUP_STAGE,England,Paraguay,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-trinidad-and-tobago-sweden,2006-06-10,2006,GROUP_STAGE,Trinidad and Tobago,Sweden,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-argentina-c-te-divoire,2006-06-10,2006,GROUP_STAGE,Argentina,Côte d'Ivoire,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-serbia-and-montenegro-netherlands,2006-06-11,2006,GROUP_STAGE,Serbia and Montenegro,Netherlands,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-mexico-ir-iran,2006-06-11,2006,GROUP_STAGE,Mexico,IR Iran,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-angola-portugal,2006-06-11,2006,GROUP_STAGE,Angola,Portugal,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-australia-japan,2006-06-12,2006,GROUP_STAGE,Australia,Japan,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-united-states-czech-republic,2006-06-12,2006,GROUP_STAGE,United States,Czech Republic,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-italy-ghana,2006-06-12,2006,GROUP_STAGE,Italy,Ghana,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-korea-republic-togo,2006-06-13,2006,GROUP_STAGE,Korea Republic,Togo,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-france-switzerland,2006-06-13,2006,GROUP_STAGE,France,Switzerland,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-brazil-croatia,2006-06-13,2006,GROUP_STAGE,Brazil,Croatia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-spain-ukraine,2006-06-14,2006,GROUP_STAGE,Spain,Ukraine,HOME,4,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-tunisia-saudi-arabia,2006-06-14,2006,GROUP_STAGE,Tunisia,Saudi Arabia,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-germany-poland,2006-06-14,2006,GROUP_STAGE,Germany,Poland,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-ecuador-costa-rica,2006-06-15,2006,GROUP_STAGE,Ecuador,Costa Rica,HOME,3,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-england-trinidad-and-tobago,2006-06-15,2006,GROUP_STAGE,England,Trinidad and Tobago,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-sweden-paraguay,2006-06-15,2006,GROUP_STAGE,Sweden,Paraguay,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-argentina-serbia-and-montenegro,2006-06-16,2006,GROUP_STAGE,Argentina,Serbia and Montenegro,HOME,6,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-netherlands-c-te-divoire,2006-06-16,2006,GROUP_STAGE,Netherlands,Côte d'Ivoire,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-mexico-angola,2006-06-16,2006,GROUP_STAGE,Mexico,Angola,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-portugal-ir-iran,2006-06-17,2006,GROUP_STAGE,Portugal,IR Iran,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-czech-republic-ghana,2006-06-17,2006,GROUP_STAGE,Czech Republic,Ghana,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-italy-united-states,2006-06-17,2006,GROUP_STAGE,Italy,United States,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-japan-croatia,2006-06-18,2006,GROUP_STAGE,Japan,Croatia,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-brazil-australia,2006-06-18,2006,GROUP_STAGE,Brazil,Australia,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-france-korea-republic,2006-06-18,2006,GROUP_STAGE,France,Korea Republic,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-togo-switzerland,2006-06-19,2006,GROUP_STAGE,Togo,Switzerland,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-saudi-arabia-ukraine,2006-06-19,2006,GROUP_STAGE,Saudi Arabia,Ukraine,AWAY,0,4,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-spain-tunisia,2006-06-19,2006,GROUP_STAGE,Spain,Tunisia,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-costa-rica-poland,2006-06-20,2006,GROUP_STAGE,Costa Rica,Poland,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-ecuador-germany,2006-06-20,2006,GROUP_STAGE,Ecuador,Germany,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-paraguay-trinidad-and-tobago,2006-06-20,2006,GROUP_STAGE,Paraguay,Trinidad and Tobago,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-sweden-england,2006-06-20,2006,GROUP_STAGE,Sweden,England,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-portugal-mexico,2006-06-21,2006,GROUP_STAGE,Portugal,Mexico,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-ir-iran-angola,2006-06-21,2006,GROUP_STAGE,IR Iran,Angola,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-c-te-divoire-serbia-and-montenegro,2006-06-21,2006,GROUP_STAGE,Côte d'Ivoire,Serbia and Montenegro,HOME,3,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-netherlands-argentina,2006-06-21,2006,GROUP_STAGE,Netherlands,Argentina,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-ghana-united-states,2006-06-22,2006,GROUP_STAGE,Ghana,United States,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-czech-republic-italy,2006-06-22,2006,GROUP_STAGE,Czech Republic,Italy,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-japan-brazil,2006-06-22,2006,GROUP_STAGE,Japan,Brazil,AWAY,1,4,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-croatia-australia,2006-06-22,2006,GROUP_STAGE,Croatia,Australia,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-saudi-arabia-spain,2006-06-23,2006,GROUP_STAGE,Saudi Arabia,Spain,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-ukraine-tunisia,2006-06-23,2006,GROUP_STAGE,Ukraine,Tunisia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-togo-france,2006-06-23,2006,GROUP_STAGE,Togo,France,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-switzerland-korea-republic,2006-06-23,2006,GROUP_STAGE,Switzerland,Korea Republic,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2006-germany-sweden,2006-06-24,2006,LAST_16,Germany,Sweden,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-argentina-mexico,2006-06-24,2006,LAST_16,Argentina,Mexico,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-england-ecuador,2006-06-25,2006,LAST_16,England,Ecuador,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-portugal-netherlands,2006-06-25,2006,LAST_16,Portugal,Netherlands,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-italy-australia,2006-06-26,2006,LAST_16,Italy,Australia,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-switzerland-ukraine,2006-06-26,2006,LAST_16,Switzerland,Ukraine,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-brazil-ghana,2006-06-27,2006,LAST_16,Brazil,Ghana,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-spain-france,2006-06-27,2006,LAST_16,Spain,France,AWAY,1,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-germany-argentina,2006-06-30,2006,QUARTER_FINAL,Germany,Argentina,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-italy-ukraine,2006-06-30,2006,QUARTER_FINAL,Italy,Ukraine,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-england-portugal,2006-07-01,2006,QUARTER_FINAL,England,Portugal,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-brazil-france,2006-07-01,2006,QUARTER_FINAL,Brazil,France,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-germany-italy,2006-07-04,2006,SEMI_FINAL,Germany,Italy,AWAY,0,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-portugal-france,2006-07-05,2006,SEMI_FINAL,Portugal,France,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2006-italy-france,2006-07-09,2006,FINAL,Italy,France,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-south-africa-mexico,2010-06-11,2010,GROUP_STAGE,South Africa,Mexico,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-uruguay-france,2010-06-11,2010,GROUP_STAGE,Uruguay,France,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-korea-republic-greece,2010-06-12,2010,GROUP_STAGE,Korea Republic,Greece,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-argentina-nigeria,2010-06-12,2010,GROUP_STAGE,Argentina,Nigeria,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-england-united-states,2010-06-12,2010,GROUP_STAGE,England,United States,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-algeria-slovenia,2010-06-13,2010,GROUP_STAGE,Algeria,Slovenia,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-serbia-ghana,2010-06-13,2010,GROUP_STAGE,Serbia,Ghana,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-germany-australia,2010-06-13,2010,GROUP_STAGE,Germany,Australia,HOME,4,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-netherlands-denmark,2010-06-14,2010,GROUP_STAGE,Netherlands,Denmark,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-japan-cameroon,2010-06-14,2010,GROUP_STAGE,Japan,Cameroon,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-italy-paraguay,2010-06-14,2010,GROUP_STAGE,Italy,Paraguay,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-new-zealand-slovakia,2010-06-15,2010,GROUP_STAGE,New Zealand,Slovakia,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-c-te-divoire-portugal,2010-06-15,2010,GROUP_STAGE,Côte d'Ivoire,Portugal,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-brazil-korea-dpr,2010-06-15,2010,GROUP_STAGE,Brazil,Korea DPR,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-honduras-chile,2010-06-16,2010,GROUP_STAGE,Honduras,Chile,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-spain-switzerland,2010-06-16,2010,GROUP_STAGE,Spain,Switzerland,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-south-africa-uruguay,2010-06-16,2010,GROUP_STAGE,South Africa,Uruguay,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-argentina-korea-republic,2010-06-17,2010,GROUP_STAGE,Argentina,Korea Republic,HOME,4,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-greece-nigeria,2010-06-17,2010,GROUP_STAGE,Greece,Nigeria,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-france-mexico,2010-06-17,2010,GROUP_STAGE,France,Mexico,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-germany-serbia,2010-06-18,2010,GROUP_STAGE,Germany,Serbia,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-slovenia-united-states,2010-06-18,2010,GROUP_STAGE,Slovenia,United States,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-england-algeria,2010-06-18,2010,GROUP_STAGE,England,Algeria,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-netherlands-japan,2010-06-19,2010,GROUP_STAGE,Netherlands,Japan,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-ghana-australia,2010-06-19,2010,GROUP_STAGE,Ghana,Australia,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-cameroon-denmark,2010-06-19,2010,GROUP_STAGE,Cameroon,Denmark,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-slovakia-paraguay,2010-06-20,2010,GROUP_STAGE,Slovakia,Paraguay,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-italy-new-zealand,2010-06-20,2010,GROUP_STAGE,Italy,New Zealand,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-brazil-c-te-divoire,2010-06-20,2010,GROUP_STAGE,Brazil,Côte d'Ivoire,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-portugal-korea-dpr,2010-06-21,2010,GROUP_STAGE,Portugal,Korea DPR,HOME,7,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-chile-switzerland,2010-06-21,2010,GROUP_STAGE,Chile,Switzerland,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-spain-honduras,2010-06-21,2010,GROUP_STAGE,Spain,Honduras,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-mexico-uruguay,2010-06-22,2010,GROUP_STAGE,Mexico,Uruguay,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-france-south-africa,2010-06-22,2010,GROUP_STAGE,France,South Africa,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-nigeria-korea-republic,2010-06-22,2010,GROUP_STAGE,Nigeria,Korea Republic,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-greece-argentina,2010-06-22,2010,GROUP_STAGE,Greece,Argentina,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-slovenia-england,2010-06-23,2010,GROUP_STAGE,Slovenia,England,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-united-states-algeria,2010-06-23,2010,GROUP_STAGE,United States,Algeria,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-ghana-germany,2010-06-23,2010,GROUP_STAGE,Ghana,Germany,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-australia-serbia,2010-06-23,2010,GROUP_STAGE,Australia,Serbia,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-paraguay-new-zealand,2010-06-24,2010,GROUP_STAGE,Paraguay,New Zealand,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-slovakia-italy,2010-06-24,2010,GROUP_STAGE,Slovakia,Italy,HOME,3,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-denmark-japan,2010-06-24,2010,GROUP_STAGE,Denmark,Japan,AWAY,1,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-cameroon-netherlands,2010-06-24,2010,GROUP_STAGE,Cameroon,Netherlands,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-portugal-brazil,2010-06-25,2010,GROUP_STAGE,Portugal,Brazil,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-korea-dpr-c-te-divoire,2010-06-25,2010,GROUP_STAGE,Korea DPR,Côte d'Ivoire,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-chile-spain,2010-06-25,2010,GROUP_STAGE,Chile,Spain,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-switzerland-honduras,2010-06-25,2010,GROUP_STAGE,Switzerland,Honduras,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2010-uruguay-korea-republic,2010-06-26,2010,LAST_16,Uruguay,Korea Republic,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-united-states-ghana,2010-06-26,2010,LAST_16,United States,Ghana,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-germany-england,2010-06-27,2010,LAST_16,Germany,England,HOME,4,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-argentina-mexico,2010-06-27,2010,LAST_16,Argentina,Mexico,HOME,3,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-netherlands-slovakia,2010-06-28,2010,LAST_16,Netherlands,Slovakia,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-brazil-chile,2010-06-28,2010,LAST_16,Brazil,Chile,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-paraguay-japan,2010-06-29,2010,LAST_16,Paraguay,Japan,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-spain-portugal,2010-06-29,2010,LAST_16,Spain,Portugal,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-netherlands-brazil,2010-07-02,2010,QUARTER_FINAL,Netherlands,Brazil,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-uruguay-ghana,2010-07-02,2010,QUARTER_FINAL,Uruguay,Ghana,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-argentina-germany,2010-07-03,2010,QUARTER_FINAL,Argentina,Germany,AWAY,0,4,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-paraguay-spain,2010-07-03,2010,QUARTER_FINAL,Paraguay,Spain,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-uruguay-netherlands,2010-07-06,2010,SEMI_FINAL,Uruguay,Netherlands,AWAY,2,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-germany-spain,2010-07-07,2010,SEMI_FINAL,Germany,Spain,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2010-netherlands-spain,2010-07-11,2010,FINAL,Netherlands,Spain,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-brazil-croatia,2014-06-12,2014,GROUP_STAGE,Brazil,Croatia,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-mexico-cameroon,2014-06-13,2014,GROUP_STAGE,Mexico,Cameroon,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-spain-netherlands,2014-06-13,2014,GROUP_STAGE,Spain,Netherlands,AWAY,1,5,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-chile-australia,2014-06-13,2014,GROUP_STAGE,Chile,Australia,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-colombia-greece,2014-06-14,2014,GROUP_STAGE,Colombia,Greece,HOME,3,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-uruguay-costa-rica,2014-06-14,2014,GROUP_STAGE,Uruguay,Costa Rica,AWAY,1,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-england-italy,2014-06-14,2014,GROUP_STAGE,England,Italy,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-c-te-divoire-japan,2014-06-14,2014,GROUP_STAGE,Côte d'Ivoire,Japan,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-switzerland-ecuador,2014-06-15,2014,GROUP_STAGE,Switzerland,Ecuador,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-france-honduras,2014-06-15,2014,GROUP_STAGE,France,Honduras,HOME,3,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-argentina-bosnia-and-herzegovina,2014-06-15,2014,GROUP_STAGE,Argentina,Bosnia and Herzegovina,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-germany-portugal,2014-06-16,2014,GROUP_STAGE,Germany,Portugal,HOME,4,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-ir-iran-nigeria,2014-06-16,2014,GROUP_STAGE,IR Iran,Nigeria,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-ghana-united-states,2014-06-16,2014,GROUP_STAGE,Ghana,United States,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-belgium-algeria,2014-06-17,2014,GROUP_STAGE,Belgium,Algeria,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-brazil-mexico,2014-06-17,2014,GROUP_STAGE,Brazil,Mexico,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-russia-korea-republic,2014-06-17,2014,GROUP_STAGE,Russia,Korea Republic,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-australia-netherlands,2014-06-18,2014,GROUP_STAGE,Australia,Netherlands,AWAY,2,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-spain-chile,2014-06-18,2014,GROUP_STAGE,Spain,Chile,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-cameroon-croatia,2014-06-18,2014,GROUP_STAGE,Cameroon,Croatia,AWAY,0,4,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-colombia-c-te-divoire,2014-06-19,2014,GROUP_STAGE,Colombia,Côte d'Ivoire,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-uruguay-england,2014-06-19,2014,GROUP_STAGE,Uruguay,England,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-japan-greece,2014-06-19,2014,GROUP_STAGE,Japan,Greece,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-italy-costa-rica,2014-06-20,2014,GROUP_STAGE,Italy,Costa Rica,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-switzerland-france,2014-06-20,2014,GROUP_STAGE,Switzerland,France,AWAY,2,5,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-honduras-ecuador,2014-06-20,2014,GROUP_STAGE,Honduras,Ecuador,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-argentina-ir-iran,2014-06-21,2014,GROUP_STAGE,Argentina,IR Iran,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-germany-ghana,2014-06-21,2014,GROUP_STAGE,Germany,Ghana,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-nigeria-bosnia-and-herzegovina,2014-06-21,2014,GROUP_STAGE,Nigeria,Bosnia and Herzegovina,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-belgium-russia,2014-06-22,2014,GROUP_STAGE,Belgium,Russia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-korea-republic-algeria,2014-06-22,2014,GROUP_STAGE,Korea Republic,Algeria,AWAY,2,4,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-united-states-portugal,2014-06-22,2014,GROUP_STAGE,United States,Portugal,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-australia-spain,2014-06-23,2014,GROUP_STAGE,Australia,Spain,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-netherlands-chile,2014-06-23,2014,GROUP_STAGE,Netherlands,Chile,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-croatia-mexico,2014-06-23,2014,GROUP_STAGE,Croatia,Mexico,AWAY,1,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-cameroon-brazil,2014-06-23,2014,GROUP_STAGE,Cameroon,Brazil,AWAY,1,4,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-costa-rica-england,2014-06-24,2014,GROUP_STAGE,Costa Rica,England,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-italy-uruguay,2014-06-24,2014,GROUP_STAGE,Italy,Uruguay,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-japan-colombia,2014-06-24,2014,GROUP_STAGE,Japan,Colombia,AWAY,1,4,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-greece-c-te-divoire,2014-06-24,2014,GROUP_STAGE,Greece,Côte d'Ivoire,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-bosnia-and-herzegovina-ir-iran,2014-06-25,2014,GROUP_STAGE,Bosnia and Herzegovina,IR Iran,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-nigeria-argentina,2014-06-25,2014,GROUP_STAGE,Nigeria,Argentina,AWAY,2,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-honduras-switzerland,2014-06-25,2014,GROUP_STAGE,Honduras,Switzerland,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-ecuador-france,2014-06-25,2014,GROUP_STAGE,Ecuador,France,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-united-states-germany,2014-06-26,2014,GROUP_STAGE,United States,Germany,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-portugal-ghana,2014-06-26,2014,GROUP_STAGE,Portugal,Ghana,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-korea-republic-belgium,2014-06-26,2014,GROUP_STAGE,Korea Republic,Belgium,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-algeria-russia,2014-06-26,2014,GROUP_STAGE,Algeria,Russia,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2014-brazil-chile,2014-06-28,2014,LAST_16,Brazil,Chile,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-colombia-uruguay,2014-06-28,2014,LAST_16,Colombia,Uruguay,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-netherlands-mexico,2014-06-29,2014,LAST_16,Netherlands,Mexico,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-costa-rica-greece,2014-06-29,2014,LAST_16,Costa Rica,Greece,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-france-nigeria,2014-06-30,2014,LAST_16,France,Nigeria,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-germany-algeria,2014-06-30,2014,LAST_16,Germany,Algeria,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-argentina-switzerland,2014-07-01,2014,LAST_16,Argentina,Switzerland,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-belgium-united-states,2014-07-01,2014,LAST_16,Belgium,United States,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-france-germany,2014-07-04,2014,QUARTER_FINAL,France,Germany,AWAY,0,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-brazil-colombia,2014-07-04,2014,QUARTER_FINAL,Brazil,Colombia,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-argentina-belgium,2014-07-05,2014,QUARTER_FINAL,Argentina,Belgium,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-netherlands-costa-rica,2014-07-05,2014,QUARTER_FINAL,Netherlands,Costa Rica,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-brazil-germany,2014-07-08,2014,SEMI_FINAL,Brazil,Germany,AWAY,1,7,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-netherlands-argentina,2014-07-09,2014,SEMI_FINAL,Netherlands,Argentina,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2014-germany-argentina,2014-07-13,2014,FINAL,Germany,Argentina,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-russia-saudi-arabia,2018-06-14,2018,GROUP_STAGE,Russia,Saudi Arabia,HOME,5,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-egypt-uruguay,2018-06-15,2018,GROUP_STAGE,Egypt,Uruguay,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-morocco-ir-iran,2018-06-15,2018,GROUP_STAGE,Morocco,IR Iran,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-portugal-spain,2018-06-15,2018,GROUP_STAGE,Portugal,Spain,DRAW,3,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-france-australia,2018-06-16,2018,GROUP_STAGE,France,Australia,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-argentina-iceland,2018-06-16,2018,GROUP_STAGE,Argentina,Iceland,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-peru-denmark,2018-06-16,2018,GROUP_STAGE,Peru,Denmark,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-croatia-nigeria,2018-06-16,2018,GROUP_STAGE,Croatia,Nigeria,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-costa-rica-serbia,2018-06-17,2018,GROUP_STAGE,Costa Rica,Serbia,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-germany-mexico,2018-06-17,2018,GROUP_STAGE,Germany,Mexico,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-brazil-switzerland,2018-06-17,2018,GROUP_STAGE,Brazil,Switzerland,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-sweden-korea-republic,2018-06-18,2018,GROUP_STAGE,Sweden,Korea Republic,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-belgium-panama,2018-06-18,2018,GROUP_STAGE,Belgium,Panama,HOME,3,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-tunisia-england,2018-06-18,2018,GROUP_STAGE,Tunisia,England,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-colombia-japan,2018-06-19,2018,GROUP_STAGE,Colombia,Japan,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-poland-senegal,2018-06-19,2018,GROUP_STAGE,Poland,Senegal,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-russia-egypt,2018-06-19,2018,GROUP_STAGE,Russia,Egypt,HOME,3,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-portugal-morocco,2018-06-20,2018,GROUP_STAGE,Portugal,Morocco,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-uruguay-saudi-arabia,2018-06-20,2018,GROUP_STAGE,Uruguay,Saudi Arabia,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-ir-iran-spain,2018-06-20,2018,GROUP_STAGE,IR Iran,Spain,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-denmark-australia,2018-06-21,2018,GROUP_STAGE,Denmark,Australia,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-france-peru,2018-06-21,2018,GROUP_STAGE,France,Peru,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-argentina-croatia,2018-06-21,2018,GROUP_STAGE,Argentina,Croatia,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-brazil-costa-rica,2018-06-22,2018,GROUP_STAGE,Brazil,Costa Rica,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-nigeria-iceland,2018-06-22,2018,GROUP_STAGE,Nigeria,Iceland,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-serbia-switzerland,2018-06-22,2018,GROUP_STAGE,Serbia,Switzerland,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-belgium-tunisia,2018-06-23,2018,GROUP_STAGE,Belgium,Tunisia,HOME,5,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-korea-republic-mexico,2018-06-23,2018,GROUP_STAGE,Korea Republic,Mexico,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-germany-sweden,2018-06-23,2018,GROUP_STAGE,Germany,Sweden,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-england-panama,2018-06-24,2018,GROUP_STAGE,England,Panama,HOME,6,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-japan-senegal,2018-06-24,2018,GROUP_STAGE,Japan,Senegal,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-poland-colombia,2018-06-24,2018,GROUP_STAGE,Poland,Colombia,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-saudi-arabia-egypt,2018-06-25,2018,GROUP_STAGE,Saudi Arabia,Egypt,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-uruguay-russia,2018-06-25,2018,GROUP_STAGE,Uruguay,Russia,HOME,3,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-spain-morocco,2018-06-25,2018,GROUP_STAGE,Spain,Morocco,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-ir-iran-portugal,2018-06-25,2018,GROUP_STAGE,IR Iran,Portugal,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-australia-peru,2018-06-26,2018,GROUP_STAGE,Australia,Peru,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-denmark-france,2018-06-26,2018,GROUP_STAGE,Denmark,France,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-iceland-croatia,2018-06-26,2018,GROUP_STAGE,Iceland,Croatia,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-nigeria-argentina,2018-06-26,2018,GROUP_STAGE,Nigeria,Argentina,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-korea-republic-germany,2018-06-27,2018,GROUP_STAGE,Korea Republic,Germany,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-mexico-sweden,2018-06-27,2018,GROUP_STAGE,Mexico,Sweden,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-switzerland-costa-rica,2018-06-27,2018,GROUP_STAGE,Switzerland,Costa Rica,DRAW,2,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-serbia-brazil,2018-06-27,2018,GROUP_STAGE,Serbia,Brazil,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-japan-poland,2018-06-28,2018,GROUP_STAGE,Japan,Poland,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-senegal-colombia,2018-06-28,2018,GROUP_STAGE,Senegal,Colombia,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-england-belgium,2018-06-28,2018,GROUP_STAGE,England,Belgium,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-panama-tunisia,2018-06-28,2018,GROUP_STAGE,Panama,Tunisia,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2018-france-argentina,2018-06-30,2018,LAST_16,France,Argentina,HOME,4,3,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-uruguay-portugal,2018-06-30,2018,LAST_16,Uruguay,Portugal,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-spain-russia,2018-07-01,2018,LAST_16,Spain,Russia,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-croatia-denmark,2018-07-01,2018,LAST_16,Croatia,Denmark,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-brazil-mexico,2018-07-02,2018,LAST_16,Brazil,Mexico,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-belgium-japan,2018-07-02,2018,LAST_16,Belgium,Japan,HOME,3,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-sweden-switzerland,2018-07-03,2018,LAST_16,Sweden,Switzerland,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-colombia-england,2018-07-03,2018,LAST_16,Colombia,England,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-uruguay-france,2018-07-06,2018,QUARTER_FINAL,Uruguay,France,AWAY,0,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-brazil-belgium,2018-07-06,2018,QUARTER_FINAL,Brazil,Belgium,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-sweden-england,2018-07-07,2018,QUARTER_FINAL,Sweden,England,AWAY,0,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-russia-croatia,2018-07-07,2018,QUARTER_FINAL,Russia,Croatia,DRAW,2,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-france-belgium,2018-07-10,2018,SEMI_FINAL,France,Belgium,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-croatia-england,2018-07-11,2018,SEMI_FINAL,Croatia,England,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2018-france-croatia,2018-07-15,2018,FINAL,France,Croatia,HOME,4,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-qatar-ecuador,2022-11-20,2022,GROUP_STAGE,Qatar,Ecuador,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-england-ir-iran,2022-11-21,2022,GROUP_STAGE,England,IR Iran,HOME,6,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-senegal-netherlands,2022-11-21,2022,GROUP_STAGE,Senegal,Netherlands,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-united-states-wales,2022-11-21,2022,GROUP_STAGE,United States,Wales,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-argentina-saudi-arabia,2022-11-22,2022,GROUP_STAGE,Argentina,Saudi Arabia,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-denmark-tunisia,2022-11-22,2022,GROUP_STAGE,Denmark,Tunisia,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-mexico-poland,2022-11-22,2022,GROUP_STAGE,Mexico,Poland,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-france-australia,2022-11-22,2022,GROUP_STAGE,France,Australia,HOME,4,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-morocco-croatia,2022-11-23,2022,GROUP_STAGE,Morocco,Croatia,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-germany-japan,2022-11-23,2022,GROUP_STAGE,Germany,Japan,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-spain-costa-rica,2022-11-23,2022,GROUP_STAGE,Spain,Costa Rica,HOME,7,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-belgium-canada,2022-11-23,2022,GROUP_STAGE,Belgium,Canada,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-switzerland-cameroon,2022-11-24,2022,GROUP_STAGE,Switzerland,Cameroon,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-uruguay-korea-republic,2022-11-24,2022,GROUP_STAGE,Uruguay,Korea Republic,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-portugal-ghana,2022-11-24,2022,GROUP_STAGE,Portugal,Ghana,HOME,3,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-brazil-serbia,2022-11-24,2022,GROUP_STAGE,Brazil,Serbia,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-wales-ir-iran,2022-11-25,2022,GROUP_STAGE,Wales,IR Iran,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-qatar-senegal,2022-11-25,2022,GROUP_STAGE,Qatar,Senegal,AWAY,1,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-netherlands-ecuador,2022-11-25,2022,GROUP_STAGE,Netherlands,Ecuador,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-england-united-states,2022-11-25,2022,GROUP_STAGE,England,United States,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-tunisia-australia,2022-11-26,2022,GROUP_STAGE,Tunisia,Australia,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-poland-saudi-arabia,2022-11-26,2022,GROUP_STAGE,Poland,Saudi Arabia,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-france-denmark,2022-11-26,2022,GROUP_STAGE,France,Denmark,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-argentina-mexico,2022-11-26,2022,GROUP_STAGE,Argentina,Mexico,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-japan-costa-rica,2022-11-27,2022,GROUP_STAGE,Japan,Costa Rica,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-belgium-morocco,2022-11-27,2022,GROUP_STAGE,Belgium,Morocco,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-croatia-canada,2022-11-27,2022,GROUP_STAGE,Croatia,Canada,HOME,4,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-spain-germany,2022-11-27,2022,GROUP_STAGE,Spain,Germany,DRAW,1,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-cameroon-serbia,2022-11-28,2022,GROUP_STAGE,Cameroon,Serbia,DRAW,3,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-korea-republic-ghana,2022-11-28,2022,GROUP_STAGE,Korea Republic,Ghana,AWAY,2,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-brazil-switzerland,2022-11-28,2022,GROUP_STAGE,Brazil,Switzerland,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-portugal-uruguay,2022-11-28,2022,GROUP_STAGE,Portugal,Uruguay,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-ecuador-senegal,2022-11-29,2022,GROUP_STAGE,Ecuador,Senegal,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-netherlands-qatar,2022-11-29,2022,GROUP_STAGE,Netherlands,Qatar,HOME,2,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-ir-iran-united-states,2022-11-29,2022,GROUP_STAGE,IR Iran,United States,AWAY,0,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-wales-england,2022-11-29,2022,GROUP_STAGE,Wales,England,AWAY,0,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-australia-denmark,2022-11-30,2022,GROUP_STAGE,Australia,Denmark,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-tunisia-france,2022-11-30,2022,GROUP_STAGE,Tunisia,France,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-saudi-arabia-mexico,2022-11-30,2022,GROUP_STAGE,Saudi Arabia,Mexico,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-poland-argentina,2022-11-30,2022,GROUP_STAGE,Poland,Argentina,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-canada-morocco,2022-12-01,2022,GROUP_STAGE,Canada,Morocco,AWAY,1,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-croatia-belgium,2022-12-01,2022,GROUP_STAGE,Croatia,Belgium,DRAW,0,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-costa-rica-germany,2022-12-01,2022,GROUP_STAGE,Costa Rica,Germany,AWAY,2,4,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-japan-spain,2022-12-01,2022,GROUP_STAGE,Japan,Spain,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-korea-republic-portugal,2022-12-02,2022,GROUP_STAGE,Korea Republic,Portugal,HOME,2,1,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-ghana-uruguay,2022-12-02,2022,GROUP_STAGE,Ghana,Uruguay,AWAY,0,2,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-cameroon-brazil,2022-12-02,2022,GROUP_STAGE,Cameroon,Brazil,HOME,1,0,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-serbia-switzerland,2022-12-02,2022,GROUP_STAGE,Serbia,Switzerland,AWAY,2,3,0.3551,0.29,0.3548,1.35,1.35,0.3551,0
+wc2022-netherlands-united-states,2022-12-03,2022,LAST_16,Netherlands,United States,HOME,3,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-argentina-australia,2022-12-03,2022,LAST_16,Argentina,Australia,HOME,2,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-france-poland,2022-12-04,2022,LAST_16,France,Poland,HOME,3,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-england-senegal,2022-12-04,2022,LAST_16,England,Senegal,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-japan-croatia,2022-12-05,2022,LAST_16,Japan,Croatia,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-brazil-korea-republic,2022-12-05,2022,LAST_16,Brazil,Korea Republic,HOME,4,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-morocco-spain,2022-12-06,2022,LAST_16,Morocco,Spain,DRAW,0,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-portugal-switzerland,2022-12-06,2022,LAST_16,Portugal,Switzerland,HOME,6,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-croatia-brazil,2022-12-09,2022,QUARTER_FINAL,Croatia,Brazil,DRAW,1,1,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-netherlands-argentina,2022-12-09,2022,QUARTER_FINAL,Netherlands,Argentina,DRAW,2,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-morocco-portugal,2022-12-10,2022,QUARTER_FINAL,Morocco,Portugal,HOME,1,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-england-france,2022-12-10,2022,QUARTER_FINAL,England,France,AWAY,1,2,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-argentina-croatia,2022-12-13,2022,SEMI_FINAL,Argentina,Croatia,HOME,3,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-france-morocco,2022-12-14,2022,SEMI_FINAL,France,Morocco,HOME,2,0,0.355,0.29,0.355,1.35,1.35,0.355,0
+wc2022-argentina-france,2022-12-18,2022,FINAL,Argentina,France,DRAW,3,3,0.355,0.29,0.355,1.35,1.35,0.355,0

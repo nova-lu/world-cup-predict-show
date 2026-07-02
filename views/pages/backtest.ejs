@@ -5,6 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .backtest-page .tab-bar { display:flex; gap:0; margin:20px 0; border-bottom:2px solid #333; }
+    .backtest-page .tab-btn { padding:10px 24px; background:#1a1a2e; border:1px solid #333; border-bottom:none; color:#888; cursor:pointer; font-size:14px; border-radius:6px 6px 0 0; }
+    .backtest-page .tab-btn.active { background:#2a2a4a; color:#4fc3f7; border-color:#4fc3f7; font-weight:600; }
+    .backtest-page .tab-btn:hover:not(.active) { color:#ccc; }
+    .backtest-page .tab-content { display:none; }
+    .backtest-page .tab-content.active { display:block; }
+
+    /* 引擎卡片 */
+    .backtest-page .eng-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px; margin:16px 0; }
+    .backtest-page .eng-card { background:#1a1a2e; border:1px solid #333; border-radius:10px; padding:18px; }
+    .backtest-page .eng-card h3 { margin:0 0 10px; font-size:15px; color:#4fc3f7; }
+    .backtest-page .eng-card .stat-row { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; border-bottom:1px solid #282828; }
+    .backtest-page .eng-card .stat-row:last-child { border-bottom:0; }
+    .backtest-page .eng-card .stat-row .label { color:#888; }
+    .backtest-page .eng-card .stat-row .value { color:#e0e0e0; font-weight:600; }
+    .backtest-page .eng-card .baseline { border-top:1px dashed #444; margin-top:8px; padding-top:8px; }
+    .backtest-page .year-table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+    .backtest-page .year-table th { background:#1a1a2e; padding:8px 10px; text-align:left; border-bottom:2px solid #4fc3f7; color:#4fc3f7; }
+    .backtest-page .year-table td { padding:6px 10px; border-bottom:1px solid #2a2a2a; }
+    .backtest-page .year-table tr:hover td { background:#1e1e38; }
+    .backtest-page .cal-table { width:100%; border-collapse:collapse; margin:12px 0; font-size:12px; }
+    .backtest-page .cal-table th { background:#1a1a2e; padding:5px 8px; border-bottom:2px solid #4fc3f7; color:#4fc3f7; text-align:center; }
+    .backtest-page .cal-table td { padding:4px 8px; border-bottom:1px solid #2a2a2a; text-align:center; }
+    .backtest-page .error-box { background:#1a1a2e; border:1px solid #5c3a3a; border-radius:8px; padding:12px; margin:12px 0; }
+    .backtest-page .error-box .err-row { display:flex; justify-content:space-between; padding:2px 0; font-size:12px; color:#ccc; }
+    .backtest-page .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+    .backtest-page .badge.good { background:#1b5e20; color:#81c784; }
+    .backtest-page .badge.ok { background:#e65100; color:#ffcc80; }
+    .backtest-page .badge.bad { background:#b71c1c; color:#ef9a9a; }
+    .backtest-page .report-list { margin:12px 0; }
+    .backtest-page .report-item { padding:8px 12px; border-bottom:1px solid #2a2a2a; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+    .backtest-page .report-item:hover { background:#1a1a2e; }
+    .backtest-page .report-item .btn-sm { padding:3px 10px; font-size:11px; }
+    .backtest-page .backtest-actions { margin:10px 0; }
+    .backtest-page .spinner-sm { display:inline-block; width:14px; height:14px; border:2px solid #333; border-top-color:#4fc3f7; border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; margin-right:6px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .backtest-page .report-preview { max-height:600px; overflow-y:auto; }
+    .backtest-page .report-preview pre { white-space:pre-wrap; font-size:12px; background:#0a0a1a; padding:12px; border-radius:6px; }
+    .backtest-page .section-title { font-size:16px; color:#4fc3f7; margin:24px 0 10px; border-bottom:1px solid #333; padding-bottom:4px; }
+
+    /* 新增可视化样式 */
+    .backtest-page .summary-callout { background:linear-gradient(135deg,#1a1a3e,#1a2a3e); border:1px solid #4fc3f744; border-radius:12px; padding:18px 22px; margin:16px 0; }
+    .backtest-page .summary-callout h3 { color:#4fc3f7; margin:0 0 8px; font-size:15px; }
+    .backtest-page .summary-callout .callout-row { display:flex; gap:20px; flex-wrap:wrap; }
+    .backtest-page .summary-callout .callout-item { flex:1; min-width:120px; }
+    .backtest-page .summary-callout .callout-item .num { font-size:28px; font-weight:700; color:#e0e0e0; }
+    .backtest-page .summary-callout .callout-item .num.good { color:#81c784; }
+    .backtest-page .summary-callout .callout-item .num.ok { color:#ffcc80; }
+    .backtest-page .summary-callout .callout-item .num.bad { color:#ef9a9a; }
+    .backtest-page .summary-callout .callout-item .lbl { color:#888; font-size:12px; margin-top:2px; }
+    .backtest-page .bar-chart { margin:12px 0; }
+    .backtest-page .bar-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
+    .backtest-page .bar-label { width:80px; font-size:12px; color:#ccc; text-align:right; flex-shrink:0; }
+    .backtest-page .bar-track { flex:1; height:22px; background:#252525; border-radius:4px; overflow:hidden; position:relative; }
+    .backtest-page .bar-fill { height:100%; border-radius:4px; transition:width 1s ease; display:flex; align-items:center; padding-left:6px; }
+    .backtest-page .bar-fill.elo { background:linear-gradient(90deg,#4fc3f7,#2196f3); }
+    .backtest-page .bar-fill.baseline { background:linear-gradient(90deg,#888,#666); }
+    .backtest-page .bar-fill.home { background:linear-gradient(90deg,#ff7043,#e64a19); }
+    .backtest-page .bar-fill.ml { background:linear-gradient(90deg,#ce93d8,#7b1fa2); }
+    .backtest-page .bar-fill.ensemble { background:linear-gradient(90deg,#ffd54f,#f9a825); }
+    .backtest-page .bar-val { font-size:11px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.5); white-space:nowrap; }
+
+    /* 年度趋势图 */
+    .backtest-page .trend-chart { background:#111; border-radius:8px; padding:12px; margin:12px 0; overflow-x:auto; }
+    .backtest-page .trend-chart svg { display:block; margin:0 auto; }
+
+    /* 校准可视化 - 柱状对比 */
+    .backtest-page .cal-viz { margin-top:8px; }
+    .backtest-page .cal-viz .cal-bar-row { display:flex; align-items:center; gap:6px; margin:3px 0; font-size:11px; }
+    .backtest-page .cal-viz .cal-bar-label { width:60px; color:#888; text-align:right; flex-shrink:0; }
+    .backtest-page .cal-viz .cal-bar-group { flex:1; display:flex; gap:2px; height:16px; position:relative; }
+    .backtest-page .cal-viz .cal-bar-group .ideal-bar { background:#444; border-radius:2px; height:100%; position:absolute; left:0; top:0; }
+    .backtest-page .cal-viz .cal-bar-group .actual-bar { border-radius:2px; height:100%; position:relative; opacity:0.85; }
+
+    /* 错误分布微图表 */
+    .backtest-page .error-viz { display:flex; gap:12px; margin:8px 0; flex-wrap:wrap; }
+    .backtest-page .error-viz .err-cat { flex:1; min-width:80px; text-align:center; padding:10px; background:#151515; border-radius:8px; border:1px solid #333; }
+    .backtest-page .error-viz .err-cat .num { font-size:22px; font-weight:700; }
+    .backtest-page .error-viz .err-cat .num.upset { color:#ff8a80; }
+    .backtest-page .error-viz .err-cat .num.draw { color:#ffd54f; }
+    .backtest-page .error-viz .err-cat .num.flip { color:#ce93d8; }
+    .backtest-page .error-viz .err-cat .lbl { font-size:11px; color:#888; margin-top:2px; }
+    .backtest-page .error-viz .err-bar { height:6px; background:#333; border-radius:3px; margin-top:6px; overflow:hidden; }
+    .backtest-page .error-viz .err-bar .fill { height:100%; border-radius:3px; }
+    .backtest-page .error-viz .err-bar .fill.upset { background:#ff8a80; }
+    .backtest-page .error-viz .err-bar .fill.draw-miss { background:#ffd54f; }
+    .backtest-page .error-viz .err-bar .fill.flip { background:#ce93d8; }
+
+    /* 叙述文字 */
+    .backtest-page .narrative { background:#0d0d20; border-left:3px solid #4fc3f7; padding:14px 18px; margin:16px 0; border-radius:0 8px 8px 0; font-size:13px; line-height:1.7; color:#ccc; }
+    .backtest-page .narrative strong { color:#e0e0e0; }
+    .backtest-page .narrative .highlight { color:#4fc3f7; }
+    .backtest-page .narrative .warn { color:#ffcc80; }
+
+    /* 引擎比较-汇总条 */
+    .backtest-page .eng-summary { display:flex; gap:0; margin:16px 0; border-radius:8px; overflow:hidden; }
+    .backtest-page .eng-summary .seg { flex:1; text-align:center; padding:12px 8px; }
+    .backtest-page .eng-summary .seg.elo { background:#1a2a3e; }
+    .backtest-page .eng-summary .seg.ml { background:#2a1a3e; }
+    .backtest-page .eng-summary .seg.ensemble { background:#2a2a1e; }
+    .backtest-page .eng-summary .seg .eng-name { font-size:11px; color:#888; }
+    .backtest-page .eng-summary .seg .eng-val { font-size:20px; font-weight:700; color:#e0e0e0; margin:4px 0; }
+    .backtest-page .eng-summary .seg .eng-badge { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; }
+    .backtest-page .eng-summary .seg.elo .eng-badge { background:#4fc3f744; color:#4fc3f7; }
+    .backtest-page .eng-summary .seg.ml .eng-badge { background:#ce93d844; color:#ce93d8; }
+    .backtest-page .eng-summary .seg.ensemble .eng-badge { background:#ffd54f44; color:#ffd54f; }
+  </style>
 </head>
 <body>
   <%- include('../partials/header') %>
@@ -12,367 +120,1091 @@
   <main class="main-content backtest-page">
     <div class="page-header">
       <h1>模型回测</h1>
-      <p class="subtitle">基于赛程数据统计模型预测表现 · 对比随机基线</p>
-    </div>
-    <div class="disclaimer-banner">
-      ⚠️ 以下回测结果基于已完赛比赛的模型预测与实际赛果的对比分析，仅供评估模型参考
+      <p class="subtitle">基于赛程数据统计模型预测表现 · 对比基线</p>
     </div>
 
-    <!-- 概览统计卡片 -->
-    <div id="backtest-overview" class="backtest-summary" style="display:none"></div>
+    <!-- Tab 栏 -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('live')">📊 2026 实时回测</button>
+      <button class="tab-btn" onclick="switchTab('history')">📈 历史回测</button>
+      <button class="tab-btn" onclick="switchTab('reports')">📂 报告存档</button>
+    </div>
 
-    <!-- 准确率卡片 -->
-    <div id="backtest-accuracy" class="backtest-cards" style="display:none"></div>
+    <!-- Tab 1: 2026 实时回测 -->
+    <div id="tab-live" class="tab-content active">
+      <p class="subtitle">基于 2026 年已完赛比赛数据</p>
+      <div id="live-summary" class="backtest-summary"></div>
 
-    <!-- 校准曲线描述 -->
-    <div id="backtest-calibration" style="display:none"></div>
+      <div id="loading-spinner" class="loading">
+        <div class="spinner"></div>
+        <p>正在加载赛程数据...</p>
+      </div>
 
-    <!-- 阶段细分表格 -->
-    <div id="backtest-stage-breakdown" style="display:none"></div>
+      <div id="no-data-message" class="empty-state" style="display:none;">
+        <p>暂无已完赛的比赛数据。</p>
+      </div>
 
-    <div id="loading-spinner" class="loading">正在加载赛程数据并计算回测指标...</div>
-    <div id="no-data-message" class="empty-state" style="display:none">
-      <p>📭 暂无已完赛比赛数据</p>
-      <p class="subtitle">赛程开始后自动显示回测结果</p>
+      <div id="live-error" class="empty-state" style="display:none;">
+        <p id="live-error-text"></p>
+      </div>
+
+      <div id="live-stats" style="display:none;">
+        <div class="backtest-cards" id="stat-cards">
+          <div class="stat-card"><div class="stat-label">已完赛</div><div class="stat-value" id="stat-total">0</div></div>
+          <div class="stat-card"><div class="stat-label">准确率</div><div class="stat-value" id="stat-accuracy">--</div></div>
+          <div class="stat-card"><div class="stat-label">Brier 评分</div><div class="stat-value" id="stat-brier">--</div></div>
+        </div>
+
+        <div class="backtest-cards" id="metric-cards"></div>
+        <div class="info-section"><h2>校准分析</h2><div class="calibration-table-wrap" id="calibration-table"></div></div>
+        <div class="info-section"><h2>阶段分解</h2><div id="stage-breakdown"></div></div>
+      </div>
+    </div>
+
+    <!-- Tab 2: 历史回测 -->
+    <div id="tab-history" class="tab-content">
+      <p class="subtitle">回测结果综合分析 · Elo / ML / Ensemble 引擎对比</p>
+
+      <div class="backtest-actions">
+        <button class="btn btn-sm btn-primary" id="bt-run-btn" onclick="runBacktest(false)">🔄 运行回测</button>
+        <button class="btn btn-sm btn-ai" id="bt-force-btn" onclick="runBacktest(true)">⚡ 重新回测(强制)</button>
+        <button class="btn btn-sm btn-danger" id="bt-cancel-btn" style="display:none;background:#5c1a1a;border-color:#ef5350;color:#ef9a9a;" onclick="cancelBacktest()">⛔ 取消回测</button>
+        <span id="bt-status" style="margin-left:12px;color:#888;font-size:12px;"></span>
+        <span id="bt-cache-status" style="margin-left:8px;color:#666;font-size:11px;"></span>
+      </div>
+
+      <div id="bt-loading" style="display:none;">
+        <p><span class="spinner-sm"></span> 正在运行回测分析... 可能需要 30-60 秒</p>
+      </div>
+
+      <div id="bt-error" style="display:none;color:#ef5350;padding:12px;border:1px solid #5c3a3a;border-radius:8px;margin:12px 0;"></div>
+
+      <div id="bt-idle" style="display:block;text-align:center;padding:40px 0;color:#666;">
+        <p style="font-size:20px;margin-bottom:8px;">📊</p>
+        <p>点击上方「运行回测」开始分析</p>
+        <p style="font-size:12px;">首次运行约需 30-60 秒，之后自动使用缓存</p>
+      </div>
+
+      <div id="bt-results" style="display:none;">
+        <!-- 概要标注 -->
+        <div id="bt-summary-callout" class="summary-callout"></div>
+        <!-- 叙述性文字 -->
+        <div id="bt-narrative" class="narrative"></div>
+        <!-- 引擎对比条形图 -->
+        <div class="section-title">引擎准确率对比</div>
+        <div id="bt-compare-chart" class="bar-chart"></div>
+        <!-- 引擎卡片详情 -->
+        <div id="bt-engine-cards" class="eng-cards"></div>
+        <!-- 年度趋势图 -->
+        <div class="section-title">按届次准确率趋势</div>
+        <div id="bt-yearly-section">
+          <div id="bt-yearly-chart" class="trend-chart"></div>
+          <div id="bt-yearly-table"></div>
+        </div>
+        <!-- 校准分析 -->
+        <div class="section-title">校准分析 (ECE)</div>
+        <div id="bt-cal-section">
+          <div id="bt-cal-viz" class="cal-viz"></div>
+          <div id="bt-cal-content"></div>
+        </div>
+        <!-- 错误分析 -->
+        <div class="section-title">错误分析</div>
+        <div id="bt-error-section">
+          <div id="bt-error-viz" class="error-viz"></div>
+          <div id="bt-error-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: 报告存档 -->
+    <div id="tab-reports" class="tab-content">
+      <p class="subtitle">已生成的回测报告列表 — 点击可查看可视化渲染</p>
+      <div id="report-list-content">
+        <div class="loading"><div class="spinner"></div><p>加载中...</p></div>
+      </div>
+
+      <!-- 报告查看器 - 可视化渲染 -->
+      <div id="report-viewer" style="display:none;">
+        <button class="btn btn-sm btn-secondary" onclick="closeReport()">← 返回报告列表</button>
+        <div class="section-title">报告摘要</div>
+        <div id="rp-summary-callout" class="summary-callout"></div>
+        <div id="rp-narrative" class="narrative"></div>
+        <div class="section-title">引擎准确率对比</div>
+        <div id="rp-compare-chart" class="bar-chart"></div>
+        <div id="rp-engine-cards" class="eng-cards"></div>
+        <div class="section-title">按届次准确率趋势</div>
+        <div id="rp-yearly-chart" class="trend-chart"></div>
+        <div id="rp-yearly-table"></div>
+        <div class="section-title">校准分析 (ECE)</div>
+        <div id="rp-cal-viz" class="cal-viz"></div>
+        <div id="rp-cal-content"></div>
+        <div class="section-title">错误分析</div>
+        <div id="rp-error-viz" class="error-viz"></div>
+        <div id="rp-error-content"></div>
+        <div class="section-title">原始报告下载</div>
+        <pre id="report-json" style="max-height:400px;overflow:auto;white-space:pre-wrap;font-size:11px;background:#0a0a1a;padding:12px;border-radius:6px;"></pre>
+      </div>
     </div>
   </main>
 
   <%- include('../partials/footer') %>
 
   <script>
-  (function() {
-    const STAGE_LABELS = {
-      'GROUP_STAGE': '小组赛',
-      'LAST_32': '32强',
-      'LAST_16': '16强',
-      'QUARTER_FINALS': '8强',
-      'SEMI_FINALS': '4强',
-      'THIRD_PLACE': '季军赛',
-      'FINAL': '决赛'
-    };
-
-    // ---------- helpers ----------
-    function actualOutcome(m) {
-      if (m.g1 == null || m.g2 == null) return null;
-      if (m.g1 > m.g2) return 'HOME';
-      if (m.g1 < m.g2) return 'AWAY';
-      return 'DRAW';
+    // ===== Tab 切换 =====
+    function switchTab(name) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      event.target.classList.add('active');
+      if (name === 'reports') loadReports();
+      if (name === 'history') loadCachedResult();
     }
 
-    function predictedOutcome(m) {
-      if (!m.prediction || !m.prediction.prob) return null;
-      const p = m.prediction.prob;
-      const max = Math.max(p.winHome || 0, p.draw || 0, p.winAway || 0);
-      if (max === (p.winHome || 0)) return 'HOME';
-      if (max === (p.draw || 0)) return 'DRAW';
+    // 静默加载缓存结果，不触发回测运行
+    async function loadCachedResult() {
+      const status = document.getElementById('bt-status');
+      const cacheStatus = document.getElementById('bt-cache-status');
+      const idle = document.getElementById('bt-idle');
+      const resultsDiv = document.getElementById('bt-results');
+      // 如果已经有渲染结果，不重复加载
+      if (window._btCachedResult && resultsDiv.style.display === 'block') {
+        cacheStatus.textContent = '(缓存)';
+        return;
+      }
+      try {
+        const res = await fetch('/api/ml/backtest?check=1');
+        const data = await res.json();
+        if (data.success && data.summary?.total > 0) {
+          window._btCachedResult = data;
+          idle.style.display = 'none';
+          renderBacktestResults(data);
+          status.textContent = `✅ ${data.summary.total} 场比赛 · ${data.summary.byYear.length} 届`;
+          cacheStatus.textContent = '(缓存)';
+        } else if (data.cancelled) {
+          idle.style.display = 'block';
+          resultsDiv.style.display = 'none';
+          status.textContent = '⛔ 上次回测已取消';
+          cacheStatus.textContent = '';
+        } else {
+          idle.style.display = 'block';
+          resultsDiv.style.display = 'none';
+          status.textContent = '';
+          cacheStatus.textContent = '(无缓存)';
+        }
+      } catch(e) {
+        // 首次加载或无缓存 - 静默显示闲置状态
+        idle.style.display = 'block';
+        resultsDiv.style.display = 'none';
+        cacheStatus.textContent = '(无缓存)';
+      }
+    }
+
+    // ===== 2026 实时回测 (原有) =====
+    (function() {
+      const $ = id => document.getElementById(id);
+      let schedule = [];
+
+      function actualOutcome(m) {
+        if (m.g1 == null || m.g2 == null) return null;
+        return m.g1 > m.g2 ? 'HOME' : m.g1 < m.g2 ? 'AWAY' : 'DRAW';
+      }
+      function predictedOutcome(m) {
+        const p = m.prediction || {};
+        const home = p.homeWin || p.home || 0;
+        const draw = p.draw || 0;
+        const away = p.awayWin || p.away || 0;
+        if (home >= draw && home >= away) return 'HOME';
+        if (draw >= home && draw >= away) return 'DRAW';
+        return 'AWAY';
+      }
+      function predictedProbForActual(m) {
+        const outcome = actualOutcome(m);
+        const p = (m.prediction || {});
+        if (outcome === 'HOME') return p.homeWin || p.home || 0;
+        if (outcome === 'AWAY') return p.awayWin || p.away || 0;
+        return p.draw || 0;
+      }
+      function brierScore(m) {
+        const outcome = actualOutcome(m);
+        const p = m.prediction || {};
+        const ph = p.homeWin || p.home || 0;
+        const pd = p.draw || 0;
+        const pa = p.awayWin || p.away || 0;
+        const oh = outcome === 'HOME' ? 1 : 0;
+        const od = outcome === 'DRAW' ? 1 : 0;
+        const oa = outcome === 'AWAY' ? 1 : 0;
+        return (ph - oh) ** 2 + (pd - od) ** 2 + (pa - oa) ** 2;
+      }
+
+      function computeStats() {
+        const matches = schedule.filter(m => actualOutcome(m) !== null && m.prediction);
+        const n = matches.length;
+        if (n === 0) { $('no-data-message').style.display = 'block'; $('loading-spinner').style.display = 'none'; return; }
+        $('no-data-message').style.display = 'none';
+        $('loading-spinner').style.display = 'none';
+        $('live-stats').style.display = 'block';
+
+        const correct = matches.filter(m => predictedOutcome(m) === actualOutcome(m)).length;
+        const accuracy = correct / n;
+        const avgBrier = matches.reduce((s, m) => s + brierScore(m), 0) / n;
+        const theoreticalRandom = 1 / 3;
+
+        $('stat-total').textContent = n;
+        $('stat-accuracy').textContent = (accuracy * 100).toFixed(1) + '%';
+        $('stat-brier').textContent = avgBrier.toFixed(3);
+
+        // Metric cards
+        const cards = [
+          { label: '预测准确率', value: (accuracy * 100).toFixed(1) + '%', cls: accuracy >= 0.5 ? 'good' : accuracy >= 0.33 ? 'ok' : 'bad', sub: `正确 ${correct}/${n}` },
+          { label: 'Brier 评分', value: avgBrier.toFixed(3), cls: avgBrier < 0.25 ? 'good' : avgBrier < 0.40 ? 'ok' : 'bad', sub: '0=完美 · 2=最差' },
+          { label: '随机基线', value: '33.3%', cls: 'ok', sub: '理论随机猜测' },
+          { label: 'vs 基线', value: ((accuracy - theoreticalRandom) * 100).toFixed(1) + '%', cls: accuracy - theoreticalRandom > 0.15 ? 'good' : accuracy - theoreticalRandom > 0 ? 'ok' : 'bad', sub: accuracy >= theoreticalRandom ? '高于随机基线 ✓' : '低于随机基线 ✗' },
+        ];
+        $('metric-cards').innerHTML = cards.map(c =>
+          `<div class="metric-card metric-${c.cls}"><div class="metric-label">${c.label}</div><div class="metric-value ${c.cls}">${c.value}</div><div class="metric-sub">${c.sub}</div></div>`
+        ).join('');
+
+        // Calibration
+        const BINS = 10;
+        const bins = Array.from({length:BINS}, () => ({n:0,correct:0,totalConf:0}));
+        for (const m of matches) {
+          const p = m.prediction || {};
+          const conf = Math.max(p.homeWin||0, p.draw||0, p.awayWin||0);
+          const idx = Math.min(Math.floor(conf * BINS), BINS-1);
+          bins[idx].n++;
+          bins[idx].correct += predictedOutcome(m) === actualOutcome(m) ? 1 : 0;
+          bins[idx].totalConf += conf;
+        }
+        let ece = 0;
+        let calRows = '<table class="standings-table"><thead><tr><th>置信区间</th><th>样本数</th><th>实际频率</th><th>平均置信</th><th>差距</th></tr></thead><tbody>';
+        for (let i = 0; i < BINS; i++) {
+          const b = bins[i];
+          if (b.n === 0) { calRows += `<tr><td>${i*10}-${(i+1)*10}%</td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`; continue; }
+          const freq = b.correct / b.n;
+          const avgC = b.totalConf / b.n;
+          const gap = Math.abs(avgC - freq);
+          ece += (b.n / n) * gap;
+          calRows += `<tr><td>${i*10}-${(i+1)*10}%</td><td>${b.n}</td><td>${(freq*100).toFixed(1)}%</td><td>${(avgC*100).toFixed(1)}%</td><td>${(gap*100).toFixed(1)}%</td></tr>`;
+        }
+        calRows += '</tbody></table>';
+        calRows += `<p style="margin-top:8px;color:#888;font-size:13px;">ECE: ${(ece*100).toFixed(2)}% (${ece < 0.05 ? '校准良好' : ece < 0.15 ? '校准中等' : '校准较差'})</p>`;
+        $('calibration-table').innerHTML = calRows;
+
+        // Stage breakdown
+        const stages = {};
+        for (const m of matches) {
+          const key = m.group || m.stage || 'KO';
+          if (!stages[key]) stages[key] = { n:0, correct:0, homeWins:0 };
+          stages[key].n++;
+          stages[key].correct += predictedOutcome(m) === actualOutcome(m) ? 1 : 0;
+          if (actualOutcome(m) === 'HOME') stages[key].homeWins++;
+        }
+        const stageKeys = Object.keys(stages).sort();
+        let sHtml = '<table class="adv-table"><thead><tr><th>阶段</th><th>场次</th><th>准确率</th><th>主胜率</th></tr></thead><tbody>';
+        for (const k of stageKeys) {
+          const s = stages[k];
+          sHtml += `<tr><td>${k}</td><td>${s.n}</td><td>${(s.correct/s.n*100).toFixed(1)}%</td><td>${(s.homeWins/s.n*100).toFixed(1)}%</td></tr>`;
+        }
+        sHtml += '</tbody></table>';
+        $('stage-breakdown').innerHTML = sHtml;
+      }
+
+      async function fetchSchedule() {
+        $('loading-spinner').style.display = 'flex';
+        try {
+          const res = await fetch('/api/matches/schedule');
+          const data = await res.json();
+          if (!data || !data.matches) { $('no-data-message').style.display = 'block'; $('loading-spinner').style.display = 'none'; return; }
+          schedule = data.matches;
+          computeStats();
+        } catch(e) {
+          $('loading-spinner').style.display = 'none';
+          $('live-error').style.display = 'block';
+          $('live-error-text').textContent = '加载失败: ' + e.message;
+        }
+      }
+
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fetchSchedule);
+      else fetchSchedule();
+    })();
+
+    // ===== 历史回测 - 增强可视化版本 =====
+
+    /** 按最大概率预测结果 */
+    function maxProbOutcome(prob) {
+      if (!prob) return null;
+      const h = prob.homeWin || 0, d = prob.draw || 0, a = prob.awayWin || 0;
+      if (h >= d && h >= a) return 'HOME';
+      if (d >= h && d >= a) return 'DRAW';
       return 'AWAY';
     }
+    function outcomeLabel(o) { return o === 'HOME' ? '主胜' : o === 'AWAY' ? '客胜' : '平局'; }
 
-    function predictedProbForActual(m) {
-      const actual = actualOutcome(m);
-      if (!actual || !m.prediction || !m.prediction.prob) return null;
-      const p = m.prediction.prob;
-      if (actual === 'HOME') return (p.winHome || 0) / 100;
-      if (actual === 'DRAW') return (p.draw || 0) / 100;
-      return (p.winAway || 0) / 100;
-    }
+    async function runBacktest(force) {
+      const status = document.getElementById('bt-status');
+      const cacheStatus = document.getElementById('bt-cache-status');
+      const loading = document.getElementById('bt-loading');
+      const error = document.getElementById('bt-error');
+      const idle = document.getElementById('bt-idle');
+      const resultsDiv = document.getElementById('bt-results');
+      const runBtn = document.getElementById('bt-run-btn');
+      const forceBtn = document.getElementById('bt-force-btn');
+      const cancelBtn = document.getElementById('bt-cancel-btn');
 
-    // Brier score for a 3-outcome match
-    function brierScore(m) {
-      if (!m.prediction || !m.prediction.prob) return null;
-      const p = m.prediction.prob;
-      const homeP = (p.winHome || 0) / 100;
-      const drawP = (p.draw || 0) / 100;
-      const awayP = (p.winAway || 0) / 100;
-      const actual = actualOutcome(m);
-      const oHome = actual === 'HOME' ? 1 : 0;
-      const oDraw = actual === 'DRAW' ? 1 : 0;
-      const oAway = actual === 'AWAY' ? 1 : 0;
-      return (homeP - oHome) ** 2 + (drawP - oDraw) ** 2 + (awayP - oAway) ** 2;
-    }
+      // 先检查是否有其他回测在运行
+      try {
+        const sr = await fetch('/api/ml/backtest/status');
+        const st = await sr.json();
+        if (st.running) {
+          error.style.display = 'block';
+          error.textContent = '⚠️ 已有回测程序正在运行，请等待完成或点击「取消回测」终止后再试';
+          return;
+        }
+      } catch(e) {}
 
-    // ---------- main ----------
-    fetch('/api/matches/schedule')
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(data => {
-        const all = data.matches || [];
-        const finished = all.filter(m => m.status === 'FT' && m.g1 != null && m.g2 != null && m.prediction && m.prediction.prob);
-        const total = all.length;
+      loading.style.display = 'block';
+      error.style.display = 'none';
+      idle.style.display = 'none';
+      status.textContent = '运行中...';
+      cacheStatus.textContent = '';
+      runBtn.disabled = true; runBtn.style.opacity = '0.5';
+      forceBtn.disabled = true; forceBtn.style.opacity = '0.5';
+      cancelBtn.style.display = 'inline-block';
 
-        document.getElementById('loading-spinner').style.display = 'none';
+      // 轮询状态，显示进度
+      let pollTimer = setInterval(async () => {
+        try {
+          const sr = await fetch('/api/ml/backtest/status');
+          const st = await sr.json();
+          if (!st.running) { clearInterval(pollTimer); return; }
+          status.textContent = '运行中... (处理中，请勿重复点击)';
+        } catch(e) { clearInterval(pollTimer); }
+      }, 3000);
 
-        if (finished.length === 0) {
-          document.getElementById('no-data-message').style.display = 'block';
+      try {
+        const res = await fetch('/api/ml/backtest' + (force ? '?force=1' : ''));
+        const data = await res.json();
+        clearInterval(pollTimer);
+        loading.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        runBtn.disabled = false; runBtn.style.opacity = '1';
+        forceBtn.disabled = false; forceBtn.style.opacity = '1';
+
+        if (!data.success) {
+          if (data.cancelled) {
+            error.style.display = 'block';
+            error.textContent = '⛔ 回测已被取消';
+            status.textContent = '已取消';
+          } else {
+            error.style.display = 'block';
+            error.textContent = '回测失败: ' + (data.error || '未知错误');
+            status.textContent = '失败';
+          }
           return;
         }
 
-        // --- overview ---
-        document.getElementById('backtest-overview').style.display = 'block';
-        document.getElementById('backtest-overview').innerHTML = `
-          <div class="stat-card">
-            <span class="stat-label">总比赛数</span>
-            <span class="stat-value">${total}</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">已完赛</span>
-            <span class="stat-value">${finished.length}</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">未开赛</span>
-            <span class="stat-value">${total - finished.length}</span>
-          </div>
-        `;
+        window._btCachedResult = data;
+        status.textContent = `✅ 完成 · ${data.summary.total} 场比赛 · ${data.summary.byYear.length} 届`;
+        cacheStatus.textContent = '(最新)';
+        renderBacktestResults(data);
+      } catch(e) {
+        clearInterval(pollTimer);
+        loading.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        runBtn.disabled = false; runBtn.style.opacity = '1';
+        forceBtn.disabled = false; forceBtn.style.opacity = '1';
+        error.style.display = 'block';
+        error.textContent = '请求失败: ' + e.message;
+        status.textContent = '请求失败';
+      }
+    }
 
-        // --- per-match analysis ---
-        let correct = 0;
-        let totalBrier = 0;
-        let brierCount = 0;
-        let randomCorrect = 0;  // baseline: random guess (33.3% expected)
-        let stageData = {};
+    // 取消回测
+    async function cancelBacktest() {
+      const status = document.getElementById('bt-status');
+      const cancelBtn = document.getElementById('bt-cancel-btn');
+      const runBtn = document.getElementById('bt-run-btn');
+      const forceBtn = document.getElementById('bt-force-btn');
+      const loading = document.getElementById('bt-loading');
 
-        finished.forEach(m => {
-          const pred = predictedOutcome(m);
-          const actual = actualOutcome(m);
-          if (pred === actual) correct++;
+      try {
+        const res = await fetch('/api/ml/backtest/cancel', { method: 'POST' });
+        const data = await res.json();
+        status.textContent = data.cancelled ? '⛔ 已取消' : ('取消失败: ' + (data.reason || '未知'));
+      } catch(e) {
+        status.textContent = '取消失败: ' + e.message;
+      }
+      loading.style.display = 'none';
+      cancelBtn.style.display = 'none';
+      runBtn.disabled = false; runBtn.style.opacity = '1';
+      forceBtn.disabled = false; forceBtn.style.opacity = '1';
+    }
 
-          const bs = brierScore(m);
-          if (bs !== null) {
-            totalBrier += bs;
-            brierCount++;
-          }
+    function renderBacktestResults(data) {
+      document.getElementById('bt-results').style.display = 'block';
+      const engines = ['elo', 'ml', 'ensemble'].filter(e => data.overall?.[e]?.available);
+      const years = data.summary.byYear.map(y => y.year).sort((a,b)=>a-b);
 
-          // random baseline: always incorrect in expectation for 3 outcomes
-          // but per match we use a simulated random guess: pick uniformly
-          const randPick = ['HOME','DRAW','AWAY'][Math.floor(Math.random() * 3)];
-          if (randPick === actual) randomCorrect++;
+      // 1. 概要标注 - 关键发现
+      renderSummaryCallout(data, engines);
 
-          // stage breakdown
-          const stage = m.stage || 'UNKNOWN';
-          if (!stageData[stage]) {
-            stageData[stage] = { total: 0, correct: 0, brierSum: 0, brierN: 0 };
-          }
-          stageData[stage].total++;
-          if (pred === actual) stageData[stage].correct++;
-          if (bs !== null) {
-            stageData[stage].brierSum += bs;
-            stageData[stage].brierN++;
-          }
-        });
+      // 2. 叙述性文字
+      renderNarrative(data, engines, years);
 
-        const accuracy = finished.length > 0 ? (correct / finished.length * 100) : 0;
-        const avgBrier = brierCount > 0 ? (totalBrier / brierCount) : 0;
-        const randAccuracy = finished.length > 0 ? (randomCorrect / finished.length * 100) : 0;
-        // Theoretical random baseline for 3 outcomes = 33.33%
-        const theoreticalRandom = 33.33;
+      // 3. 引擎对比条形图
+      renderCompareChart(data, engines);
 
-        // --- accuracy cards ---
-        document.getElementById('backtest-accuracy').style.display = 'block';
-        document.getElementById('backtest-accuracy').innerHTML = `
-          <div class="metric-card metric-primary">
-            <span class="metric-label">模型准确率</span>
-            <span class="metric-value ${accuracy >= 50 ? 'good' : accuracy >= 33 ? 'ok' : 'bad'}">${accuracy.toFixed(1)}%</span>
-            <span class="metric-sub">${correct} / ${finished.length} 场正确预测</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">平均 Brier 评分</span>
-            <span class="metric-value">${avgBrier.toFixed(4)}</span>
-            <span class="metric-sub">越小越好（完美=0, 随机≈0.667）</span>
-          </div>
-          <div class="metric-card metric-baseline">
-            <span class="metric-label">随机基线（模拟）</span>
-            <span class="metric-value">${randAccuracy.toFixed(1)}%</span>
-            <span class="metric-sub">理论随机 ≈ ${theoreticalRandom.toFixed(1)}%</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">模型提升 vs 随机</span>
-            <span class="metric-value ${accuracy - theoreticalRandom > 15 ? 'good' : accuracy - theoreticalRandom > 5 ? 'ok' : 'bad'}">+${(accuracy - theoreticalRandom).toFixed(1)}%</span>
-            <span class="metric-sub">超出随机基线的百分点</span>
-          </div>
-        `;
+      // 4. 引擎卡片
+      renderEngineCards(data, engines);
 
-        // --- calibration description ---
-        document.getElementById('backtest-calibration').style.display = 'block';
+      // 5. 年度趋势图 (SVG)
+      renderYearlyChart(data, engines, years);
 
-        // Calibration: group predictions by confidence deciles
-        let bins = {};
-        for (let d = 0; d <= 9; d++) {
-          const key = (d * 10) + '-' + ((d + 1) * 10);
-          bins[key] = { count: 0, correct: 0 };
+      // 6. 年度表格
+      renderYearlyTable(data, engines, years);
+
+      // 7. 校准可视化
+      renderCalibration(data, engines);
+
+      // 8. 错误可视化
+      renderErrorAnalysis(data, engines);
+    }
+
+    // ---- 1. 概要标注 ----
+    function renderSummaryCallout(data, engines) {
+      const o = data.overall;
+      const total = data.summary.total;
+      const topEngine = engines.reduce((best, e) => (o[e]?.accuracy || 0) > (o[best]?.accuracy || 0) ? e : best, engines[0]);
+      const topAcc = (o[topEngine]?.accuracy || 0) * 100;
+      const randomGap = (o[topEngine]?.accuracy || 0) - 0.333;
+      const ece = o[topEngine]?.calibration?.ece || 0;
+      const eceLabel = ece < 0.05 ? '良好' : ece < 0.15 ? '中等' : '较差';
+
+      let html = `<h3>📊 核心发现</h3><div class="callout-row">`;
+      html += `<div class="callout-item"><div class="num ${topAcc > 40 ? 'good' : 'ok'}">${topAcc.toFixed(1)}%</div><div class="lbl">最佳引擎准确率 (${engineDisplayName(topEngine)})</div></div>`;
+      html += `<div class="callout-item"><div class="num ${randomGap > 0 ? 'good' : 'bad'}">${randomGap > 0 ? '+' : ''}${(randomGap * 100).toFixed(1)}%</div><div class="lbl">vs 随机基线 (33.3%)</div></div>`;
+      html += `<div class="callout-item"><div class="num ${ece < 0.05 ? 'good' : ece < 0.15 ? 'ok' : 'bad'}">${(ece * 100).toFixed(2)}%</div><div class="lbl">ECE ${eceLabel} (${engineDisplayName(topEngine)})</div></div>`;
+      html += `<div class="callout-item"><div class="num">${total}</div><div class="lbl">覆盖比赛 · ${data.summary.byYear.length}届世界杯</div></div>`;
+      html += `</div>`;
+      document.getElementById('bt-summary-callout').innerHTML = html;
+    }
+
+    function engineDisplayName(eng) {
+      return eng === 'elo' ? 'Elo' : eng === 'ml' ? 'ML' : 'Ensemble';
+    }
+
+    // ---- 2. 叙述性文字 ----
+    function renderNarrative(data, engines, years) {
+      const o = data.overall;
+      const topE = engines.reduce((best, e) => (o[e]?.accuracy || 0) > (o[best]?.accuracy || 0) ? e : best, engines[0]);
+      const topAcc = (o[topE]?.accuracy || 0) * 100;
+      const worstE = engines.reduce((worst, e) => (o[e]?.accuracy || 1) < (o[worst]?.accuracy || 1) ? e : worst, engines[0]);
+      const worstAcc = (o[worstE]?.accuracy || 0) * 100;
+
+      // 最佳/最差年份
+      let bestYr = '', worstYr = '';
+      let bestAccYr = 0, worstAccYr = 100;
+      for (const e of engines) {
+        for (const y of years) {
+          const yd = data.yearly[e]?.[y];
+          if (!yd) continue;
+          if (yd.accuracy > bestAccYr) { bestAccYr = yd.accuracy; bestYr = `${y}(${engineDisplayName(e)})`; }
+          if (yd.accuracy < worstAccYr) { worstAccYr = yd.accuracy; worstYr = `${y}(${engineDisplayName(e)})`; }
         }
+      }
 
-        finished.forEach(m => {
-          const prob = predictedProbForActual(m);
-          if (prob === null) return;
-          const decile = Math.min(Math.floor(prob * 10), 9);
-          const key = (decile * 10) + '-' + ((decile + 1) * 10);
-          if (!bins[key]) return;
-          bins[key].count++;
-          const pred = predictedOutcome(m);
-          const actual = actualOutcome(m);
-          if (pred === actual) bins[key].correct++;
-        });
+      // 校准评语
+      const ece = o[topE]?.calibration?.ece || 0;
+      const calComment = ece < 0.03 ? '校准非常精准，模型置信度与实际结果高度吻合' :
+                         ece < 0.08 ? '校准处于合理范围，置信度仅供参考' :
+                         '校准存在偏差，模型高估或低估了自身预测的可靠性';
 
-        let calibHtml = '<div class="info-section"><h2>📊 校准分析</h2><p>校准衡量模型预测概率与实际观测频率之间的一致性。理想情况下，当模型预测某结果概率为 X% 时，该结果实际发生的比例也接近 X%。</p>';
-        calibHtml += '<div class="calibration-table-wrap"><table class="standings-table"><thead><tr><th>置信区间</th><th>比赛数</th><th>实际频率</th><th>校准偏差</th></tr></thead><tbody>';
+      // 错误模式
+      const ea = data.errorAnalysis?.[topE];
+      const upsetPct = ea?.patterns?.upset ? (ea.patterns.upset / ea.totalErrors * 100).toFixed(0) : 0;
+      const drawMissPct = ea?.patterns?.drawMiss ? (ea.patterns.drawMiss / ea.totalErrors * 100).toFixed(0) : 0;
+      const flipPct = ea?.patterns?.homeAwayMiss ? (ea.patterns.homeAwayMiss / ea.totalErrors * 100).toFixed(0) : 0;
 
-        let totalEce = 0;
-        let eceCount = 0;
-        for (let d = 0; d <= 9; d++) {
-          const key = (d * 10) + '-' + ((d + 1) * 10);
-          const bin = bins[key];
-          if (!bin || bin.count === 0) {
-            calibHtml += `<tr><td>${key}%</td><td>0</td><td>—</td><td>—</td></tr>`;
-            continue;
-          }
-          const mid = (d * 10 + 5); // midpoint of bin, eg 5, 15, 25...
-          const freq = bin.correct / bin.count * 100;
-          const diff = Math.abs(freq - mid);
-          totalEce += diff / 100 * (bin.count / finished.length);
-          eceCount++;
-          const color = diff <= 5 ? 'var(--accent-green)' : diff <= 15 ? 'var(--warning)' : 'var(--win-away)';
-          calibHtml += `<tr><td>${key}%</td><td>${bin.count}</td><td>${freq.toFixed(1)}%</td><td style="color:${color};font-weight:600;">${diff <= 1 ? '✓' : diff.toFixed(1) + '%'}</td></tr>`;
-        }
-        calibHtml += '</tbody></table></div>';
+      const text = `本次回测覆盖 <strong>${data.summary.total}</strong> 场比赛，涵盖 <strong>${data.summary.byYear.length}</strong> 届世界杯（${years.join('、')}年）。
+      在可用引擎中，<span class="highlight">${engineDisplayName(topE)}</span> 表现最优，整体准确率 <strong>${topAcc.toFixed(1)}%</strong>
+      ${topAcc > 40 ? '，相较随机猜测（33.3%）有显著提升' : '，仅略高于随机猜测基线'}。
+      ${engines.length > 1 ? `表现较弱的引擎为 ${engineDisplayName(worstE)}（${worstAcc.toFixed(1)}%）。` : ''}
+      从历年趋势来看，<span class="highlight">${bestYr}</span> 准确率最高（${(bestAccYr * 100).toFixed(1)}%），
+      ${worstYr} 准确率最低（${(worstAccYr * 100).toFixed(1)}%），<span class="warn">反映出模型在不同届次间稳定性存在差异</span>。
+      校准方面，ECE（期望校准误差）为 <strong>${(ece * 100).toFixed(2)}%</strong>：${calComment}。
+      错误模式上，爆冷误判占 <strong>${upsetPct}%</strong>，平局漏判占 <strong>${drawMissPct}%</strong>，胜负颠倒（主客颠倒）占 <strong>${flipPct}%</strong>
+      ${parseInt(flipPct) > 50 ? '——表明模型在强弱判断上的主要错误是方向混淆，而非实力低估。' : ''}
+      ${parseInt(upsetPct) > 40 ? '——大量爆冷误判表明模型在低概率事件上预测能力有限。' : ''}`;
 
-        const ece = totalEce; // Expected Calibration Error
-        calibHtml += `<p style="margin-top:12px;font-size:0.9rem;color:var(--text-muted);">预期校准误差 (ECE)：<strong>${(ece * 100).toFixed(1)}%</strong> — ${ece < 0.05 ? '校准良好，模型置信度与实际情况基本一致' : ece < 0.15 ? '校准中等，高置信度预测可能存在轻微偏差' : '校准较差，模型存在过自信或欠自信倾向'}</p>`;
-        calibHtml += '</div>';
+      document.getElementById('bt-narrative').innerHTML = `<strong>📝 分析摘要</strong><br>${text}`;
+    }
 
-        document.getElementById('backtest-calibration').innerHTML = calibHtml;
+    // ---- 3. 引擎对比条形图 ----
+    function renderCompareChart(data, engines) {
+      const o = data.overall;
+      const maxVal = 0.6;
+      const items = [];
 
-        // --- stage breakdown ---
-        document.getElementById('backtest-stage-breakdown').style.display = 'block';
-        const stageOrder = ['GROUP_STAGE', 'LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'THIRD_PLACE', 'FINAL'];
-        let stageHtml = '<div class="info-section"><h2>🏟️ 阶段细分</h2>';
-        stageHtml += '<div class="adv-table"><div class="adv-header"><span>阶段</span><span>比赛数</span><span>正确</span><span>准确率</span><span>Brier</span><span>对比随机</span></div>';
+      // 模型引擎
+      for (const eng of engines) {
+        if (!o[eng]) continue;
+        items.push({ label: engineDisplayName(eng), val: o[eng].accuracy || 0, cls: eng, type: 'engine' });
+      }
+      // 基线
+      items.push({ label: '随机基线', val: 0.333, cls: 'baseline', type: 'baseline' });
+      items.push({ label: 'Always Home', val: o[engines[0]]?.alwaysHomeBaseline?.accuracy || 0.435, cls: 'home', type: 'baseline' });
 
-        let stageTotal = 0, stageCorrectTotal = 0;
-        stageOrder.forEach(s => {
-          const sd = stageData[s];
-          if (!sd || sd.total === 0) return;
-          const acc = sd.correct / sd.total * 100;
-          const brier = sd.brierN > 0 ? (sd.brierSum / sd.brierN) : 0;
-          stageTotal += sd.total;
-          stageCorrectTotal += sd.correct;
-          const stageRand = sd.total > 0 ? (sd.total / 3) : 0; // expected random correct
-          const vsRand = sd.total > 0 ? ((sd.correct - stageRand) / sd.total * 100) : 0;
-
-          stageHtml += `
-            <div class="adv-row">
-              <span style="font-weight:600;">${STAGE_LABELS[s] || s}</span>
-              <span>${sd.total}</span>
-              <span>${sd.correct}</span>
-              <span style="font-weight:700;color:${acc >= 50 ? 'var(--accent-green)' : acc >= 33 ? 'var(--warning)' : 'var(--win-away)'};">${acc.toFixed(1)}%</span>
-              <span style="font-variant-numeric:tabular-nums;">${brier.toFixed(4)}</span>
-              <span style="color:${vsRand > 0 ? 'var(--accent-green)' : 'var(--win-away)'};">${vsRand > 0 ? '+' : ''}${vsRand.toFixed(1)}%</span>
+      let html = items.map(item => {
+        const pct = Math.min((item.val / maxVal) * 100, 100);
+        const pctLabel = (item.val * 100).toFixed(1) + '%';
+        return `<div class="bar-row">
+          <div class="bar-label">${item.label}</div>
+          <div class="bar-track">
+            <div class="bar-fill ${item.cls}" style="width:${pct}%">
+              <span class="bar-val">${pctLabel}</span>
             </div>
-          `;
-        });
-
-        // total row
-        const totalAcc = stageTotal > 0 ? (stageCorrectTotal / stageTotal * 100) : 0;
-        stageHtml += `
-          <div class="adv-row" style="background:rgba(255,255,255,0.03);font-weight:700;">
-            <span>合计</span>
-            <span>${stageTotal}</span>
-            <span>${stageCorrectTotal}</span>
-            <span style="color:${totalAcc >= 50 ? 'var(--accent-green)' : totalAcc >= 33 ? 'var(--warning)' : 'var(--win-away)'};">${totalAcc.toFixed(1)}%</span>
-            <span>${avgBrier.toFixed(4)}</span>
-            <span style="color:var(--accent-green);">+${(totalAcc - theoreticalRandom).toFixed(1)}%</span>
           </div>
-        `;
+        </div>`;
+      }).join('');
 
-        stageHtml += '</div></div>';
-        document.getElementById('backtest-stage-breakdown').innerHTML = stageHtml;
+      document.getElementById('bt-compare-chart').innerHTML = html;
+    }
 
-      })
-      .catch(err => {
-        document.getElementById('loading-spinner').innerHTML = '⚠️ 数据加载失败: ' + err.message;
-      });
-  })();
+    // ---- 4. 引擎卡片 ----
+    function renderEngineCards(data, engines) {
+      const cardsHtml = engines.map(eng => {
+        const o = data.overall[eng];
+        const cal = o.calibration || {};
+        const accBadge = o.accuracy > 0.4 ? 'good' : o.accuracy > 0.33 ? 'ok' : 'bad';
+        const eceBadge = cal.ece < 0.05 ? 'good' : cal.ece < 0.15 ? 'ok' : 'bad';
+        return `<div class="eng-card">
+          <h3>${eng === 'elo' ? '📈 Elo 模型' : eng === 'ml' ? '🤖 ML 模型 v1' : '🧠 Ensemble'}</h3>
+          <div class="stat-row"><span class="label">比赛数</span><span class="value">${o.n}</span></div>
+          <div class="stat-row"><span class="label">准确率</span><span class="value"><span class="badge ${accBadge}">${(o.accuracy * 100).toFixed(1)}%</span></span></div>
+          <div class="stat-row"><span class="label">Brier</span><span class="value">${o.brier.toFixed(4)}</span></div>
+          <div class="stat-row"><span class="label">LogLoss</span><span class="value">${o.logLoss.toFixed(4)}</span></div>
+          <div class="stat-row"><span class="label">ECE</span><span class="value"><span class="badge ${eceBadge}">${cal.ece != null ? (cal.ece * 100).toFixed(2) + '%' : '—'}</span></span></div>
+          <div class="stat-row"><span class="label">ROI (等额投注)</span><span class="value">${o.roi != null ? o.roi : '—'}</span></div>
+          <div class="stat-row"><span class="label">AUC (宏平均)</span><span class="value">${o.auc?.macroAvg != null ? (o.auc.macroAvg * 100).toFixed(1) + '%' : '—'}</span></div>
+          <div class="baseline">
+            <div class="stat-row" style="color:#666;"><span class="label">vs 随机基线</span><span class="value">33.3% / 0.667 Brier</span></div>
+            <div class="stat-row" style="color:#666;"><span class="label">Always Home</span><span class="value">${o.alwaysHomeBaseline ? (o.alwaysHomeBaseline.accuracy * 100).toFixed(1) + '%' : '—'}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('bt-engine-cards').innerHTML = cardsHtml;
+    }
+
+    // ---- 5. 年度趋势图 (SVG) ----
+    function renderYearlyChart(data, engines, years) {
+      const W = Math.max(years.length * 90, 600), H = 260;
+      const pad = { top: 30, right: 50, bottom: 40, left: 55 };
+      const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
+      const colors = { elo: '#4fc3f7', ml: '#ce93d8', ensemble: '#ffd54f' };
+
+      // 收集所有值
+      const allVals = [];
+      for (const eng of engines) {
+        for (const y of years) {
+          const v = data.yearly[eng]?.[y]?.accuracy;
+          if (v != null) allVals.push(v);
+        }
+      }
+      allVals.push(0, 0.5);
+      const minVal = Math.min(...allVals), maxVal = Math.max(...allVals);
+      const margin = (maxVal - minVal) * 0.15 || 0.1;
+      const yMin = Math.max(0, minVal - margin), yMax = Math.min(1, maxVal + margin);
+
+      function yPos(val) { return pad.top + ch - ((val - yMin) / (yMax - yMin)) * ch; }
+      function xPos(i) { return pad.left + (i / (years.length - 1)) * cw; }
+      const barW = Math.min(40, (cw / years.length - 10));
+
+      // 构建SVG
+      let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d20;border-radius:6px;">`;
+
+      // 网格线
+      for (let pct = 0.2; pct <= 0.6; pct += 0.1) {
+        const yy = yPos(pct);
+        svg += `<line x1="${pad.left}" y1="${yy}" x2="${W - pad.right}" y2="${yy}" stroke="#252525" stroke-width="1"/>`;
+        svg += `<text x="${pad.left - 8}" y="${yy + 4}" fill="#555" font-size="10" text-anchor="end">${(pct*100).toFixed(0)}%</text>`;
+      }
+
+      // 随机基线
+      const baseY = yPos(0.333);
+      svg += `<line x1="${pad.left}" y1="${baseY}" x2="${W - pad.right}" y2="${baseY}" stroke="#666" stroke-width="1" stroke-dasharray="6,4" opacity="0.6"/>`;
+      svg += `<text x="${W - pad.right + 4}" y="${baseY + 4}" fill="#666" font-size="10">随机 33.3%</text>`;
+
+      // 引擎折线
+      const engineLabels = [];
+      for (const eng of engines) {
+        const pts = [];
+        for (let i = 0; i < years.length; i++) {
+          const v = data.yearly[eng]?.[years[i]]?.accuracy;
+          if (v != null) pts.push(`${xPos(i)},${yPos(v)}`);
+        }
+        if (pts.length < 2) continue;
+        const lineD = 'M' + pts.join(' L');
+        const color = colors[eng] || '#888';
+        svg += `<path d="${lineD}" fill="none" stroke="${color}" stroke-width="2.5" opacity="0.8"/>`;
+        // 数据点
+        for (let i = 0; i < years.length; i++) {
+          const v = data.yearly[eng]?.[years[i]]?.accuracy;
+          if (v != null) {
+            const cx = xPos(i), cy = yPos(v);
+            svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="#111" stroke-width="1.5"/>`;
+            svg += `<text x="${cx}" y="${cy - 8}" fill="${color}" font-size="10" text-anchor="middle">${(v*100).toFixed(1)}%</text>`;
+          }
+        }
+        engineLabels.push({ name: engineDisplayName(eng), color });
+      }
+
+      // 图例
+      let lx = pad.left;
+      svg += `<text x="${lx}" y="16" fill="#888" font-size="11">引擎:</text>`;
+      lx += 45;
+      for (const el of engineLabels) {
+        svg += `<rect x="${lx}" y="10" width="12" height="10" fill="${el.color}" rx="2"/>`;
+        svg += `<text x="${lx + 16}" y="19" fill="#aaa" font-size="11">${el.name}</text>`;
+        lx += 60;
+      }
+
+      // X轴标签
+      for (let i = 0; i < years.length; i++) {
+        const xx = xPos(i);
+        svg += `<text x="${xx}" y="${H - 12}" fill="#666" font-size="11" text-anchor="middle">${years[i]}</text>`;
+        // 比赛场次
+        const cnt = data.summary.byYear.find(y => y.year === years[i])?.count || 0;
+        svg += `<text x="${xx}" y="${H - 26}" fill="#444" font-size="9" text-anchor="middle">${cnt}场</text>`;
+      }
+
+      // y轴标题
+      svg += `<text x="14" y="${pad.top + ch/2}" fill="#555" font-size="11" text-anchor="middle" transform="rotate(-90,14,${pad.top + ch/2})">准确率</text>`;
+      svg += `</svg>`;
+      document.getElementById('bt-yearly-chart').innerHTML = svg;
+    }
+
+    // ---- 6. 年度表格 ----
+    function renderYearlyTable(data, engines, years) {
+      let html = `<table class="year-table"><thead><tr><th>年份</th><th>场次</th>`;
+      for (const eng of engines) {
+        html += `<th>${engineDisplayName(eng)} 准确率</th><th>Brier</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+      for (const y of years) {
+        const cnt = data.summary.byYear.find(b => b.year === y)?.count || 0;
+        html += `<tr><td><strong>${y}</strong></td><td>${cnt}</td>`;
+        for (const eng of engines) {
+          const yd = data.yearly[eng]?.[y];
+          const acc = yd ? (yd.accuracy * 100).toFixed(1) + '%' : '—';
+          const brier = yd ? yd.brier.toFixed(3) : '—';
+          const accCls = yd?.accuracy > 0.4 ? 'style="color:#81c784"' : yd?.accuracy > 0.33 ? 'style="color:#ffcc80"' : 'style="color:#ef9a9a"';
+          html += `<td ${accCls}><strong>${acc}</strong></td><td style="color:#888">${brier}</td>`;
+        }
+        html += `</tr>`;
+      }
+      html += `</tbody></table>`;
+      document.getElementById('bt-yearly-table').innerHTML = html;
+    }
+
+    // ---- 7. 校准可视化 ----
+    function renderCalibration(data, engines) {
+      // 为每个引擎生成校准柱状图
+      let vizHtml = '';
+      let tblHtml = '';
+      for (const eng of engines) {
+        const cal = data.overall[eng]?.calibration;
+        if (!cal || !cal.bins) continue;
+        const bins = cal.bins;
+        const maxN = Math.max(...bins.map(b => b.n), 1);
+        const maxPct = 1;
+
+        vizHtml += `<div style="margin-bottom:16px;"><span style="color:#4fc3f7;font-size:13px;font-weight:600;">${engineDisplayName(eng)}</span> · ECE: ${(cal.ece * 100).toFixed(2)}% · <span class="badge ${cal.ece < 0.05 ? 'good' : cal.ece < 0.15 ? 'ok' : 'bad'}">${cal.eceLevel}</span></div>`;
+
+        // 校准柱状图
+        for (const b of bins) {
+          if (b.n === 0) continue;
+          const idealPct = b.avgConfidence * 100;
+          const actualPct = b.actualFreq * 100;
+          const isOver = actualPct > idealPct;
+          const barColor = Math.abs(actualPct - idealPct) < 5 ? '#81c784' : Math.abs(actualPct - idealPct) < 12 ? '#ffcc80' : '#ef9a9a';
+
+          vizHtml += `<div class="cal-bar-row">
+            <div class="cal-bar-label">${b.label}</div>
+            <div class="cal-bar-group">
+              <div class="ideal-bar" style="left:0;width:${idealPct}%;background:#444;"></div>
+              <div class="actual-bar" style="left:0;width:${actualPct}%;background:${barColor};"></div>
+            </div>
+            <span style="width:50px;text-align:right;font-size:10px;color:#888;">${b.n}场</span>
+          </div>`;
+        }
+
+        // 校准表格
+        tblHtml += `<h4 style="color:#aaa;margin:12px 0 4px;">${engineDisplayName(eng)} 校准明细</h4>`;
+        tblHtml += `<table class="cal-table"><thead><tr><th>置信区间</th><th>样本数</th><th>实际频率</th><th>平均置信</th><th>差距</th></tr></thead><tbody>`;
+        for (const b of bins) {
+          tblHtml += `<tr><td>${b.label}</td><td>${b.n}</td><td>${(b.actualFreq * 100).toFixed(1)}%</td><td>${(b.avgConfidence * 100).toFixed(1)}%</td><td>${(b.gap * 100).toFixed(1)}%</td></tr>`;
+        }
+        tblHtml += `</tbody></table>`;
+      }
+      document.getElementById('bt-cal-viz').innerHTML = vizHtml || '<p style="color:#666;">暂无校准数据</p>';
+      document.getElementById('bt-cal-content').innerHTML = tblHtml || '';
+    }
+
+    // ---- 8. 错误分析可视化 ----
+    function renderErrorAnalysis(data, engines) {
+      let vizHtml = '';
+      let errHtml = '';
+
+      for (const eng of engines) {
+        const ea = data.errorAnalysis[eng];
+        if (!ea || !ea.totalErrors) continue;
+        const n = data.overall[eng]?.n || 0;
+        const upset = ea.patterns?.upset || 0;
+        const drawMiss = ea.patterns?.drawMiss || 0;
+        const flip = ea.patterns?.homeAwayMiss || 0;
+        const totalErrors = ea.totalErrors;
+        const maxCat = Math.max(upset, drawMiss, flip, 1);
+
+        vizHtml += `<div style="margin-bottom:12px;"><span style="color:#ff8a80;font-size:13px;font-weight:600;">${engineDisplayName(eng)}</span> · ${totalErrors}/${n} 错误 (${(ea.errorRate * 100).toFixed(1)}%) · 平均错误置信度: ${(ea.avgConfOnError * 100).toFixed(1)}%</div>`;
+        vizHtml += `<div class="error-viz">`;
+        vizHtml += `<div class="err-cat"><div class="num upset">${upset}</div><div class="lbl">爆冷误判</div><div class="err-bar"><div class="fill upset" style="width:${upset/maxCat*100}%"></div></div></div>`;
+        vizHtml += `<div class="err-cat"><div class="num draw">${drawMiss}</div><div class="lbl">平局漏判</div><div class="err-bar"><div class="fill draw-miss" style="width:${drawMiss/maxCat*100}%"></div></div></div>`;
+        vizHtml += `<div class="err-cat"><div class="num flip">${flip}</div><div class="lbl">胜负颠倒</div><div class="err-bar"><div class="fill flip" style="width:${flip/maxCat*100}%"></div></div></div>`;
+        vizHtml += `</div>`;
+
+        // 错误列表
+        errHtml += `<div class="error-box"><strong style="color:#ff8a80;">${engineDisplayName(eng)} 详细错误列表 (前10条)</strong><div style="max-height:200px;overflow-y:auto;margin-top:6px;">`;
+        if (ea.errorList && ea.errorList.length > 0) {
+          for (const e of ea.errorList.slice(0, 10)) {
+            errHtml += `<div class="err-row"><span>${e.match} (${e.date})</span><span>预测: ${outcomeLabel(e.predicted)} → 实际: ${outcomeLabel(e.actual)} <span style="color:${e.confidence > 0.7 ? '#ef5350' : '#888'};">[${(e.confidence * 100).toFixed(0)}%]</span></span></div>`;
+          }
+        }
+        errHtml += `</div></div>`;
+      }
+      document.getElementById('bt-error-viz').innerHTML = vizHtml || '<p style="color:#666;">暂无错误分析数据</p>';
+      document.getElementById('bt-error-content').innerHTML = errHtml || '<p style="color:#666;">暂无详细错误数据</p>';
+    }
+
+    // ===== 报告存档 =====
+    async function loadReports() {
+      const container = document.getElementById('report-list-content');
+      // 如果已有报告列表且非空，不重新加载
+      if (window._reportList && container.querySelector('.report-item')) return;
+      try {
+        const res = await fetch('/api/ml/backtest/reports');
+        const data = await res.json();
+        const reports = data.reports || [];
+
+        if (reports.length === 0) {
+          container.innerHTML = '<p style="color:#888;text-align:center;padding:30px 0;">暂无已生成的报告。请先切到「历史回测」Tab 运行一次回测。</p>';
+          return;
+        }
+
+        window._reportList = reports;
+        // 从文件名解析日期和时间
+        function parseReportInfo(f) {
+          const base = f.filename.replace(/\.json$/, '');
+          const parts = base.split('_');
+          let dateStr = '', type = '完整报告';
+          if (base.startsWith('backtest_summary')) { type = '摘要报告'; dateStr = parts.slice(2).join('_'); }
+          else if (base.startsWith('backtest_detail')) { type = '明细报告'; dateStr = parts.slice(2).join('_'); }
+          else { type = '完整报告'; dateStr = parts.slice(1).join('_'); }
+          // 转换 T15-40-28 → 15:40:28
+          const timeStr = dateStr.replace(/T/, ' ').replace(/-/g, ':').replace(/(\d+):(\d+):(\d+):(\d+)/, '$1-$2 $3:$4:$5');
+          return { type, dateStr: timeStr.replace(/-/g, '/').replace(/:/g, ':') };
+        }
+
+        container.innerHTML = '<div class="report-list">' + reports.map(r => {
+          const info = parseReportInfo(r);
+          return `<div class="report-item" onclick="loadReport('${r.filename}')">
+            <span>${info.type}: <strong>${info.dateStr}</strong></span>
+            <span style="color:#888;font-size:12px;">${(r.size / 1024).toFixed(1)} KB · ${new Date(r.generatedAt).toLocaleDateString('zh-CN')} <span class="btn btn-sm btn-ai">查看渲染</span></span>
+          </div>`;
+        }).join('') + '</div>';
+      } catch(e) {
+        container.innerHTML = `<p style="color:#ef5350;text-align:center;padding:20px;">加载失败: ${e.message}</p>`;
+      }
+    }
+
+    // 报告可视化渲染
+    async function loadReport(filename) {
+      const container = document.getElementById('report-list-content');
+      const viewer = document.getElementById('report-viewer');
+      container.style.display = 'none';
+      viewer.style.display = 'block';
+      // 清空之前的内容
+      ['rp-summary-callout','rp-narrative','rp-compare-chart','rp-engine-cards',
+       'rp-yearly-chart','rp-yearly-table','rp-cal-viz','rp-cal-content',
+       'rp-error-viz','rp-error-content'].forEach(id => document.getElementById(id).innerHTML = '');
+      document.getElementById('report-json').textContent = '加载中...';
+
+      try {
+        const res = await fetch('/api/ml/backtest/report/' + encodeURIComponent(filename));
+        const data = await res.json();
+
+        // 使用同样的渲染函数绘制报告 (加 rp- 前缀)
+        const engines = ['elo', 'ml', 'ensemble'].filter(e => data.overall?.[e]?.available);
+        const years = data.summary?.byYear?.map(y => y.year).sort((a,b)=>a-b) || [];
+
+        // 复用渲染函数，但输出到 rp- 开头的容器
+        function rp(id, html) { document.getElementById('rp-' + id).innerHTML = html; }
+        function rpS(id) { return document.getElementById('rp-' + id); }
+
+        // 核心发现
+        renderSummaryCalloutTo(data, engines, 'rp-summary-callout');
+        // 叙述
+        renderNarrativeTo(data, engines, years, 'rp-narrative');
+        // 对比图
+        renderCompareChartTo(data, engines, 'rp-compare-chart');
+        // 引擎卡片
+        renderEngineCardsTo(data, engines, 'rp-engine-cards');
+        // 年度趋势
+        renderYearlyChartTo(data, engines, years, 'rp-yearly-chart');
+        renderYearlyTableTo(data, engines, years, 'rp-yearly-table');
+        // 校准
+        renderCalibrationTo(data, engines, 'rp-cal-viz', 'rp-cal-content');
+        // 错误
+        renderErrorAnalysisTo(data, engines, 'rp-error-viz', 'rp-error-content');
+
+        // 原始JSON
+        const summaryLines = [];
+        summaryLines.push(`报告生成时间: ${data.generatedAt}`);
+        summaryLines.push(`总比赛数: ${data.summary?.total || 0}`);
+        if (data.summary?.byYear) {
+          summaryLines.push(`覆盖届次: ${data.summary.byYear.map(y => `${y.year}年(${y.count}场)`).join('、')}`);
+        }
+        summaryLines.push('');
+        if (data.overall) {
+          for (const [eng, o] of Object.entries(data.overall)) {
+            if (!o.available) continue;
+            summaryLines.push(`--- ${eng.toUpperCase()} ---`);
+            summaryLines.push(`  准确率: ${(o.accuracy * 100).toFixed(1)}%`);
+            summaryLines.push(`  Brier: ${o.brier.toFixed(4)}`);
+            summaryLines.push(`  LogLoss: ${o.logLoss.toFixed(4)}`);
+            summaryLines.push(`  ECE: ${o.calibration?.ece != null ? (o.calibration.ece * 100).toFixed(2) + '%' : '—'}`);
+          }
+        }
+        const readable = summaryLines.join('\n') + '\n\n=== 原始 JSON ===\n\n' + JSON.stringify(data, null, 2);
+        document.getElementById('report-json').textContent = readable;
+      } catch(e) {
+        document.getElementById('report-json').textContent = '加载失败: ' + e.message;
+      }
+    }
+
+    // 带目标容器的渲染函数集 (复用给报告)
+    function renderSummaryCalloutTo(data, engines, targetId) {
+      const o = data.overall;
+      const total = data.summary?.total || 0;
+      const topEngine = engines.reduce((best, e) => (o[e]?.accuracy || 0) > (o[best]?.accuracy || 0) ? e : best, engines[0]);
+      const topAcc = (o[topEngine]?.accuracy || 0) * 100;
+      const randomGap = (o[topEngine]?.accuracy || 0) - 0.333;
+      const ece = o[topEngine]?.calibration?.ece || 0;
+      const eceLabel = ece < 0.05 ? '良好' : ece < 0.15 ? '中等' : '较差';
+      let html = `<h3>📊 核心发现</h3><div class="callout-row">`;
+      html += `<div class="callout-item"><div class="num ${topAcc > 40 ? 'good' : 'ok'}">${topAcc.toFixed(1)}%</div><div class="lbl">最佳引擎准确率 (${engineDisplayName(topEngine)})</div></div>`;
+      html += `<div class="callout-item"><div class="num ${randomGap > 0 ? 'good' : 'bad'}">${randomGap > 0 ? '+' : ''}${(randomGap * 100).toFixed(1)}%</div><div class="lbl">vs 随机基线 (33.3%)</div></div>`;
+      html += `<div class="callout-item"><div class="num ${ece < 0.05 ? 'good' : ece < 0.15 ? 'ok' : 'bad'}">${(ece * 100).toFixed(2)}%</div><div class="lbl">ECE ${eceLabel}</div></div>`;
+      html += `<div class="callout-item"><div class="num">${total}</div><div class="lbl">覆盖比赛 · ${(data.summary?.byYear||[]).length}届世界杯</div></div>`;
+      html += `</div>`;
+      document.getElementById(targetId).innerHTML = html;
+    }
+    function renderNarrativeTo(data, engines, years, targetId) {
+      const o = data.overall;
+      const topE = engines.reduce((best, e) => (o[e]?.accuracy || 0) > (o[best]?.accuracy || 0) ? e : best, engines[0]);
+      const topAcc = (o[topE]?.accuracy || 0) * 100;
+      let bestYr = '', worstYr = '';
+      let bestAccYr = 0, worstAccYr = 100;
+      for (const e of engines) {
+        for (const y of years) {
+          const yd = data.yearly[e]?.[y];
+          if (!yd) continue;
+          if (yd.accuracy > bestAccYr) { bestAccYr = yd.accuracy; bestYr = `${y}(${engineDisplayName(e)})`; }
+          if (yd.accuracy < worstAccYr) { worstAccYr = yd.accuracy; worstYr = `${y}(${engineDisplayName(e)})`; }
+        }
+      }
+      const ece = o[topE]?.calibration?.ece || 0;
+      const calComment = ece < 0.03 ? '校准非常精准' : ece < 0.08 ? '校准处于合理范围' : '校准存在偏差';
+      const ea = data.errorAnalysis?.[topE];
+      const upsetPct = ea?.patterns?.upset ? (ea.patterns.upset / ea.totalErrors * 100).toFixed(0) : 0;
+      const drawMissPct = ea?.patterns?.drawMiss ? (ea.patterns.drawMiss / ea.totalErrors * 100).toFixed(0) : 0;
+      const flipPct = ea?.patterns?.homeAwayMiss ? (ea.patterns.homeAwayMiss / ea.totalErrors * 100).toFixed(0) : 0;
+      const text = `本次回测覆盖 <strong>${data.summary?.total || 0}</strong> 场比赛，涵盖 <strong>${(data.summary?.byYear||[]).length}</strong> 届世界杯（${years.join('、')}年）。
+      最佳引擎 <span class="highlight">${engineDisplayName(topE)}</span> 准确率 <strong>${topAcc.toFixed(1)}%</strong>${topAcc > 40 ? '，明显优于随机猜测（33.3%）' : '，略高于随机猜测'}。
+      历年最高准确率为 <span class="highlight">${bestYr}</span>（${(bestAccYr * 100).toFixed(1)}%），最低为 ${worstYr}（${(worstAccYr * 100).toFixed(1)}%）。
+      ECE：<strong>${(ece * 100).toFixed(2)}%</strong>（${calComment}）。
+      错误分布：爆冷误判 ${upsetPct}%、平局漏判 ${drawMissPct}%、胜负颠倒 ${flipPct}%。`;
+      document.getElementById(targetId).innerHTML = `<strong>📝 分析摘要</strong><br>${text}`;
+    }
+    function renderCompareChartTo(data, engines, targetId) {
+      const o = data.overall;
+      const maxVal = 0.6;
+      const items = [];
+      for (const eng of engines) {
+        if (!o[eng]) continue;
+        items.push({ label: engineDisplayName(eng), val: o[eng].accuracy || 0, cls: eng });
+      }
+      items.push({ label: '随机基线', val: 0.333, cls: 'baseline' });
+      items.push({ label: 'Always Home', val: o[engines[0]]?.alwaysHomeBaseline?.accuracy || 0.435, cls: 'home' });
+      const html = items.map(item => {
+        const pct = Math.min((item.val / maxVal) * 100, 100);
+        return `<div class="bar-row"><div class="bar-label">${item.label}</div><div class="bar-track"><div class="bar-fill ${item.cls}" style="width:${pct}%"><span class="bar-val">${(item.val*100).toFixed(1)}%</span></div></div></div>`;
+      }).join('');
+      document.getElementById(targetId).innerHTML = html;
+    }
+    function renderEngineCardsTo(data, engines, targetId) {
+      const html = engines.map(eng => {
+        const o = data.overall[eng];
+        const cal = o.calibration || {};
+        const accBadge = o.accuracy > 0.4 ? 'good' : o.accuracy > 0.33 ? 'ok' : 'bad';
+        const eceBadge = cal.ece < 0.05 ? 'good' : cal.ece < 0.15 ? 'ok' : 'bad';
+        return `<div class="eng-card">
+          <h3>${eng === 'elo' ? '📈 Elo 模型' : eng === 'ml' ? '🤖 ML 模型 v1' : '🧠 Ensemble'}</h3>
+          <div class="stat-row"><span class="label">比赛数</span><span class="value">${o.n}</span></div>
+          <div class="stat-row"><span class="label">准确率</span><span class="value"><span class="badge ${accBadge}">${(o.accuracy*100).toFixed(1)}%</span></span></div>
+          <div class="stat-row"><span class="label">Brier</span><span class="value">${o.brier.toFixed(4)}</span></div>
+          <div class="stat-row"><span class="label">LogLoss</span><span class="value">${o.logLoss.toFixed(4)}</span></div>
+          <div class="stat-row"><span class="label">ECE</span><span class="value"><span class="badge ${eceBadge}">${cal.ece != null ? (cal.ece*100).toFixed(2)+'%' : '—'}</span></span></div>
+          <div class="stat-row"><span class="label">ROI</span><span class="value">${o.roi != null ? o.roi : '—'}</span></div>
+          <div class="stat-row"><span class="label">AUC</span><span class="value">${o.auc?.macroAvg != null ? (o.auc.macroAvg*100).toFixed(1)+'%' : '—'}</span></div>
+          <div class="baseline">
+            <div class="stat-row" style="color:#666;"><span class="label">vs 随机基线</span><span class="value">33.3%</span></div>
+            <div class="stat-row" style="color:#666;"><span class="label">Always Home</span><span class="value">${o.alwaysHomeBaseline ? (o.alwaysHomeBaseline.accuracy*100).toFixed(1)+'%' : '—'}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById(targetId).innerHTML = html;
+    }
+    function renderYearlyChartTo(data, engines, years, targetId) {
+      if (!years || years.length === 0) { document.getElementById(targetId).innerHTML = '<p style="color:#666;text-align:center;padding:20px;">无年份数据</p>'; return; }
+      const W = Math.max(years.length * 90, 600), H = 260;
+      const pad = { top: 30, right: 50, bottom: 40, left: 55 };
+      const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
+      const colors = { elo: '#4fc3f7', ml: '#ce93d8', ensemble: '#ffd54f' };
+      const allVals = [];
+      for (const eng of engines) {
+        for (const y of years) { const v = data.yearly[eng]?.[y]?.accuracy; if (v != null) allVals.push(v); }
+      }
+      allVals.push(0, 0.5);
+      const minVal = Math.min(...allVals), maxVal = Math.max(...allVals);
+      const margin = (maxVal - minVal) * 0.15 || 0.1;
+      const yMin = Math.max(0, minVal - margin), yMax = Math.min(1, maxVal + margin);
+      function yPos(val) { return pad.top + ch - ((val - yMin) / (yMax - yMin)) * ch; }
+      function xPos(i) { return pad.left + (i / (years.length - 1)) * cw; }
+      let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="background:#0d0d20;border-radius:6px;">`;
+      for (let pct = 0.2; pct <= 0.6; pct += 0.1) {
+        const yy = yPos(pct);
+        svg += `<line x1="${pad.left}" y1="${yy}" x2="${W - pad.right}" y2="${yy}" stroke="#252525" stroke-width="1"/>`;
+        svg += `<text x="${pad.left - 8}" y="${yy + 4}" fill="#555" font-size="10" text-anchor="end">${(pct*100).toFixed(0)}%</text>`;
+      }
+      const baseY = yPos(0.333);
+      svg += `<line x1="${pad.left}" y1="${baseY}" x2="${W - pad.right}" y2="${baseY}" stroke="#666" stroke-width="1" stroke-dasharray="6,4" opacity="0.6"/>`;
+      svg += `<text x="${W - pad.right + 4}" y="${baseY + 4}" fill="#666" font-size="10">随机 33.3%</text>`;
+      const engineLabels = [];
+      for (const eng of engines) {
+        const pts = [];
+        for (let i = 0; i < years.length; i++) {
+          const v = data.yearly[eng]?.[years[i]]?.accuracy;
+          if (v != null) pts.push(`${xPos(i)},${yPos(v)}`);
+        }
+        if (pts.length < 2) continue;
+        const color = colors[eng] || '#888';
+        svg += `<path d="M${pts.join(' L')}" fill="none" stroke="${color}" stroke-width="2.5" opacity="0.8"/>`;
+        for (let i = 0; i < years.length; i++) {
+          const v = data.yearly[eng]?.[years[i]]?.accuracy;
+          if (v != null) {
+            const cx = xPos(i), cy = yPos(v);
+            svg += `<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="#111" stroke-width="1.5"/>`;
+            svg += `<text x="${cx}" y="${cy - 8}" fill="${color}" font-size="10" text-anchor="middle">${(v*100).toFixed(1)}%</text>`;
+          }
+        }
+        engineLabels.push({ name: engineDisplayName(eng), color });
+      }
+      let lx = pad.left;
+      svg += `<text x="${lx}" y="16" fill="#888" font-size="11">引擎:</text>`; lx += 45;
+      for (const el of engineLabels) {
+        svg += `<rect x="${lx}" y="10" width="12" height="10" fill="${el.color}" rx="2"/>`;
+        svg += `<text x="${lx + 16}" y="19" fill="#aaa" font-size="11">${el.name}</text>`; lx += 60;
+      }
+      for (let i = 0; i < years.length; i++) {
+        const xx = xPos(i);
+        svg += `<text x="${xx}" y="${H - 12}" fill="#666" font-size="11" text-anchor="middle">${years[i]}</text>`;
+        const cnt = (data.summary?.byYear?.find(y => y.year === years[i])?.count) || 0;
+        svg += `<text x="${xx}" y="${H - 26}" fill="#444" font-size="9" text-anchor="middle">${cnt}场</text>`;
+      }
+      svg += `<text x="14" y="${pad.top + ch/2}" fill="#555" font-size="11" text-anchor="middle" transform="rotate(-90,14,${pad.top + ch/2})">准确率</text>`;
+      svg += `</svg>`;
+      document.getElementById(targetId).innerHTML = svg;
+    }
+    function renderYearlyTableTo(data, engines, years, targetId) {
+      if (!years || years.length === 0) { document.getElementById(targetId).innerHTML = ''; return; }
+      let html = `<table class="year-table"><thead><tr><th>年份</th><th>场次</th>`;
+      for (const eng of engines) { html += `<th>${engineDisplayName(eng)} 准确率</th><th>Brier</th>`; }
+      html += `</tr></thead><tbody>`;
+      for (const y of years) {
+        const cnt = (data.summary?.byYear?.find(b => b.year === y)?.count) || 0;
+        html += `<tr><td><strong>${y}</strong></td><td>${cnt}</td>`;
+        for (const eng of engines) {
+          const yd = data.yearly[eng]?.[y];
+          const acc = yd ? (yd.accuracy*100).toFixed(1)+'%' : '—';
+          const brier = yd ? yd.brier.toFixed(3) : '—';
+          const cls = yd?.accuracy > 0.4 ? 'style="color:#81c784"' : yd?.accuracy > 0.33 ? 'style="color:#ffcc80"' : 'style="color:#ef9a9a"';
+          html += `<td ${cls}><strong>${acc}</strong></td><td style="color:#888">${brier}</td>`;
+        }
+        html += `</tr>`;
+      }
+      html += `</tbody></table>`;
+      document.getElementById(targetId).innerHTML = html;
+    }
+    function renderCalibrationTo(data, engines, vizId, tblId) {
+      let vizHtml = '', tblHtml = '';
+      for (const eng of engines) {
+        const cal = data.overall[eng]?.calibration;
+        if (!cal || !cal.bins) continue;
+        vizHtml += `<div style="margin-bottom:12px;"><span style="color:#4fc3f7;font-size:13px;font-weight:600;">${engineDisplayName(eng)}</span> · ECE: ${(cal.ece*100).toFixed(2)}% · <span class="badge ${cal.ece<0.05?'good':cal.ece<0.15?'ok':'bad'}">${cal.eceLevel}</span></div>`;
+        for (const b of cal.bins) {
+          if (b.n === 0) continue;
+          const idealPct = b.avgConfidence * 100;
+          const actualPct = b.actualFreq * 100;
+          const barColor = Math.abs(actualPct - idealPct) < 5 ? '#81c784' : Math.abs(actualPct - idealPct) < 12 ? '#ffcc80' : '#ef9a9a';
+          vizHtml += `<div class="cal-bar-row"><div class="cal-bar-label">${b.label}</div><div class="cal-bar-group"><div class="ideal-bar" style="width:${idealPct}%;background:#444;"></div><div class="actual-bar" style="width:${actualPct}%;background:${barColor};"></div></div><span style="width:50px;text-align:right;font-size:10px;color:#888;">${b.n}场</span></div>`;
+        }
+        tblHtml += `<h4 style="color:#aaa;margin:8px 0 4px;">${engineDisplayName(eng)} 校准明细</h4><table class="cal-table"><thead><tr><th>置信区间</th><th>样本数</th><th>实际频率</th><th>平均置信</th><th>差距</th></tr></thead><tbody>`;
+        for (const b of cal.bins) {
+          tblHtml += `<tr><td>${b.label}</td><td>${b.n}</td><td>${(b.actualFreq*100).toFixed(1)}%</td><td>${(b.avgConfidence*100).toFixed(1)}%</td><td>${(b.gap*100).toFixed(1)}%</td></tr>`;
+        }
+        tblHtml += `</tbody></table>`;
+      }
+      document.getElementById(vizId).innerHTML = vizHtml || '<p style="color:#666;">暂无校准数据</p>';
+      document.getElementById(tblId).innerHTML = tblHtml || '';
+    }
+    function renderErrorAnalysisTo(data, engines, vizId, errId) {
+      let vizHtml = '', errHtml = '';
+      for (const eng of engines) {
+        const ea = data.errorAnalysis[eng];
+        if (!ea || !ea.totalErrors) continue;
+        const n = data.overall[eng]?.n || 0;
+        const upset = ea.patterns?.upset || 0, drawMiss = ea.patterns?.drawMiss || 0, flip = ea.patterns?.homeAwayMiss || 0;
+        const maxCat = Math.max(upset, drawMiss, flip, 1);
+        vizHtml += `<div style="margin-bottom:8px;"><span style="color:#ff8a80;font-weight:600;">${engineDisplayName(eng)}</span> · ${ea.totalErrors}/${n} 错误 (${(ea.errorRate*100).toFixed(1)}%)</div>`;
+        vizHtml += `<div class="error-viz"><div class="err-cat"><div class="num upset">${upset}</div><div class="lbl">爆冷误判</div><div class="err-bar"><div class="fill upset" style="width:${upset/maxCat*100}%"></div></div></div>`;
+        vizHtml += `<div class="err-cat"><div class="num draw">${drawMiss}</div><div class="lbl">平局漏判</div><div class="err-bar"><div class="fill draw-miss" style="width:${drawMiss/maxCat*100}%"></div></div></div>`;
+        vizHtml += `<div class="err-cat"><div class="num flip">${flip}</div><div class="lbl">胜负颠倒</div><div class="err-bar"><div class="fill flip" style="width:${flip/maxCat*100}%"></div></div></div></div>`;
+        errHtml += `<div class="error-box"><strong style="color:#ff8a80;">${engineDisplayName(eng)} 错误列表 (前10条)</strong><div style="max-height:200px;overflow-y:auto;margin-top:6px;">`;
+        if (ea.errorList && ea.errorList.length > 0) {
+          for (const e of ea.errorList.slice(0, 10)) {
+            errHtml += `<div class="err-row"><span>${e.match} (${e.date})</span><span>预测: ${outcomeLabel(e.predicted)} → 实际: ${outcomeLabel(e.actual)} <span style="color:${e.confidence>0.7?'#ef5350':'#888'};">[${(e.confidence*100).toFixed(0)}%]</span></span></div>`;
+          }
+        }
+        errHtml += `</div></div>`;
+      }
+      document.getElementById(vizId).innerHTML = vizHtml || '<p style="color:#666;">暂无错误分析数据</p>';
+      document.getElementById(errId).innerHTML = errHtml || '<p style="color:#666;">暂无详细错误数据</p>';
+    }
+
+    function closeReport() {
+      document.getElementById('report-list-content').style.display = 'block';
+      document.getElementById('report-viewer').style.display = 'none';
+    }
   </script>
-
-  <style>
-  .backtest-summary {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .stat-card {
-    flex: 1;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 16px;
-    text-align: center;
-  }
-  .stat-label {
-    display: block;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-  }
-  .stat-value {
-    display: block;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .backtest-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .metric-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 16px;
-    text-align: center;
-  }
-  .metric-primary {
-    border-color: var(--accent);
-    background: rgba(88,166,255,0.06);
-  }
-  .metric-baseline {
-    border-color: rgba(139,148,158,0.4);
-    background: rgba(139,148,158,0.06);
-  }
-  .metric-label {
-    display: block;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .metric-value {
-    display: block;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    font-variant-numeric: tabular-nums;
-  }
-  .metric-value.good { color: var(--accent-green); }
-  .metric-value.ok { color: var(--warning); }
-  .metric-value.bad { color: var(--win-away); }
-  .metric-sub {
-    display: block;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    margin-top: 6px;
-  }
-
-  .calibration-table-wrap {
-    margin-top: 16px;
-    overflow-x: auto;
-  }
-  </style>
 </body>
 </html>

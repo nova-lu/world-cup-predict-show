@@ -20,22 +20,22 @@ const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
 const groupConfig = GROUP_LETTERS.map(g => ({ group: g, label: g + '组' }));
 
 const round32Slots = [
-  { id: 'r32-1', label: 'R32·1', home: '1A', away: '3RD:E', slot: 'W73', stage: 'round32' },
+  { id: 'r32-1', label: 'R32·1', home: '1A', away: '3RD_RANK:1', slot: 'W73', stage: 'round32' },
   { id: 'r32-2', label: 'R32·2', home: '2D', away: '2G', slot: 'W74', stage: 'round32' },
   { id: 'r32-3', label: 'R32·3', home: '1C', away: '2F', slot: 'W75', stage: 'round32' },
   { id: 'r32-4', label: 'R32·4', home: '2E', away: '2I', slot: 'W76', stage: 'round32' },
-  { id: 'r32-5', label: 'R32·5', home: '1I', away: '3RD:F', slot: 'W77', stage: 'round32' },
+  { id: 'r32-5', label: 'R32·5', home: '1I', away: '3RD_RANK:2', slot: 'W77', stage: 'round32' },
   { id: 'r32-6', label: 'R32·6', home: '2A', away: '2B', slot: 'W78', stage: 'round32' },
   { id: 'r32-7', label: 'R32·7', home: '1H', away: '2J', slot: 'W79', stage: 'round32' },
   { id: 'r32-8', label: 'R32·8', home: '2K', away: '2L', slot: 'W80', stage: 'round32' },
-  { id: 'r32-9', label: 'R32·9', home: '1B', away: '3RD:J', slot: 'W81', stage: 'round32' },
-  { id: 'r32-10', label: 'R32·10', home: '1L', away: '3RD:K', slot: 'W82', stage: 'round32' },
-  { id: 'r32-11', label: 'R32·11', home: '1G', away: '3RD:I', slot: 'W83', stage: 'round32' },
-  { id: 'r32-12', label: 'R32·12', home: '1E', away: '3RD:D', slot: 'W84', stage: 'round32' },
+  { id: 'r32-9', label: 'R32·9', home: '1B', away: '3RD_RANK:3', slot: 'W81', stage: 'round32' },
+  { id: 'r32-10', label: 'R32·10', home: '1L', away: '3RD_RANK:4', slot: 'W82', stage: 'round32' },
+  { id: 'r32-11', label: 'R32·11', home: '1G', away: '3RD_RANK:5', slot: 'W83', stage: 'round32' },
+  { id: 'r32-12', label: 'R32·12', home: '1E', away: '3RD_RANK:6', slot: 'W84', stage: 'round32' },
   { id: 'r32-13', label: 'R32·13', home: '1F', away: '2C', slot: 'W85', stage: 'round32' },
-  { id: 'r32-14', label: 'R32·14', home: '1D', away: '3RD:B', slot: 'W86', stage: 'round32' },
+  { id: 'r32-14', label: 'R32·14', home: '1D', away: '3RD_RANK:7', slot: 'W86', stage: 'round32' },
   { id: 'r32-15', label: 'R32·15', home: '1J', away: '2H', slot: 'W87', stage: 'round32' },
-  { id: 'r32-16', label: 'R32·16', home: '1K', away: '3RD:L', slot: 'W88', stage: 'round32' },
+  { id: 'r32-16', label: 'R32·16', home: '1K', away: '3RD_RANK:8', slot: 'W88', stage: 'round32' },
 ];
 
 const round16Slots = [
@@ -121,8 +121,8 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
     ...m,
     winner: slotResults[m.slot]?.winner || null,
     loser: slotResults[m.slot]?.loser || null,
-    g1: slotResults[m.slot]?.g1 || null,
-    g2: slotResults[m.slot]?.g2 || null,
+    g1: slotResults[m.slot]?.g1 ?? null,
+    g2: slotResults[m.slot]?.g2 ?? null,
     finished: slotResults[m.slot]?.finished || false,
     resolved: true,
     // 添加球队信息和 Elo 评分

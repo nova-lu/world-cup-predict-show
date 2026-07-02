@@ -1,0 +1,174 @@
+{
+  "manifestId": "elo_update_20260702_203602",
+  "generatedAt": "2026-07-02T12:36:02.400Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-06-29",
+    "to": "2026-07-01"
+  },
+  "matchesApplied": 9,
+  "matchDetails": [
+    {
+      "date": "2026-06-29",
+      "home": "Germany",
+      "away": "Paraguay",
+      "score": "1-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -14.5,
+      "deltaAway": 14.5,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-06-29",
+      "home": "Netherlands",
+      "away": "Morocco",
+      "score": "1-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -1.3,
+      "deltaAway": 1.3,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-06-29",
+      "home": "Brazil",
+      "away": "Japan",
+      "score": "2-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 16.5,
+      "deltaAway": -16.5,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-06-30",
+      "home": "Ivory Coast",
+      "away": "Norway",
+      "score": "1-2",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -15.9,
+      "deltaAway": 15.9,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-06-30",
+      "home": "France",
+      "away": "Sweden",
+      "score": "3-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 6.8,
+      "deltaAway": -6.8,
+      "upsetSuppressed": true
+    },
+    {
+      "date": "2026-06-30",
+      "home": "Mexico",
+      "away": "Ecuador",
+      "score": "2-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 21.6,
+      "deltaAway": -21.6,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-01",
+      "home": "England",
+      "away": "DR Congo",
+      "score": "2-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 5.3,
+      "deltaAway": -5.3,
+      "upsetSuppressed": true
+    },
+    {
+      "date": "2026-07-01",
+      "home": "Belgium",
+      "away": "Senegal",
+      "score": "3-2",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 22.2,
+      "deltaAway": -22.2,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-01",
+      "home": "USA",
+      "away": "Bosnia and Herzegovina",
+      "score": "2-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 11.7,
+      "deltaAway": -11.7,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "belgium",
+      "delta": 22.2
+    },
+    {
+      "team": "senegal",
+      "delta": -22.2
+    },
+    {
+      "team": "mexico",
+      "delta": 21.6
+    },
+    {
+      "team": "ecuador",
+      "delta": -21.6
+    },
+    {
+      "team": "brazil",
+      "delta": 16.5
+    }
+  ],
+  "ratingsBefore": {
+    "france": 2036.1,
+    "brazil": 1958.1,
+    "england": 1996.4,
+    "netherlands": 1909.4,
+    "germany": 1915.1,
+    "belgium": 1866.6,
+    "morocco": 1891.6,
+    "usa": 1826,
+    "mexico": 1866.6,
+    "japan": 1835.3,
+    "senegal": 1828,
+    "ecuador": 1818.9,
+    "ivory-coast": 1756.2,
+    "paraguay": 1684.1,
+    "bosnia-and-herzegovina": 1619.1,
+    "norway": 1889.2,
+    "sweden": 1759.5,
+    "dr-congo": 1670.6
+  },
+  "ratingsAfter": {
+    "france": 2042.9,
+    "brazil": 1974.6,
+    "england": 2001.7,
+    "netherlands": 1908.1,
+    "germany": 1900.6,
+    "belgium": 1888.8,
+    "morocco": 1892.9,
+    "usa": 1837.7,
+    "mexico": 1888.2,
+    "japan": 1818.8,
+    "senegal": 1805.8,
+    "ecuador": 1797.3,
+    "ivory-coast": 1740.3,
+    "paraguay": 1698.6,
+    "bosnia-and-herzegovina": 1607.4,
+    "norway": 1905.1,
+    "sweden": 1752.7,
+    "dr-congo": 1665.3
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}
