@@ -281,6 +281,30 @@ function validateAnalysis(analysis) {
   if (!Array.isArray(analysis.keyFactors)) analysis.keyFactors = [];
   if (!Array.isArray(analysis.riskFactors)) analysis.riskFactors = [];
 
+  // 确保 alternativeScores 存在
+  if (!Array.isArray(analysis.alternativeScores) || analysis.alternativeScores.length === 0) {
+    analysis.alternativeScores = [];
+  } else {
+    analysis.alternativeScores = analysis.alternativeScores
+      .filter(s => s && typeof s.home === 'number' && typeof s.away === 'number')
+      .slice(0, 3);
+  }
+
+  // 确保 riskAssessment 存在
+  if (!analysis.riskAssessment || typeof analysis.riskAssessment !== 'object') {
+    analysis.riskAssessment = { level: 'medium', score: 0.5, explanation: '暂无风险评估' };
+  } else {
+    if (!['low', 'medium', 'high'].includes(analysis.riskAssessment.level)) {
+      analysis.riskAssessment.level = 'medium';
+    }
+    if (typeof analysis.riskAssessment.score !== 'number') {
+      analysis.riskAssessment.score = 0.5;
+    }
+    if (!analysis.riskAssessment.explanation) {
+      analysis.riskAssessment.explanation = '暂无风险评估';
+    }
+  }
+
   // 确保 recommendedPick
   if (!['home', 'draw', 'away'].includes(analysis.recommendedPick)) {
     const maxKey = Object.entries(p).reduce((a, b) => a[1] > b[1] ? a : b)[0];

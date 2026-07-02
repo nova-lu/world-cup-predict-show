@@ -116,6 +116,12 @@
     }
     $('ai-best-odds').textContent = an.bestOddsSource || '--';
 
+    // 备选比分
+    renderAltScores(an.alternativeScores);
+
+    // 风险评估
+    renderRiskAssessment(an.riskAssessment);
+
     // 队伍名
     $('ai-home-name').textContent = phase14Data.team1Name || phase14Data.team1Slug;
     $('ai-away-name').textContent = phase14Data.team2Name || phase14Data.team2Slug;
@@ -271,6 +277,58 @@
   window.refreshAnalysis = function() {
     fetchAnalysis(true);
   };
+
+  // ===== 备选比分 =====
+  function renderAltScores(altScores) {
+    const toggle = $('ai-alt-scores-toggle');
+    const list = $('ai-alt-scores-list');
+    if (!altScores || altScores.length === 0) {
+      toggle.style.display = 'none';
+      list.style.display = 'none';
+      return;
+    }
+    toggle.style.display = 'inline';
+    list.innerHTML = altScores.map((s, i) =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;${i < altScores.length - 1 ? 'border-bottom:1px solid #334155' : ''}">
+        <span><strong>${s.home}-${s.away}</strong></span>
+        <span style="color:#94a3b8">${s.scenario || ''}</span>
+        <span style="color:#facc15">${fmtPct(s.probability)}</span>
+      </div>`
+    ).join('');
+  }
+
+  // 全局暴露 toggle
+  window.toggleAltScores = function() {
+    const list = $('ai-alt-scores-list');
+    const toggle = $('ai-alt-scores-toggle');
+    const isHidden = list.style.display === 'none';
+    list.style.display = isHidden ? 'block' : 'none';
+    toggle.textContent = isHidden ? '▲ 收起' : '▼ 备选';
+  };
+
+  // ===== 风险评估 =====
+  function renderRiskAssessment(ra) {
+    const el = $('ai-risk-assessment');
+    if (!ra || !ra.level) { el.style.display = 'none'; return; }
+
+    el.style.display = 'block';
+
+    const colors = { low: '#22c55e', medium: '#facc15', high: '#ef4444' };
+    const labels = { low: '低风险', medium: '中风险', high: '高风险' };
+    const bgColors = { low: '#052e16', medium: '#422006', high: '#450a0a' };
+
+    const badge = $('ai-risk-badge');
+    badge.textContent = labels[ra.level] || '未知';
+    badge.style.background = bgColors[ra.level] || '#334155';
+    badge.style.color = colors[ra.level] || '#94a3b8';
+
+    $('ai-risk-score').textContent = `(风险评分: ${(ra.score * 100).toFixed(0)}/100)`;
+
+    const desc = $('ai-risk-desc');
+    desc.textContent = ra.explanation || '';
+    el.style.border = `1px solid ${colors[ra.level] || '#334155'}40`;
+    el.style.background = bgColors[ra.level] || '#1e293b';
+  }
 
   // ===== 工具函数 =====
 

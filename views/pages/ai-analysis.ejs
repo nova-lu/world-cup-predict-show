@@ -60,12 +60,28 @@
           <div class="ai-hero-details" id="ai-hero-details">
             <div class="detail-item"><span class="label">AI 推荐</span><span class="value" id="ai-pick">--</span></div>
             <div class="detail-item"><span class="label">置信度</span><span class="value" id="ai-confidence">--</span></div>
-            <div class="detail-item"><span class="label">预测比分</span><span class="value" id="ai-score">--</span></div>
+            <div class="detail-item" style="grid-column:span 2">
+              <span class="label">预测比分</span>
+              <span class="value" id="ai-score">--</span>
+              <span class="value alt-scores-toggle" id="ai-alt-scores-toggle" style="display:none;cursor:pointer;font-size:0.8rem;color:#94a3b8;margin-left:8px" onclick="toggleAltScores()">▼ 备选</span>
+            </div>
             <div class="detail-item"><span class="label">大小球</span><span class="value" id="ai-ou">--</span></div>
             <div class="detail-item"><span class="label">预期总进球</span><span class="value" id="ai-xg-total">--</span></div>
             <div class="detail-item"><span class="label">加时概率</span><span class="value" id="ai-et">--</span></div>
             <div class="detail-item"><span class="label">点球概率</span><span class="value" id="ai-pk">--</span></div>
             <div class="detail-item"><span class="label">最新赔率</span><span class="value" id="ai-best-odds">--</span></div>
+          </div>
+          <!-- 备选比分列表（初始隐藏） -->
+          <div id="ai-alt-scores-list" style="display:none;margin-top:6px;padding:8px 16px;background:#1e293b;border-radius:8px;font-size:0.85rem">
+          </div>
+          <!-- 风险评估 -->
+          <div id="ai-risk-assessment" style="display:none;margin-top:10px;padding:10px 16px;border-radius:8px;font-size:0.85rem">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="label">风险评估</span>
+              <span id="ai-risk-badge" style="padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.8rem"></span>
+              <span id="ai-risk-score" style="color:#94a3b8;font-size:0.8rem"></span>
+            </div>
+            <div id="ai-risk-desc" style="color:#94a3b8;font-size:0.8rem;line-height:1.4"></div>
           </div>
           <div class="ai-generated-at" id="ai-generated-at"></div>
         </div>
