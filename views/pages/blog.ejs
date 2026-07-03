@@ -131,12 +131,25 @@
     <!-- 深度分析 -->
     <h2 class="section-heading">📊 深度分析</h2>
     <div class="blog-grid">
-      <%
-        const articles = [
-          {
-              slug: 'knockout-first-wave',
-              date: '2026-07-02',
-              title: '淘汰赛首轮激战：德国荷兰点球出局，巴西加拿大率先晋级16强',
+      <% const articles = [
+            {
+                slug: 'r16-matchups-preview',
+                date: '2026-07-04',
+                title: '16强今日开战！加拿大摩洛哥打响头炮，五场焦点战全解析',
+                excerpt: '16强赛今日拉开帷幕：加拿大vs摩洛哥黑马之争，墨西哥vs英格兰矛盾之战，巴西vs挪威南美技术流对阵北欧力量，巴拉圭再遇法国，比利时vs美国青春风暴对阵黄金一代。东道主命运几何？',
+                tags: ['16强', '赛程', '前瞻', '加拿大', '墨西哥', '美国']
+              },
+            {
+                slug: 'r32-finale',
+                date: '2026-07-04',
+                title: '32强完美收官：西班牙葡萄牙瑞士晋级，16强全员落位',
+                excerpt: '32强淘汰赛最后三个比赛日落幕：西班牙3-0奥地利、葡萄牙2-1克罗地亚、瑞士2-0阿尔及利亚、阿根廷3-0佛得角、哥伦比亚2-1加纳。16强对阵全部确定，4场焦点1/8决赛今日开战。',
+                tags: ['淘汰赛', '32强', '西班牙', '葡萄牙', '阿根廷', '16强']
+              },
+            {
+                slug: 'knockout-first-wave',
+                date: '2026-07-02',
+                title: '淘汰赛首轮激战：德国荷兰点球出局，巴西加拿大率先晋级16强',
               excerpt: '世界杯淘汰赛首日冷门不断：巴西补时绝杀日本，姆巴佩双响淘汰瑞典，德国和荷兰相继在点球大战中被巴拉圭和摩洛哥淘汰。凯恩11分钟双响逆转刚果（金），比利时卢卡库替补上演让二追三。',
               tags: ['淘汰赛', '德国', '荷兰', '冷门', '点球', '巴西']
             },
@@ -223,10 +236,10 @@
             title: '夺冠格局：为何没有一支球队夺冠概率超过 17%？',
             excerpt: '本届世界杯夺冠概率分布之分散前所未有——模型显示最大热门也不到 17%。48 队扩军、主客场均衡化、强队青黄不接等因素共同造就了"全员皆有机会"的乱世格局。',
             tags: ['夺冠', '格局', '数据']
-          }
-        ];
-      %>
-      <% articles.forEach(function(a) { %>
+            }
+            ];
+            %>
+            <% articles.forEach(function(a) { %>
         <div class="blog-card">
           <div class="blog-card-date"><%= a.date %></div>
           <div class="blog-card-title"><%= a.title %></div>
@@ -249,7 +262,6 @@
     .then(function(data) {
       var grid = document.getElementById('news-grid');
       if (!data.items || data.items.length === 0) {
-        grid.innerHTML = '<div class="error-muted">暂无最新资讯</div>';
         return;
       }
       var html = '';

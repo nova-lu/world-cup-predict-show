@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import * as collector from './collector.js';
 import * as metrics from './metrics.js';
 import * as reporter from './reporter.js';
+import { computeOddsBaseline } from './oddsBaseline.js';
 import mlConfig from '../config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -59,22 +60,52 @@ export async function runBacktest(opts = {}) {
 
     if (_cancelled) throw new BacktestCancelledError();
 
+    // Phase 17 T3: 保存 2026 年比赛预测快照
+    try {
+      const { savePredictionSnapshot } = await import('./snapshotHelper.js');
+      for (const rec of records) {
+        if (rec.year === 2026 && rec.predictions) {
+          savePredictionSnapshot(rec, rec.predictions);
+        }
+      }
+    } catch (e) {
+      console.warn('[backtest/engine] 预测快照保存失败:', e.message);
+    }
+
     const engines = ['elo'];
     if (mlEnabled) engines.push('ml', 'ensemble');
 
-    const overall = {}, yearly = {}, stageBreakdown = {}, errorAnalysis = {};
+    const overall = {}, yearly = {}, stageBreakdown = {}, errorAnalysis = {}, sceneAnalysis = {}, errorClustering = {};
     for (const eng of engines) {
       overall[eng] = metrics.computeAggregate(records, eng);
       yearly[eng] = metrics.computeByYear(records, eng);
       stageBreakdown[eng] = metrics.computeByStage(records, eng);
       errorAnalysis[eng] = metrics.computeErrorAnalysis(records, eng);
+      // Phase 17 T5: 场景分析
+      sceneAnalysis[eng] = metrics.computeSceneAnalysis(records, eng);
+      // Phase 17 T6: 错误聚类
+      errorClustering[eng] = metrics.computeErrorClustering(records, eng);
     }
 
-    const result = { success: true, summary, overall, yearly, stageBreakdown, errorAnalysis, records };
+    // Phase 17 T6: 引擎优势分析
+    let engineAdvantage = {};
+    if (engines.includes('ml') && engines.includes('elo')) {
+      engineAdvantage = metrics.computeEngineAdvantage(records);
+    }
+
+    // Phase 17 T4: 赔率基线
+    const oddsBaseline = computeOddsBaseline(records);
+
+    const result = {
+      success: true, summary, overall, yearly, stageBreakdown, errorAnalysis,
+      sceneAnalysis, errorClustering, engineAdvantage, oddsBaseline, records,
+      // Phase 17 T2: 标注 ML 数据泄露风险
+      mlLeakageWarning: true,
+    };
 
     if (saveReport && !_cancelled) {
       try {
-        reporter.generateReport(result);
+        await reporter.generateReport(result);
       } catch (e) {
         console.warn('[backtest/engine] 报告生成失败:', e.message);
       }

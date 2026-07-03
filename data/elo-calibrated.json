@@ -1,22 +1,22 @@
 {
-  "generatedAt": "2026-07-02T12:36:02.399Z",
-  "matchesApplied": 9,
+  "generatedAt": "2026-07-03T15:44:49.312Z",
+  "matchesApplied": 3,
   "ratings": {
     "argentina": 1989.7,
     "france": 2042.9,
-    "spain": 2010.9,
+    "spain": 2017.3,
     "brazil": 1974.6,
     "england": 2001.7,
-    "portugal": 1936.1,
+    "portugal": 1955.6,
     "netherlands": 1908.1,
     "germany": 1900.6,
     "belgium": 1888.8,
     "italy": 1901,
     "colombia": 1896.9,
     "uruguay": 1800.9,
-    "croatia": 1859,
+    "croatia": 1839.5,
     "morocco": 1892.9,
-    "switzerland": 1827.1,
+    "switzerland": 1844,
     "usa": 1837.7,
     "mexico": 1888.2,
     "japan": 1818.8,
@@ -37,7 +37,7 @@
     "saudi-arabia": 1659.9,
     "qatar": 1570.8,
     "egypt": 1720.3,
-    "algeria": 1710.5,
+    "algeria": 1693.6,
     "scotland": 1661.3,
     "cameroon": 1633,
     "paraguay": 1698.6,
@@ -59,7 +59,7 @@
     "norway": 1905.1,
     "sweden": 1752.7,
     "turkey": 1720.3,
-    "austria": 1722.1,
+    "austria": 1715.7,
     "iraq": 1582.7,
     "uzbekistan": 1602.4,
     "cape-verde": 1625.3,
@@ -67,5 +67,5 @@
     "curacao": 1544.8,
     "united-states": 1538.6
   },
-  "method": "batch-update-2026-07-02"
+  "method": "batch-update-2026-07-03"
 }

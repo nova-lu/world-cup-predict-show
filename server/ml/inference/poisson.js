@@ -14,6 +14,75 @@ export function computePoissonMatrix(lambdaHome, lambdaAway, maxGoals = 8) {
 }
 
 /**
+ * Dixon-Coles τ 调整因子
+ * 修正独立泊松对 0-0 / 0-1 / 1-0 / 1-1 低分平局的系统性低估
+ *
+ * 参考: Dixon & Coles (1997, JRSS-C)
+ * 实现对齐: server/services/elo-model.mjs dcTau()
+ *
+ * @param {number} a - 主队进球数
+ * @param {number} b - 客队进球数
+ * @param {number} lambda - 主队预期进球 λ
+ * @param {number} mu - 客队预期进球 μ
+ * @param {number} rho - 相关性参数（典型值 -0.13）
+ * @returns {number} τ 调整乘子
+ */
+export function dcTau(a, b, lambda, mu, rho) {
+  if (a === 0 && b === 0) return 1 - lambda * mu * rho;
+  if (a === 0 && b === 1) return 1 + lambda * rho;
+  if (a === 1 && b === 0) return 1 + mu * rho;
+  if (a === 1 && b === 1) return 1 - rho;
+  return 1;
+}
+
+/**
+ * 默认 ρ 值（经验值，来自世界大赛历史数据拟合）
+ */
+export function getDefaultRho() {
+  return -0.13;
+}
+
+/**
+ * 带 Dixon-Coles 修正的泊松比分矩阵
+ * 在基础泊松 PMF 乘积上应用 τ 调整，然后归一化
+ *
+ * @param {number} lambdaHome - 主队预期进球
+ * @param {number} lambdaAway - 客队预期进球
+ * @param {number} rho - DC 相关性参数（null/undefined 回退到独立泊松）
+ * @param {number} [maxGoals=8] - 最大进球数
+ * @returns {Array<Array<number>>} 归一化后的比分概率矩阵
+ */
+export function computePoissonMatrixDC(lambdaHome, lambdaAway, rho, maxGoals = 8) {
+  // rho 为 null/undefined 时回退到独立泊松
+  if (rho == null) return computePoissonMatrix(lambdaHome, lambdaAway, maxGoals);
+
+  const matrix = [];
+  let totalProb = 0;
+
+  for (let h = 0; h <= maxGoals; h++) {
+    matrix[h] = [];
+    for (let a = 0; a <= maxGoals; a++) {
+      const baseProb = poissonPMF(h, lambdaHome) * poissonPMF(a, lambdaAway);
+      const tau = dcTau(h, a, lambdaHome, lambdaAway, rho);
+      const adjusted = baseProb * tau;
+      matrix[h][a] = adjusted;
+      totalProb += adjusted;
+    }
+  }
+
+  // 归一化以确保总和为 1.0
+  if (totalProb > 0) {
+    for (let h = 0; h <= maxGoals; h++) {
+      for (let a = 0; a <= maxGoals; a++) {
+        matrix[h][a] /= totalProb;
+      }
+    }
+  }
+
+  return matrix;
+}
+
+/**
  * 泊松概率质量函数 P(X=k) = e^(-λ) * λ^k / k!
  */
 function poissonPMF(k, lambda) {

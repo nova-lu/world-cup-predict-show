@@ -1,0 +1,27 @@
+{
+  "optimalRho": 0.013,
+  "negativeLogLikelihood": 3001.84,
+  "validMatches": 964,
+  "baseline": {
+    "rho": 0,
+    "nll": 3001.88
+  },
+  "defaultRho": {
+    "rho": -0.13,
+    "nll": 3007.44
+  },
+  "improvement": {
+    "logLikelihoodReduction": 0.05,
+    "percentReduction": 0
+  },
+  "config": {
+    "csvPath": "E:\\codes_practice\\world-cup-related\\worldcup_new_2026\\world-cup-data\\matches_1930_2022.csv",
+    "nSteps": 51,
+    "rhoRange": [
+      -0.5,
+      0.5
+    ]
+  },
+  "timestamp": "2026-07-03T15:00:29.574Z",
+  "summary": "最优 ρ = 0.013，比独立泊松 (ρ=0) 改善 0.0%"
+}

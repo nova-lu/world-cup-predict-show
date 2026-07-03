@@ -8,12 +8,15 @@ import { fileURLToPath, pathToFileURL } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RESULTS_PATH = path.resolve(__dirname, '../../../data/wc2026-results.json');
 
+// 预测快照持久化
+import { loadPredictionSnapshot, loadAllSnapshots, getSnapshotStats } from './snapshotHelper.js';
+
 export function load2026Matches() {
   let raw;
   try { raw = JSON.parse(fs.readFileSync(RESULTS_PATH, 'utf-8')); }
   catch { return []; }
   const matches = (raw.matches || []).filter(m => m.status === 'FT' && m.g1 != null && m.g2 != null);
-  return matches.map(m => ({
+  const results = matches.map(m => ({
     matchId: `wc2026-${m.t1}-${m.t2}`,
     date: m.date,
     year: 2026,
@@ -27,6 +30,17 @@ export function load2026Matches() {
     actualScore: { home: m.g1, away: m.g2 },
     dataSource: 'wc2026',
   }));
+
+  // 合并已持久化的预测快照
+  const enriched = results.map(m => {
+    const snapshot = loadPredictionSnapshot(m.matchId);
+    if (snapshot && snapshot.predictions) {
+      return { ...m, predictions: snapshot.predictions };
+    }
+    return m;
+  });
+
+  return enriched;
 }
 
 export async function loadHistoricalMatches(years) {
@@ -87,4 +101,12 @@ function getStageFromRound(round) {
   if (r.includes('final')) return 'FINAL';
   if (r.includes('third') || r.includes('3rd')) return 'THIRD_PLACE';
   return 'KO';
+}
+
+/**
+ * 获取持久化预测快照的摘要统计
+ * @returns {{ total: number, byMonth: Array<{ month: string, count: number }>, dateRange: { earliest: string|null, latest: string|null } }}
+ */
+export function getPredictionSnapshotSummary() {
+  return getSnapshotStats();
 }

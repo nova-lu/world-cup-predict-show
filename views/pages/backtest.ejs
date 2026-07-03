@@ -100,6 +100,16 @@
     .backtest-page .narrative .highlight { color:#4fc3f7; }
     .backtest-page .narrative .warn { color:#ffcc80; }
 
+    /* 散点图样式 */
+    .backtest-page .scatter-viz svg { display:block; margin:0 auto; }
+    .backtest-page .scatter-viz .dot { stroke:#fff; stroke-width:0.5; cursor:pointer; }
+    .backtest-page .scatter-viz .dot:hover { stroke-width:2; }
+    .backtest-page .scatter-viz .axis line, .scatter-viz .axis path { stroke:#555; stroke-width:1; }
+    .backtest-page .scatter-viz .axis text { fill:#888; font-size:11px; }
+    .backtest-page .scatter-viz .label { fill:#aaa; font-size:12px; }
+    .backtest-page .scatter-viz .legend { font-size:11px; }
+    .backtest-page .scatter-viz .legend-item { cursor:pointer; }
+
     /* 引擎比较-汇总条 */
     .backtest-page .eng-summary { display:flex; gap:0; margin:16px 0; border-radius:8px; overflow:hidden; }
     .backtest-page .eng-summary .seg { flex:1; text-align:center; padding:12px 8px; }
@@ -112,6 +122,41 @@
     .backtest-page .eng-summary .seg.elo .eng-badge { background:#4fc3f744; color:#4fc3f7; }
     .backtest-page .eng-summary .seg.ml .eng-badge { background:#ce93d844; color:#ce93d8; }
     .backtest-page .eng-summary .seg.ensemble .eng-badge { background:#ffd54f44; color:#ffd54f; }
+
+    /* ===== 2026 实时回测 Tab 样式 ===== */
+    .backtest-page .backtest-cards { display:flex; gap:12px; flex-wrap:wrap; margin:16px 0; }
+    .backtest-page .backtest-cards .stat-card { flex:1; min-width:130px; background:linear-gradient(135deg,#1a1a3e,#16213e); border:1px solid #2a2a4a; border-radius:10px; padding:16px 20px; text-align:center; }
+    .backtest-page .backtest-cards .stat-card .stat-label { font-size:12px; color:#888; margin-bottom:6px; }
+    .backtest-page .backtest-cards .stat-card .stat-value { font-size:28px; font-weight:700; color:#4fc3f7; }
+    .backtest-page .metric-card { flex:1; min-width:150px; background:#1a1a2e; border:1px solid #333; border-radius:10px; padding:14px 16px; text-align:center; }
+    .backtest-page .metric-card .metric-label { font-size:12px; color:#888; margin-bottom:4px; }
+    .backtest-page .metric-card .metric-value { font-size:22px; font-weight:700; }
+    .backtest-page .metric-card .metric-value.good { color:#81c784; }
+    .backtest-page .metric-card .metric-value.ok { color:#ffcc80; }
+    .backtest-page .metric-card .metric-value.bad { color:#ef9a9a; }
+    .backtest-page .metric-card .metric-sub { font-size:11px; color:#666; margin-top:2px; }
+    .backtest-page .info-section { background:#0d0d20; border:1px solid #252540; border-radius:10px; padding:16px 18px; margin:20px 0; }
+    .backtest-page .info-section h2 { font-size:14px; color:#4fc3f7; margin:0 0 12px; padding-bottom:8px; border-bottom:1px solid #252540; }
+    .backtest-page .info-section .cal-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .backtest-page .info-section .cal-table th { background:#1a1a2e; padding:6px 10px; border-bottom:2px solid #4fc3f7; color:#4fc3f7; text-align:center; font-weight:600; }
+    .backtest-page .info-section .cal-table td { padding:5px 10px; border-bottom:1px solid #2a2a2a; text-align:center; color:#ccc; }
+    .backtest-page .info-section .cal-table tr:hover td { background:#1e1e38; }
+    .backtest-page .stage-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .backtest-page .stage-table th { background:#1a1a2e; padding:7px 10px; border-bottom:2px solid #4fc3f7; color:#4fc3f7; text-align:left; }
+    .backtest-page .stage-table td { padding:6px 10px; border-bottom:1px solid #2a2a2a; color:#ccc; }
+    .backtest-page .stage-table tr:hover td { background:#1e1e38; }
+    .backtest-page .backtest-summary .engine-switch { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .backtest-page .backtest-summary .engine-switch label { font-size:13px; color:#888; }
+    .backtest-page .backtest-summary .engine-switch select { background:#1a1a2e; color:#e0e0e0; border:1px solid #4fc3f7; border-radius:4px; padding:4px 10px; font-size:13px; }
+    /* 实时回测 JS 中使用的 class 名 */
+    .backtest-page .standings-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .backtest-page .standings-table th { background:#1a1a2e; padding:6px 10px; border-bottom:2px solid #4fc3f7; color:#4fc3f7; text-align:center; font-weight:600; }
+    .backtest-page .standings-table td { padding:5px 10px; border-bottom:1px solid #2a2a2a; text-align:center; color:#ccc; }
+    .backtest-page .standings-table tr:hover td { background:#1e1e38; }
+    .backtest-page .adv-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .backtest-page .adv-table th { background:#1a1a2e; padding:7px 10px; border-bottom:2px solid #4fc3f7; color:#4fc3f7; text-align:left; }
+    .backtest-page .adv-table td { padding:6px 10px; border-bottom:1px solid #2a2a2a; color:#ccc; }
+    .backtest-page .adv-table tr:hover td { background:#1e1e38; }
   </style>
 </head>
 <body>
@@ -128,6 +173,7 @@
       <button class="tab-btn active" onclick="switchTab('live')">📊 2026 实时回测</button>
       <button class="tab-btn" onclick="switchTab('history')">📈 历史回测</button>
       <button class="tab-btn" onclick="switchTab('reports')">📂 报告存档</button>
+      <button class="tab-btn" onclick="switchTab('engine-compare')">🔬 引擎对比</button>
     </div>
 
     <!-- Tab 1: 2026 实时回测 -->
@@ -241,8 +287,38 @@
         <div class="section-title">错误分析</div>
         <div id="rp-error-viz" class="error-viz"></div>
         <div id="rp-error-content"></div>
-        <div class="section-title">原始报告下载</div>
-        <pre id="report-json" style="max-height:400px;overflow:auto;white-space:pre-wrap;font-size:11px;background:#0a0a1a;padding:12px;border-radius:6px;"></pre>
+        <pre id="report-json" style="max-height:400px;overflow:auto;white-space:pre-wrap;font-size:11px;background:#0a0a1a;padding:12px;border-radius:6px;margin-top:16px;"></pre>
+      </div>
+    </div>
+
+    <!-- Tab 4: 引擎对比 -->
+    <div id="tab-engine-compare" class="tab-content">
+      <div id="bt-engine-compare-idle" style="text-align:center;padding:40px;color:#666;">
+        <div style="font-size:48px;margin-bottom:12px;">🔬</div>
+        <div style="font-size:16px;margin-bottom:8px;">运行回测后可查看引擎对比分析</div>
+        <div style="font-size:13px;">请先在「历史回测」Tab 中运行回测</div>
+        <button class="btn" style="margin-top:16px;" onclick="switchTab('history')">📈 前往历史回测</button>
+      </div>
+      <div id="bt-engine-compare-content" style="display:none;">
+        <!-- 引擎对比雷达仪表盘 -->
+        <div class="section-title">引擎五维对比</div>
+        <div id="ec-radar-chart" class="bar-chart"></div>
+
+        <!-- ML vs Elo 场景优势表 -->
+        <div class="section-title">ML vs Elo 场景优势</div>
+        <div id="ec-advantage-table"></div>
+
+        <!-- 错误聚类分析 -->
+        <div class="section-title">错误聚类 (按Elo差)</div>
+        <div id="ec-clustering-table"></div>
+
+        <!-- 场景指标对比 -->
+        <div class="section-title">场景指标对比</div>
+        <div id="ec-scene-table"></div>
+
+        <!-- 置信度-准确率散点图 (T8.4) -->
+        <div class="section-title">年度置信度 vs 准确率散点图</div>
+        <div id="ec-scatter-plot" class="scatter-viz" style="background:#111;border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto;min-height:340px;"></div>
       </div>
     </div>
   </main>
@@ -258,6 +334,7 @@
       event.target.classList.add('active');
       if (name === 'reports') loadReports();
       if (name === 'history') loadCachedResult();
+      if (name === 'engine-compare') loadEngineCompare();
     }
 
     // 静默加载缓存结果，不触发回测运行
@@ -299,13 +376,19 @@
       }
     }
 
-    // ===== 2026 实时回测 (原有) =====
+    // ===== 2026 实时回测 (使用回测引擎数据) =====
     (function() {
       const $ = id => document.getElementById(id);
       let schedule = [];
+      let _currentEngine = 'ensemble';
 
       function actualOutcome(m) {
-        if (m.g1 == null || m.g2 == null) return null;
+        if (m.g1 == null && m.g2 == null) {
+          if (m.actualScore?.home != null && m.actualScore?.away != null) {
+            return m.actualScore.home > m.actualScore.away ? 'HOME' : m.actualScore.home < m.actualScore.away ? 'AWAY' : 'DRAW';
+          }
+          return null;
+        }
         return m.g1 > m.g2 ? 'HOME' : m.g1 < m.g2 ? 'AWAY' : 'DRAW';
       }
       function predictedOutcome(m) {
@@ -355,80 +438,160 @@
 
         // Metric cards
         const cards = [
-          { label: '预测准确率', value: (accuracy * 100).toFixed(1) + '%', cls: accuracy >= 0.5 ? 'good' : accuracy >= 0.33 ? 'ok' : 'bad', sub: `正确 ${correct}/${n}` },
-          { label: 'Brier 评分', value: avgBrier.toFixed(3), cls: avgBrier < 0.25 ? 'good' : avgBrier < 0.40 ? 'ok' : 'bad', sub: '0=完美 · 2=最差' },
-          { label: '随机基线', value: '33.3%', cls: 'ok', sub: '理论随机猜测' },
-          { label: 'vs 基线', value: ((accuracy - theoreticalRandom) * 100).toFixed(1) + '%', cls: accuracy - theoreticalRandom > 0.15 ? 'good' : accuracy - theoreticalRandom > 0 ? 'ok' : 'bad', sub: accuracy >= theoreticalRandom ? '高于随机基线 ✓' : '低于随机基线 ✗' },
+          { label: '\u9884\u6d4b\u51c6\u786e\u7387', value: (accuracy * 100).toFixed(1) + '%', cls: accuracy >= 0.5 ? 'good' : accuracy >= 0.33 ? 'ok' : 'bad', sub: '正确 ' + correct + '/' + n },
+          { label: 'Brier \u8bc4\u5206', value: avgBrier.toFixed(3), cls: avgBrier < 0.25 ? 'good' : avgBrier < 0.40 ? 'ok' : 'bad', sub: '0=\u5b8c\u7f8e \u00b7 2=\u6700\u5dee' },
+          { label: '\u968f\u673a\u57fa\u7ebf', value: '33.3%', cls: 'ok', sub: '\u7406\u8bba\u968f\u673a\u731c\u6d4b' },
+          { label: 'vs \u57fa\u7ebf', value: ((accuracy - theoreticalRandom) * 100).toFixed(1) + '%', cls: accuracy - theoreticalRandom > 0.15 ? 'good' : accuracy - theoreticalRandom > 0 ? 'ok' : 'bad', sub: accuracy >= theoreticalRandom ? '\u9ad8\u4e8e\u968f\u673a\u57fa\u7ebf \u2713' : '\u4f4e\u4e8e\u968f\u673a\u57fa\u7ebf \u2717' },
         ];
-        $('metric-cards').innerHTML = cards.map(c =>
-          `<div class="metric-card metric-${c.cls}"><div class="metric-label">${c.label}</div><div class="metric-value ${c.cls}">${c.value}</div><div class="metric-sub">${c.sub}</div></div>`
-        ).join('');
+        $('metric-cards').innerHTML = cards.map(function(c) {
+          return '<div class="metric-card metric-' + c.cls + '"><div class="metric-label">' + c.label + '</div><div class="metric-value ' + c.cls + '">' + c.value + '</div><div class="metric-sub">' + c.sub + '</div></div>';
+        }).join('');
 
         // Calibration
-        const BINS = 10;
-        const bins = Array.from({length:BINS}, () => ({n:0,correct:0,totalConf:0}));
-        for (const m of matches) {
-          const p = m.prediction || {};
-          const conf = Math.max(p.homeWin||0, p.draw||0, p.awayWin||0);
-          const idx = Math.min(Math.floor(conf * BINS), BINS-1);
+        var BINS = 10;
+        var bins = Array.from({length:BINS}, function() { return {n:0,correct:0,totalConf:0}; });
+        for (var i = 0; i < matches.length; i++) {
+          var m = matches[i];
+          var p = m.prediction || {};
+          var conf = Math.max(p.homeWin||0, p.draw||0, p.awayWin||0);
+          var idx = Math.min(Math.floor(conf * BINS), BINS-1);
           bins[idx].n++;
           bins[idx].correct += predictedOutcome(m) === actualOutcome(m) ? 1 : 0;
           bins[idx].totalConf += conf;
         }
-        let ece = 0;
-        let calRows = '<table class="standings-table"><thead><tr><th>置信区间</th><th>样本数</th><th>实际频率</th><th>平均置信</th><th>差距</th></tr></thead><tbody>';
-        for (let i = 0; i < BINS; i++) {
-          const b = bins[i];
-          if (b.n === 0) { calRows += `<tr><td>${i*10}-${(i+1)*10}%</td><td>0</td><td>—</td><td>—</td><td>—</td></tr>`; continue; }
-          const freq = b.correct / b.n;
-          const avgC = b.totalConf / b.n;
-          const gap = Math.abs(avgC - freq);
+        var ece = 0;
+        var calRows = '<table class="standings-table"><thead><tr><th>\u7f6e\u4fe1\u533a\u95f4</th><th>\u6837\u672c\u6570</th><th>\u5b9e\u9645\u9891\u7387</th><th>\u5e73\u5747\u7f6e\u4fe1</th><th>\u5dee\u8ddd</th></tr></thead><tbody>';
+        for (var i = 0; i < BINS; i++) {
+          var b = bins[i];
+          if (b.n === 0) { calRows += '<tr><td>' + (i*10) + '-' + ((i+1)*10) + '%</td><td>0</td><td>\u2014</td><td>\u2014</td><td>\u2014</td></tr>'; continue; }
+          var freq = b.correct / b.n;
+          var avgC = b.totalConf / b.n;
+          var gap = Math.abs(avgC - freq);
           ece += (b.n / n) * gap;
-          calRows += `<tr><td>${i*10}-${(i+1)*10}%</td><td>${b.n}</td><td>${(freq*100).toFixed(1)}%</td><td>${(avgC*100).toFixed(1)}%</td><td>${(gap*100).toFixed(1)}%</td></tr>`;
+          calRows += '<tr><td>' + (i*10) + '-' + ((i+1)*10) + '%</td><td>' + b.n + '</td><td>' + (freq*100).toFixed(1) + '%</td><td>' + (avgC*100).toFixed(1) + '%</td><td>' + (gap*100).toFixed(1) + '%</td></tr>';
         }
         calRows += '</tbody></table>';
-        calRows += `<p style="margin-top:8px;color:#888;font-size:13px;">ECE: ${(ece*100).toFixed(2)}% (${ece < 0.05 ? '校准良好' : ece < 0.15 ? '校准中等' : '校准较差'})</p>`;
+        calRows += '<p style="margin-top:8px;color:#888;font-size:13px;">ECE: ' + (ece*100).toFixed(2) + '% (' + (ece < 0.05 ? '\u6821\u51c6\u826f\u597d' : ece < 0.15 ? '\u6821\u51c6\u4e2d\u7b49' : '\u6821\u51c6\u8f83\u5dee') + ')</p>';
         $('calibration-table').innerHTML = calRows;
 
         // Stage breakdown
-        const stages = {};
-        for (const m of matches) {
-          const key = m.group || m.stage || 'KO';
+        var stages = {};
+        for (var i = 0; i < matches.length; i++) {
+          var m = matches[i];
+          var key = m.group || m.stage || (m.matchGroup || 'KO');
           if (!stages[key]) stages[key] = { n:0, correct:0, homeWins:0 };
           stages[key].n++;
           stages[key].correct += predictedOutcome(m) === actualOutcome(m) ? 1 : 0;
           if (actualOutcome(m) === 'HOME') stages[key].homeWins++;
         }
-        const stageKeys = Object.keys(stages).sort();
-        let sHtml = '<table class="adv-table"><thead><tr><th>阶段</th><th>场次</th><th>准确率</th><th>主胜率</th></tr></thead><tbody>';
-        for (const k of stageKeys) {
-          const s = stages[k];
-          sHtml += `<tr><td>${k}</td><td>${s.n}</td><td>${(s.correct/s.n*100).toFixed(1)}%</td><td>${(s.homeWins/s.n*100).toFixed(1)}%</td></tr>`;
+        var stageKeys = Object.keys(stages).sort();
+        var sHtml = '<table class="adv-table"><thead><tr><th>\u9636\u6bb5</th><th>\u573a\u6b21</th><th>\u51c6\u786e\u7387</th><th>\u4e3b\u80dc\u7387</th></tr></thead><tbody>';
+        for (var i = 0; i < stageKeys.length; i++) {
+          var sk = stageKeys[i];
+          var s = stages[sk];
+          sHtml += '<tr><td>' + sk + '</td><td>' + s.n + '</td><td>' + (s.correct/s.n*100).toFixed(1) + '%</td><td>' + (s.homeWins/s.n*100).toFixed(1) + '%</td></tr>';
         }
         sHtml += '</tbody></table>';
         $('stage-breakdown').innerHTML = sHtml;
       }
 
-      async function fetchSchedule() {
-        $('loading-spinner').style.display = 'flex';
-        try {
-          const res = await fetch('/api/matches/schedule');
-          const data = await res.json();
-          if (!data || !data.matches) { $('no-data-message').style.display = 'block'; $('loading-spinner').style.display = 'none'; return; }
-          schedule = data.matches;
+      function updateLiveEngine(engine) {
+        _currentEngine = engine;
+        if (window._liveRecords) {
+          schedule = window._liveRecords.map(function(r) {
+            var rec = Object.assign({}, r);
+            rec.g1 = r.actualScore ? r.actualScore.home : undefined;
+            rec.g2 = r.actualScore ? r.actualScore.away : undefined;
+            rec.prediction = r.predictions ? r.predictions[engine] ? r.predictions[engine].prob : undefined : undefined;
+            return rec;
+          });
           computeStats();
-        } catch(e) {
-          $('loading-spinner').style.display = 'none';
-          $('live-error').style.display = 'block';
-          $('live-error-text').textContent = '加载失败: ' + e.message;
         }
       }
 
+      async function fetchSchedule() {
+        $('loading-spinner').style.display = 'flex';
+        try {
+          var res = await fetch('/api/ml/backtest?check=1');
+          var data = await res.json();
+          if (data.success && data.records && data.records.length > 0) {
+            var live2026 = data.records.filter(function(r) {
+              return r.year === 2026 && r.actualScore && r.actualScore.home != null && r.predictions;
+            });
+            if (live2026.length > 0) {
+              window._liveRecords = live2026;
+              schedule = live2026.map(function(r) {
+                var rec = Object.assign({}, r);
+                rec.g1 = r.actualScore.home;
+                rec.g2 = r.actualScore.away;
+                rec.prediction = r.predictions[_currentEngine] ? r.predictions[_currentEngine].prob : undefined;
+                return rec;
+              });
+              computeStats();
+              return;
+            }
+          }
+
+          // ?check=1 缓存为空，尝试从最新报告加载
+          try {
+            var reportListRes = await fetch('/api/ml/backtest/reports');
+            var reportList = await reportListRes.json();
+            if (reportList.reports && reportList.reports.length > 0) {
+              var latest = reportList.reports[0].filename;
+              var reportRes = await fetch('/api/ml/backtest/report/' + encodeURIComponent(latest));
+              var reportData = await reportRes.json();
+              if (reportData.records && reportData.records.length > 0) {
+                var live2026 = reportData.records.filter(function(r) {
+                  return r.year === 2026 && r.actualScore && r.actualScore.home != null && r.predictions;
+                });
+                if (live2026.length > 0) {
+                  window._liveRecords = live2026;
+                  window._btCachedResult = reportData;
+                  schedule = live2026.map(function(r) {
+                    var rec = Object.assign({}, r);
+                    rec.g1 = r.actualScore.home;
+                    rec.g2 = r.actualScore.away;
+                    rec.prediction = r.predictions[_currentEngine] ? r.predictions[_currentEngine].prob : undefined;
+                    return rec;
+                  });
+                  computeStats();
+                  return;
+                }
+              }
+            }
+          } catch(e2) {
+            // 报告加载失败，忽略
+          }
+
+          // 没有缓存数据，提示用户先运行回测
+          $('loading-spinner').style.display = 'none';
+          $('no-data-message').style.display = 'block';
+          $('no-data-message').innerHTML = '<p>\u8bf7\u5148\u5728\u300c\u5386\u53f2\u56de\u6d4b\u300dTab \u4e2d\u8fd0\u884c\u56de\u6d4b\u4ee5\u751f\u6210 2026 \u5e74\u6570\u636e</p><button class="btn" style="margin-top:12px;" onclick="switchTab(\'history\')">\ud83d\udcc8 \u524d\u5f80\u5386\u53f2\u56de\u6d4b</button>';
+        } catch(e) {
+          $('loading-spinner').style.display = 'none';
+          $('live-error').style.display = 'block';
+          $('live-error-text').textContent = '\u52a0\u8f7d\u5931\u8d25: ' + e.message;
+        }
+      }
+
+      // \u6dfb\u52a0\u5f15\u64ce\u5207\u6362\u63a7\u4ef6
+      $('live-summary').innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">' +
+        '<span style="color:#888;font-size:13px;">\u9884\u6d4b\u5f15\u64ce:</span>' +
+        '<select id="live-engine-select" style="background:#1a1a2e;color:#e0e0e0;border:1px solid #4fc3f7;border-radius:4px;padding:4px 10px;font-size:13px;" onchange="window._liveSchedule.updateLiveEngine(this.value)">' +
+          '<option value="ensemble">\u96c6\u6210(Ensemble)</option>' +
+          '<option value="ml">\u673a\u5668\u5b66\u4e60(ML)</option>' +
+          '<option value="elo">Elo \u6a21\u578b</option>' +
+        '</select>' +
+      '</div>';
+
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fetchSchedule);
       else fetchSchedule();
+
+      window._liveSchedule = { updateLiveEngine: updateLiveEngine };
     })();
 
     // ===== 历史回测 - 增强可视化版本 =====
+
 
     /** 按最大概率预测结果 */
     function maxProbOutcome(prob) {
@@ -935,8 +1098,21 @@
       // 清空之前的内容
       ['rp-summary-callout','rp-narrative','rp-compare-chart','rp-engine-cards',
        'rp-yearly-chart','rp-yearly-table','rp-cal-viz','rp-cal-content',
-       'rp-error-viz','rp-error-content'].forEach(id => document.getElementById(id).innerHTML = '');
-      document.getElementById('report-json').textContent = '加载中...';
+       'rp-error-viz','rp-error-content'].forEach(id => {
+        var el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      });
+      // 显示加载进度
+      var progressEl = document.getElementById('report-progress');
+      if (!progressEl) {
+        progressEl = document.createElement('div');
+        progressEl.id = 'report-progress';
+        progressEl.style.cssText = 'text-align:center;padding:20px;color:#888;font-size:14px;';
+        viewer.insertBefore(progressEl, viewer.firstChild.nextSibling);
+      }
+      progressEl.style.display = 'block';
+      progressEl.textContent = '正在加载报告数据...';
+      document.getElementById('report-json').textContent = '';
 
       try {
         const res = await fetch('/api/ml/backtest/report/' + encodeURIComponent(filename));
@@ -947,47 +1123,81 @@
         const years = data.summary?.byYear?.map(y => y.year).sort((a,b)=>a-b) || [];
 
         // 复用渲染函数，但输出到 rp- 开头的容器
-        function rp(id, html) { document.getElementById('rp-' + id).innerHTML = html; }
+        function rp(id, html) { var el = document.getElementById('rp-' + id); if (el) el.innerHTML = html; }
         function rpS(id) { return document.getElementById('rp-' + id); }
 
-        // 核心发现
-        renderSummaryCalloutTo(data, engines, 'rp-summary-callout');
-        // 叙述
-        renderNarrativeTo(data, engines, years, 'rp-narrative');
-        // 对比图
-        renderCompareChartTo(data, engines, 'rp-compare-chart');
-        // 引擎卡片
-        renderEngineCardsTo(data, engines, 'rp-engine-cards');
-        // 年度趋势
-        renderYearlyChartTo(data, engines, years, 'rp-yearly-chart');
-        renderYearlyTableTo(data, engines, years, 'rp-yearly-table');
-        // 校准
-        renderCalibrationTo(data, engines, 'rp-cal-viz', 'rp-cal-content');
-        // 错误
-        renderErrorAnalysisTo(data, engines, 'rp-error-viz', 'rp-error-content');
+        // 分步渲染——用 setTimeout 让浏览器交替绘制，避免卡死
+        var steps = [
+          { label: '核心发现', fn: function() { renderSummaryCalloutTo(data, engines, 'rp-summary-callout'); }},
+          { label: '分析摘要', fn: function() { renderNarrativeTo(data, engines, years, 'rp-narrative'); }},
+          { label: '引擎对比图', fn: function() { renderCompareChartTo(data, engines, 'rp-compare-chart'); }},
+          { label: '引擎卡片', fn: function() { renderEngineCardsTo(data, engines, 'rp-engine-cards'); }},
+          { label: '年度趋势图', fn: function() { renderYearlyChartTo(data, engines, years, 'rp-yearly-chart'); }},
+          { label: '年度表格', fn: function() { renderYearlyTableTo(data, engines, years, 'rp-yearly-table'); }},
+          { label: '校准分析', fn: function() { renderCalibrationTo(data, engines, 'rp-cal-viz', 'rp-cal-content'); }},
+          { label: '错误分析', fn: function() { renderErrorAnalysisTo(data, engines, 'rp-error-viz', 'rp-error-content'); }},
+        ];
 
-        // 原始JSON
-        const summaryLines = [];
-        summaryLines.push(`报告生成时间: ${data.generatedAt}`);
-        summaryLines.push(`总比赛数: ${data.summary?.total || 0}`);
-        if (data.summary?.byYear) {
-          summaryLines.push(`覆盖届次: ${data.summary.byYear.map(y => `${y.year}年(${y.count}场)`).join('、')}`);
-        }
-        summaryLines.push('');
-        if (data.overall) {
-          for (const [eng, o] of Object.entries(data.overall)) {
-            if (!o.available) continue;
-            summaryLines.push(`--- ${eng.toUpperCase()} ---`);
-            summaryLines.push(`  准确率: ${(o.accuracy * 100).toFixed(1)}%`);
-            summaryLines.push(`  Brier: ${o.brier.toFixed(4)}`);
-            summaryLines.push(`  LogLoss: ${o.logLoss.toFixed(4)}`);
-            summaryLines.push(`  ECE: ${o.calibration?.ece != null ? (o.calibration.ece * 100).toFixed(2) + '%' : '—'}`);
+        var stepIdx = 0;
+        function runNextStep() {
+          if (stepIdx >= steps.length) {
+            progressEl.style.display = 'none';
+            // 原始JSON
+            buildReportJson(data);
+            return;
           }
+          var step = steps[stepIdx];
+          progressEl.textContent = '渲染中 (' + (stepIdx+1) + '/' + steps.length + '): ' + step.label;
+          try { step.fn(); } catch(e) { console.warn('[报告] ' + step.label + ' 渲染失败:', e); }
+          stepIdx++;
+          setTimeout(runNextStep, 8);
         }
-        const readable = summaryLines.join('\n') + '\n\n=== 原始 JSON ===\n\n' + JSON.stringify(data, null, 2);
-        document.getElementById('report-json').textContent = readable;
+        setTimeout(runNextStep, 4);
       } catch(e) {
+        progressEl.style.display = 'none';
         document.getElementById('report-json').textContent = '加载失败: ' + e.message;
+      }
+    }
+
+    function buildReportJson(data) {
+      const summaryLines = [];
+      summaryLines.push('报告生成时间: ' + data.generatedAt);
+      summaryLines.push('总比赛数: ' + (data.summary?.total || 0));
+      if (data.summary?.byYear) {
+        summaryLines.push('覆盖届次: ' + data.summary.byYear.map(function(y) { return y.year + '年(' + y.count + '场)'; }).join('、'));
+      }
+      summaryLines.push('');
+      if (data.overall) {
+        var engNames = Object.keys(data.overall);
+        for (var ei = 0; ei < engNames.length; ei++) {
+          var eng = engNames[ei];
+          var o = data.overall[eng];
+          if (!o.available) continue;
+          summaryLines.push('--- ' + eng.toUpperCase() + ' ---');
+          summaryLines.push('  准确率: ' + (o.accuracy * 100).toFixed(1) + '%');
+          summaryLines.push('  Brier: ' + o.brier.toFixed(4));
+          summaryLines.push('  LogLoss: ' + o.logLoss.toFixed(4));
+          summaryLines.push('  ECE: ' + (o.calibration?.ece != null ? (o.calibration.ece * 100).toFixed(2) + '%' : '\u2014'));
+        }
+      }
+      // 只写摘要
+      var jsonEl = document.getElementById('report-json');
+      jsonEl.textContent = summaryLines.join('\n');
+      // 下载按钮
+      var dlBtn = document.getElementById('report-json-dl');
+      if (!dlBtn) {
+        dlBtn = document.createElement('a');
+        dlBtn.id = 'report-json-dl';
+        dlBtn.className = 'btn btn-sm btn-secondary';
+        dlBtn.style.cssText = 'margin-top:8px;display:inline-block;font-size:12px;text-decoration:none;';
+        dlBtn.textContent = '\u2b07 \u4e0b\u8f7d\u539f\u59cb JSON';
+        dlBtn.target = '_blank';
+        jsonEl.parentNode.insertBefore(dlBtn, jsonEl.nextSibling);
+        // 用 Blob + ObjectURL 生成可下载文件，零 DOM 开销
+        var rawJson = JSON.stringify(data, null, 2);
+        var blob = new Blob([rawJson], { type: 'application/json' });
+        dlBtn.href = URL.createObjectURL(blob);
+        dlBtn.download = 'backtest-report-' + (data.generatedAt ? data.generatedAt.replace(/[:]/g, '-') : Date.now()) + '.json';
       }
     }
 
@@ -1204,6 +1414,243 @@
     function closeReport() {
       document.getElementById('report-list-content').style.display = 'block';
       document.getElementById('report-viewer').style.display = 'none';
+    }
+
+    // ===== Tab 4: 引擎对比 =====
+    async function loadEngineCompare() {
+      const idle = document.getElementById('bt-engine-compare-idle');
+      const content = document.getElementById('bt-engine-compare-content');
+      try {
+        const res = await fetch('/api/ml/backtest?check=1');
+        const data = await res.json();
+        if (!data.success || !data.summary?.total) {
+          idle.style.display = 'block';
+          content.style.display = 'none';
+          return;
+        }
+        idle.style.display = 'none';
+        content.style.display = 'block';
+        renderEngineCompare(data);
+      } catch(e) {
+        idle.style.display = 'block';
+        content.style.display = 'none';
+      }
+    }
+
+    function renderEngineCompare(data) {
+      const engines = ['elo', 'ml', 'ensemble'].filter(e => data.overall?.[e]?.available);
+      if (engines.length === 0) return;
+
+      // 1. 引擎五维对比条形图
+      renderRadarBars(data, engines, 'ec-radar-chart');
+
+      // 2. ML vs Elo 场景优势表
+      renderAdvantageTable(data, 'ec-advantage-table');
+
+      // 3. 错误聚类
+      renderClusteringTable(data, engines, 'ec-clustering-table');
+
+      // 4. 场景指标对比
+      renderSceneComparison(data, engines, 'ec-scene-table');
+
+      // 5. 置信度散点图 (T8.4)
+      renderConfidenceScatter(data, engines, 'ec-scatter-plot');
+    }
+
+    function renderRadarBars(data, engines, targetId) {
+      const dims = ['accuracy', 'brier', 'logLoss', 'roi', 'auc'];
+      var dimLabels = ['准确率 \u2191', 'Brier \u2193', 'LogLoss \u2193', 'ROI \u2191', 'AUC \u2191'];
+      const dimFormats = [
+        v => (v*100).toFixed(1) + '%',
+        v => v.toFixed(3),
+        v => v.toFixed(3),
+        v => v + '%',
+        v => (v*100).toFixed(1) + '%',
+      ];
+      const invertDims = { brier: true, logLoss: true };
+      const engColors = { elo: '#4fc3f7', ml: '#ce93d8', ensemble: '#ffd54f' };
+      let html = '';
+      for (let di = 0; di < dims.length; di++) {
+        const dim = dims[di];
+        const label = dimLabels[di];
+        const fmt = dimFormats[di];
+        const invert = invertDims[dim];
+        const vals = engines.map(e => data.overall[e]?.[dim] ?? 0);
+        let mx = 0;
+        for (const v of vals) mx = Math.max(mx, invert && dim === 'brier' ? 0.5 - v : v);
+        if (mx === 0) mx = 1;
+        html += '<div class="bar-row"><div class="bar-label">' + label + '</div>';
+        for (let ei = 0; ei < engines.length; ei++) {
+          const raw = vals[ei];
+          let norm = dim === 'brier' ? (0.5 - raw) : raw;
+          if (dim === 'logLoss') norm = Math.max(0, 1 - raw);
+          const pct = Math.round((norm / mx) * 100);
+          const color = engColors[engines[ei]] || '#888';
+          html += '<div class="bar-track" style="height:18px;"><div class="bar-fill" style="width:' + pct + '%;background:' + color + ';"><span class="bar-val">' + engines[ei] + ' ' + fmt(raw) + '</span></div></div>';
+        }
+        html += '</div>';
+      }
+      document.getElementById(targetId).innerHTML = html;
+    }
+
+    function renderAdvantageTable(data, targetId) {
+      const adv = data.engineAdvantage;
+      if (!adv || !adv.mlBetter || !adv.eloBetter) {
+        document.getElementById(targetId).innerHTML = '<p style="color:#666;text-align:center;">暂无优势数据</p>';
+        return;
+      }
+      let html = '<table class="year-table"><thead><tr><th>场景</th><th>ML 优</th><th>Elo 优</th><th>平手</th><th>优势方</th></tr></thead><tbody>';
+      const scenes = Object.keys(adv.mlBetter).sort();
+      for (const s of scenes) {
+        const ml = adv.mlBetter[s] || 0;
+        const elo = adv.eloBetter[s] || 0;
+        const tie = adv.tie?.[s] || 0;
+        const total = ml + elo + tie;
+        const winner = ml > elo ? 'ML' : elo > ml ? 'Elo' : '平手';
+        html += '<tr><td>' + s + '</td><td>' + ml + '</td><td>' + elo + '</td><td>' + tie + '</td><td><strong>' + winner + '</strong></td></tr>';
+      }
+      html += '</tbody></table>';
+      document.getElementById(targetId).innerHTML = html;
+    }
+
+    function renderClusteringTable(data, engines, targetId) {
+      const ec = data.errorClustering;
+      if (!ec) {
+        document.getElementById(targetId).innerHTML = '<p style="color:#666;text-align:center;">暂无错误聚类数据</p>';
+        return;
+      }
+      let html = '<table class="year-table"><thead><tr><th>Elo 差梯度</th>';
+      for (const e of engines) html += '<th>' + engineDisplayName(e) + '</th>';
+      html += '</tr></thead><tbody>';
+      const clusters = Object.keys(ec[engines[0]] || {}).sort();
+      for (const c of clusters) {
+        html += '<tr><td>' + c + '</td>';
+        for (const e of engines) {
+          const v = ec[e]?.[c];
+          const errRate = v ? (v.errorRate * 100).toFixed(1) + '%' : '\u2014';
+          const n = v ? '(' + v.n + ')' : '';
+          html += '<td>' + errRate + ' ' + n + '</td>';
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      document.getElementById(targetId).innerHTML = html;
+    }
+
+    function renderSceneComparison(data, engines, targetId) {
+      const sc = data.sceneAnalysis;
+      if (!sc) {
+        document.getElementById(targetId).innerHTML = '<p style="color:#666;text-align:center;">暂无场景分析数据</p>';
+        return;
+      }
+      let html = '<table class="year-table"><thead><tr><th>引擎</th><th>Over/Under 准确率</th><th>BTTS 准确率</th><th>xG MAE</th><th>精确比分</th><th>Top3 比分</th></tr></thead><tbody>';
+      for (const eng of engines) {
+        const s = sc[eng];
+        if (!s?.overUnder || s.overUnder.n === 0) continue;
+        const ouAcc = (s.overUnder.accuracy*100).toFixed(1) + '%';
+        const btAcc = (s.btts.accuracy*100).toFixed(1) + '%';
+        const xgMae = s.score.xgMae || '-';
+        const exactHit = (s.score.exactHitRate*100).toFixed(1) + '%';
+        const top3Hit = (s.score.top3HitRate*100).toFixed(1) + '%';
+        const ouCls = s.overUnder.accuracy > 0.55 ? 'style="color:#81c784"' : 'style="color:#ffcc80"';
+        const btCls = s.btts.accuracy > 0.50 ? 'style="color:#81c784"' : 'style="color:#ffcc80"';
+        html += '<tr><td><strong>' + engineDisplayName(eng) + '</strong></td><td ' + ouCls + '>' + ouAcc + '</td><td ' + btCls + '>' + btAcc + '</td><td>' + xgMae + '</td><td>' + exactHit + '</td><td>' + top3Hit + '</td></tr>';
+      }
+      html += '</tbody></table>';
+      document.getElementById(targetId).innerHTML = html || '<p style="color:#666;text-align:center;">暂无场景指标数据</p>';
+    }
+
+    // Phase 17 T8.4: 置信度 vs 准确率散点图
+    // \u6bcf\u5e74\u4e00\u4e2a\u6570\u636e\u70b9\uff0cX=\u7f6e\u4fe1\u5ea6\u6307\u6807(1-brier)\uff0cY=\u51c6\u786e\u7387\uff0c\u5c55\u793a\u5f15\u64ce\u95f4\u5173\u7cfb
+    function renderConfidenceScatter(data, engines, targetId) {
+      const container = document.getElementById(targetId);
+      if (!data.yearly) {
+        container.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">\u6682\u65e0\u5e74\u5ea6\u6570\u636e</p>';
+        return;
+      }
+      const points = [];
+      for (const eng of engines) {
+        const yr = data.yearly[eng];
+        if (!yr) continue;
+        const years = Object.keys(yr).sort();
+        for (const y of years) {
+          const d = yr[y];
+          if (d.accuracy == null || d.brier == null) continue;
+          const conf = 1 - d.brier;
+          points.push({ engine: eng, year: y, conf, acc: d.accuracy });
+        }
+      }
+      if (points.length < 2) {
+        container.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">\u6570\u636e\u70b9\u4e0d\u8db3</p>';
+        return;
+      }
+
+      const engColors = { elo: '#4fc3f7', ml: '#ce93d8', ensemble: '#ffd54f' };
+      const engSymbols = { elo: 'circle', ml: 'diamond', ensemble: 'triangle' };
+
+      let xMin = 1, xMax = 0, yMin = 1, yMax = 0;
+      for (const p of points) {
+        xMin = Math.min(xMin, p.conf); xMax = Math.max(xMax, p.conf);
+        yMin = Math.min(yMin, p.acc); yMax = Math.max(yMax, p.acc);
+      }
+      const pad = 0.05;
+      xMin = Math.max(0, xMin - pad); xMax = Math.min(1, xMax + pad);
+      yMin = Math.max(0, yMin - pad); yMax = Math.min(1, yMax + pad);
+      if (xMax - xMin < 0.1) { xMin = Math.max(0, xMin - 0.05); xMax = Math.min(1, xMax + 0.05); }
+      if (yMax - yMin < 0.1) { yMin = Math.max(0, yMin - 0.05); yMax = Math.min(1, yMax + 0.05); }
+
+      const w = 550, h = 380, mL = 60, mR = 20, mT = 20, mB = 45;
+      const pw = w - mL - mR, ph = h - mT - mB;
+
+      function xF(v) { return mL + ((v - xMin) / (xMax - xMin)) * pw; }
+      function yF(v) { return mT + ph - ((v - yMin) / (yMax - yMin)) * ph; }
+
+      let html = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+      html += '<rect x="' + mL + '" y="' + mT + '" width="' + pw + '" height="' + ph + '" fill="#151515" stroke="#333" stroke-width="1"/>';
+      for (let i = 0; i <= 5; i++) {
+        const v = xMin + (xMax - xMin) * i / 5;
+        const vY = yMin + (yMax - yMin) * i / 5;
+        const gx = xF(v);
+        const gy = yF(vY);
+        if (i > 0) {
+          html += '<line x1="' + gx + '" y1="' + mT + '" x2="' + gx + '" y2="' + (mT+ph) + '" stroke="#282828" stroke-width="1"/>';
+          html += '<line x1="' + mL + '" y1="' + gy + '" x2="' + (mL+pw) + '" y2="' + gy + '" stroke="#282828" stroke-width="1"/>';
+        }
+        html += '<text x="' + gx + '" y="' + (h - 12) + '" text-anchor="middle" fill="#666" font-size="10">' + (v*100).toFixed(0) + '%</text>';
+        html += '<text x="' + (mL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" fill="#666" font-size="10">' + (vY*100).toFixed(0) + '%</text>';
+      }
+      html += '<text x="' + (mL + pw/2) + '" y="' + (h - 2) + '" text-anchor="middle" fill="#888" font-size="11" font-weight="500">\u7f6e\u4fe1\u5ea6\u6307\u6807 (1\u2212Brier)</text>';
+      html += '<text x="12" y="' + (mT + ph/2) + '" text-anchor="middle" fill="#888" font-size="11" font-weight="500" transform="rotate(-90,12,' + (mT+ph/2) + ')">\u51c6\u786e\u7387</text>';
+
+      for (const p of points) {
+        const cx = xF(p.conf), cy = yF(p.acc);
+        const color = engColors[p.engine] || '#888';
+        const title = engineDisplayName(p.engine) + ' ' + p.year + ': \u51c6\u786e\u7387' + (p.acc*100).toFixed(1) + '%, \u7f6e\u4fe1\u5ea6' + (p.conf*100).toFixed(1) + '%';
+        let shape;
+        if (engSymbols[p.engine] === 'circle') {
+          shape = '<circle cx="' + cx + '" cy="' + cy + '" r="5" fill="' + color + '" opacity="0.85" class="dot"><title>' + title + '</title></circle>';
+        } else if (engSymbols[p.engine] === 'diamond') {
+          const s = 5;
+          shape = '<polygon points="' + cx + ',' + (cy-s) + ' ' + (cx+s) + ',' + cy + ' ' + cx + ',' + (cy+s) + ' ' + (cx-s) + ',' + cy + '" fill="' + color + '" opacity="0.85" class="dot"><title>' + title + '</title></polygon>';
+        } else {
+          const s = 5, r3 = s * 0.577;
+          shape = '<polygon points="' + cx + ',' + (cy-s) + ' ' + (cx+r3) + ',' + (cy+s*0.5) + ' ' + (cx-r3) + ',' + (cy+s*0.5) + '" fill="' + color + '" opacity="0.85" class="dot"><title>' + title + '</title></polygon>';
+        }
+        html += shape;
+      }
+
+      let lx = mL + pw - 130, ly = mT + 10;
+      html += '<rect x="' + (lx-8) + '" y="' + (ly-6) + '" width="130" height="' + (engines.length * 20 + 10) + '" rx="4" fill="#1a1a2e" stroke="#333" opacity="0.9"/>';
+      for (let i = 0; i < engines.length; i++) {
+        const e = engines[i];
+        const color = engColors[e] || '#888';
+        const sy = ly + i * 20;
+        html += '<circle cx="' + (lx + 5) + '" cy="' + (sy + 2) + '" r="4" fill="' + color + '"/>';
+        html += '<text x="' + (lx + 14) + '" y="' + (sy + 6) + '" fill="#ccc" font-size="11" class="legend-item">' + engineDisplayName(e) + '</text>';
+      }
+
+      html += '</svg>';
+      container.innerHTML = html;
     }
   </script>
 </body>

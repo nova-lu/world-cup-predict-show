@@ -1,0 +1,84 @@
+{
+  "manifestId": "elo_update_20260703_234449",
+  "generatedAt": "2026-07-03T15:44:49.312Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-02",
+    "to": "2026-07-02"
+  },
+  "matchesApplied": 3,
+  "matchDetails": [
+    {
+      "date": "2026-07-02",
+      "home": "Spain",
+      "away": "Austria",
+      "score": "3-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 6.4,
+      "deltaAway": -6.4,
+      "upsetSuppressed": true
+    },
+    {
+      "date": "2026-07-02",
+      "home": "Portugal",
+      "away": "Croatia",
+      "score": "2-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 19.5,
+      "deltaAway": -19.5,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-02",
+      "home": "Switzerland",
+      "away": "Algeria",
+      "score": "2-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 16.9,
+      "deltaAway": -16.9,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "portugal",
+      "delta": 19.5
+    },
+    {
+      "team": "croatia",
+      "delta": -19.5
+    },
+    {
+      "team": "switzerland",
+      "delta": 16.9
+    },
+    {
+      "team": "algeria",
+      "delta": -16.9
+    },
+    {
+      "team": "spain",
+      "delta": 6.4
+    }
+  ],
+  "ratingsBefore": {
+    "spain": 2010.9,
+    "portugal": 1936.1,
+    "croatia": 1859,
+    "switzerland": 1827.1,
+    "algeria": 1710.5,
+    "austria": 1722.1
+  },
+  "ratingsAfter": {
+    "spain": 2017.3,
+    "portugal": 1955.6,
+    "croatia": 1839.5,
+    "switzerland": 1844,
+    "algeria": 1693.6,
+    "austria": 1715.7
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}

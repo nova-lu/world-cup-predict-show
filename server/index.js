@@ -95,6 +95,11 @@ app.get('/api/ml/status', async (req, res) => {
       degrade: degradeStats || { degradeCount: 0 },
       // Phase 10: 数据新鲜度状态
       freshness,
+      // Phase 18: Dixon-Coles 泊松修正状态
+      poisson: {
+        dcEnabled: mlConfig.poisson?.dcEnabled ?? true,
+        dcRho: mlConfig.poisson?.dcRho ?? -0.13,
+      },
       error,
     });
   } catch (e) {
