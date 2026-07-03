@@ -1230,6 +1230,51 @@
    "pens2": null,
    "status": "FT",
    "winner": null
+  },
+  {
+    "date": "2026-07-02",
+    "round": "Round of 32",
+    "group": null,
+    "team1": "Spain",
+    "team2": "Austria",
+    "t1": "spain",
+    "t2": "austria",
+    "g1": 3,
+    "g2": 0,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": null
+  },
+  {
+    "date": "2026-07-02",
+    "round": "Round of 32",
+    "group": null,
+    "team1": "Portugal",
+    "team2": "Croatia",
+    "t1": "portugal",
+    "t2": "croatia",
+    "g1": 2,
+    "g2": 1,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": null
+  },
+  {
+    "date": "2026-07-02",
+    "round": "Round of 32",
+    "group": null,
+    "team1": "Switzerland",
+    "team2": "Algeria",
+    "t1": "switzerland",
+    "t2": "algeria",
+    "g1": 2,
+    "g2": 0,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": null
   }
  ]
 }

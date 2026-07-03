@@ -15,7 +15,8 @@ import mlConfig from '../config.js';
 import { buildMatchFeatures } from '../data/features.js';
 import { normalizePrediction, toProbabilities, validateProbabilities } from '../utils/probability.js';
 import {
-  computePoissonMatrix, computeProbabilities, computeTopScores,
+  computePoissonMatrix, computePoissonMatrixDC, getDefaultRho,
+  computeProbabilities, computeTopScores,
   computeOverUnder, computeBTTS, computeRisk, computeCoverage,
   filterScoresByDirection,
 } from './poisson.js';
@@ -86,7 +87,9 @@ export async function predictMatch(homeTeam, awayTeam, matchDate, options = {}) 
   const lambdaHome = mlResult.lambda_home || 1.5;
   const lambdaAway = mlResult.lambda_away || 1.0;
 
-  const scoreMatrix = computePoissonMatrix(lambdaHome, lambdaAway);
+  const scoreMatrix = mlConfig.poisson?.dcEnabled
+    ? computePoissonMatrixDC(lambdaHome, lambdaAway, mlConfig.poisson.dcRho ?? getDefaultRho())
+    : computePoissonMatrix(lambdaHome, lambdaAway);
   const probabilities = computeProbabilities(scoreMatrix);
   const rawTopScores = computeTopScores(scoreMatrix, 10); // 取 Top10 保留方向门控空间
 

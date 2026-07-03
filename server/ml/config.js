@@ -77,6 +77,12 @@ const mlConfig = {
   // 降级
   degradeToElo: true,
 
+  // ---------- Phase 18: Dixon-Coles 泊松修正 ----------
+  poisson: {
+    dcEnabled: true,         // 灰度开关：false 回退到独立泊松
+    dcRho: -0.13,            // DC 相关性参数（null 表示使用 getDefaultRho 值）
+  },
+
   // ---------- Phase 7 配置 ----------
   polymarket: {
     enabled: true,

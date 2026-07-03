@@ -1,23 +1,24 @@
 /**
  * 回测预测生成器
+ *
+ * Phase 17 T1: 使用 Elo 时间点快照替代当前 Elo 评分
+ * getEloForTeamAtDate(slug, date) 从 eloSnapshot.js 读取
  */
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { getEloForTeamAtDate, getSnapshotInfo } from './eloSnapshot.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-let eloModel, mlPredictor, eloRatings, rankingModule, mlConfig;
+let eloModel, mlPredictor, mlConfig;
 
 async function ensureDeps() {
   if (!eloModel) eloModel = await import(pathToFileURL(path.resolve(__dirname, '../../services/elo-model.mjs')).href);
-  if (!rankingModule) rankingModule = await import(pathToFileURL(path.resolve(__dirname, '../data/rankings.js')).href);
   if (!mlConfig) { const mod = await import(pathToFileURL(path.resolve(__dirname, '../config.js')).href); mlConfig = mod.default; }
-  if (!eloRatings) eloRatings = rankingModule.loadEloRatings();
   if (!mlPredictor) {
     try { mlPredictor = await import(pathToFileURL(path.resolve(__dirname, '../inference/predictor.js')).href); }
     catch (e) { console.warn('[backtest/predictor] ML:', e.message); }
   }
 }
-
 function isGroupStage(stage) {
   if (!stage) return false;
   const s = String(stage);
@@ -27,8 +28,8 @@ function isGroupStage(stage) {
 export async function predictOne(match, opts = {}) {
   await ensureDeps();
   const mlEnabled = opts.mlEnabled !== false && !!mlPredictor;
-  const homeElo = getEloForTeam(match.homeTeam);
-  const awayElo = getEloForTeam(match.awayTeam);
+  const homeElo = getEloForTeamAtDate(match.homeTeam, match.date);
+  const awayElo = getEloForTeamAtDate(match.awayTeam, match.date);
   const predictions = {};
 
   // Elo: 小组赛有主场优势，淘汰赛/中立场 neutral
@@ -44,7 +45,16 @@ export async function predictOne(match, opts = {}) {
     try {
       const ctx = { isHome: true, isHost: false, isKnockout: !isGroupStage(match.stage), tournamentWeight: match.year === 2026 ? 1.0 : 0.9 };
       const r = await mlPredictor.predictMatch(match.homeTeam, match.awayTeam, match.date, { context: ctx });
-      predictions.ml = { prob: { homeWin: r.probabilities?.homeWin || 0, draw: r.probabilities?.draw || 0, awayWin: r.probabilities?.awayWin || 0 }, xg: { home: r.expectedGoals?.home || 0, away: r.expectedGoals?.away || 0 }, confidence: r.metadata?.confidence || 0 };
+      predictions.ml = {
+        prob: { homeWin: r.probabilities?.homeWin || 0, draw: r.probabilities?.draw || 0, awayWin: r.probabilities?.awayWin || 0 },
+        xg: { home: r.expectedGoals?.home || 0, away: r.expectedGoals?.away || 0 },
+        confidence: r.metadata?.confidence || 0,
+        overUnder: r.overUnder || { over2_5: 0.5, under2_5: 0.5 },
+        btts: r.btts || { yes: 0.5, no: 0.5 },
+        topScores: r.topScores || [],
+        risk: r.risk || {},
+        coverage: r.coverage || {},
+      };
     } catch (e) { predictions.ml = null; }
   }
 
@@ -56,7 +66,15 @@ export async function predictOne(match, opts = {}) {
     } catch (e) { predictions.ensemble = null; }
   }
 
-  return { ...match, eloRating: { home: homeElo, away: awayElo }, predictions };
+  return {
+    ...match,
+    eloRating: { home: homeElo, away: awayElo },
+    predictions,
+    snapshotInfo: {
+      home: getSnapshotInfo(match.date),
+      away: getSnapshotInfo(match.date),
+    },
+  };
 }
 
 export async function predictBatch(matches, opts = {}) {
@@ -73,13 +91,4 @@ export async function predictBatch(matches, opts = {}) {
     if ((i + 1) % 20 === 0) console.log(`[backtest/predictor] ${i + 1}/${matches.length}`);
   }
   return results;
-}
-
-function getEloForTeam(slug) {
-  if (!eloRatings) return 1500;
-  if (eloRatings[slug]) return eloRatings[slug].rating || eloRatings[slug] || 1500;
-  for (const [key, val] of Object.entries(eloRatings)) {
-    if (key.toLowerCase().replace(/[^a-z0-9]/g, '-') === slug) return val.rating || val || 1500;
-  }
-  return 1500;
 }

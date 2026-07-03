@@ -177,6 +177,7 @@ router.get('/schedule', async (req, res) => {
   try {
     const { date, group, status } = req.query;
     let matches = await fetchAllMatches(req.forceRefresh);
+    const predictions = predictUpcoming(matches);
 
     if (date) matches = matches.filter(m => m.date === date);
     if (group && group !== 'all') matches = matches.filter(m => m.group === group);
@@ -185,11 +186,15 @@ router.get('/schedule', async (req, res) => {
 
     res.json({
       total: matches.length,
-      matches: matches.map(m => ({
-        ...m,
-        team1Info: getTeamInfo(m.t1),
-        team2Info: getTeamInfo(m.t2),
-      })),
+      matches: matches.map(m => {
+        const pred = predictions.find(p => p.match.t1 === m.t1 && p.match.t2 === m.t2);
+        return {
+          ...m,
+          team1Info: getTeamInfo(m.t1),
+          team2Info: getTeamInfo(m.t2),
+          prediction: pred?.prediction || null,
+        };
+      }),
       _cache: buildCacheMeta('api:matches', true, null),
     });
   } catch (e) {
