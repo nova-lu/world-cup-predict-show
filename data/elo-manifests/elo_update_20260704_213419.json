@@ -1,0 +1,83 @@
+{
+  "manifestId": "elo_update_20260704_213419",
+  "generatedAt": "2026-07-04T13:34:19.819Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-03",
+    "to": "2026-07-03"
+  },
+  "matchesApplied": 3,
+  "matchDetails": [
+    {
+      "date": "2026-07-03",
+      "home": "Egypt",
+      "away": "Australia",
+      "score": "1-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 1.5,
+      "deltaAway": -1.5,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-03",
+      "home": "Colombia",
+      "away": "Ghana",
+      "score": "1-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 11,
+      "deltaAway": -11,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-03",
+      "home": "Argentina",
+      "away": "Cabo Verde",
+      "score": "3-2",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 2.3,
+      "deltaAway": -2.3,
+      "upsetSuppressed": true
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "colombia",
+      "delta": 11
+    },
+    {
+      "team": "ghana",
+      "delta": -11
+    },
+    {
+      "team": "argentina",
+      "delta": 2.3
+    },
+    {
+      "team": "cabo-verde",
+      "delta": -2.3
+    },
+    {
+      "team": "egypt",
+      "delta": 1.5
+    }
+  ],
+  "ratingsBefore": {
+    "argentina": 1989.7,
+    "colombia": 1896.9,
+    "australia": 1741,
+    "ghana": 1676.9,
+    "egypt": 1720.3
+  },
+  "ratingsAfter": {
+    "argentina": 1992,
+    "colombia": 1907.9,
+    "australia": 1739.5,
+    "ghana": 1665.9,
+    "egypt": 1721.8,
+    "cabo-verde": 1497.7
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}

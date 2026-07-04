@@ -167,15 +167,23 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      gap: 2px;
       min-height: 38px;
       text-decoration: none;
       color: inherit;
       position: relative;
     }
-    .ko-bracket-grid .bracket-match:hover {
-      border-color: var(--accent);
-      background: var(--bg-hover);
+    .ko-bracket-grid .bracket-match:hover { background: var(--bg-hover); }
+    .ko-bracket-grid .bracket-match.finished {
+      border-left-color: var(--accent-green, #22c55e) !important;
     }
+    .ko-bracket-grid .bracket-match.unresolved {
+      background: rgba(255,255,255,0.015);
+      border-style: dashed;
+      opacity: 0.5;
+      cursor: default;
+    }
+    .ko-bracket-grid .bracket-match.unresolved:hover { background: rgba(255,255,255,0.015); }
     .ko-bracket-grid .team-line {
       display: flex;
       align-items: center;
@@ -241,7 +249,11 @@
       <h1>🏆 淘汰赛仪表盘 <span class="real-badge">实时数据</span></h1>
       <p class="subtitle" id="ko-summary">加载中...</p>
     </div>
-    <div id="source-banner" class="success-banner" style="display:none"></div>
+    <div id="source-banner" class="success-banner" style="display:none">
+      <span id="source-banner-text"></span>
+      <span id="ko-freshness" style="margin-left:12px;font-size:0.78rem;color:var(--text-muted)"></span>
+      <button onclick="loadKnockoutData(true)" style="margin-left:12px;font-size:0.72rem;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:4px;padding:2px 10px;cursor:pointer">🔄 刷新</button>
+    </div>
     <div id="loading-spinner" class="loading">🏆 加载淘汰赛数据...</div>
 
     <div id="ko-dashboard" class="ko-dashboard" style="display:none">
@@ -251,6 +263,7 @@
         <div class="ko-tab" data-panel="matches">⚽ 比赛列表</div>
         <div class="ko-tab" data-panel="qualified">✅ 32强队伍</div>
         <div class="ko-tab" data-panel="r16-teams">🔵 16强队伍</div>
+        <div class="ko-tab" data-panel="quarter-teams">🏅 8强队伍</div>
         <div class="ko-tab" data-panel="third">📊 第三名竞争</div>
       </div>
 
@@ -297,6 +310,17 @@
             32强淘汰赛胜者（含已完赛的真实结果和未赛比赛的模拟预测）
           </p>
           <div class="qualified-grid" id="ko-r16-teams"></div>
+        </div>
+      </div>
+
+      <!-- Panel 3c: Quarter-final teams -->
+      <div class="ko-panel" id="panel-quarter-teams">
+        <div class="ko-section">
+          <h2>🏅 晋级 8 强的球队</h2>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px">
+            16强淘汰赛胜者（含已完赛的真实结果和未赛比赛的模拟预测）
+          </p>
+          <div class="qualified-grid" id="ko-quarter-teams"></div>
         </div>
       </div>
 
@@ -349,11 +373,20 @@
     const isAwayWinner = winnerSlug && away && match.away === winnerSlug;
     const homeColor = home?.color?.primary || '';
 
+    // 如果两队都未确定（W-slot），跳过渲染（用占位格代替）
+    const homeUnresolved = match.home && match.home.startsWith('W');
+    const awayUnresolved = match.away && match.away.startsWith('W');
+    if (homeUnresolved && awayUnresolved) {
+      return '<div class="bracket-match unresolved" data-slot="' + match.slot + '"><div class="team-line"><span class="name" style="color:var(--text-muted)">待定</span></div><div class="team-line"><span class="name" style="color:var(--text-muted)">待定</span></div></div>';
+    }
+
     var html = '<div class="bracket-match' + (finished ? ' finished' : '') + '" data-slot="' + match.slot + '" style="border-left:3px solid ' + homeColor + '">';
     if (match.label) html += '<div class="match-label">' + match.label + '</div>';
     // Home
     html += '<div class="team-line' + (isHomeWinner ? ' winner' : '') + '">';
-    if (home) {
+    if (homeUnresolved) {
+      html += '<span class="name" style="color:var(--text-muted)">待定</span>';
+    } else if (home) {
       html += flagHtml(home, 'sm') + '<span class="name">' + (home.name || match.home) + '</span>';
       if (!finished) html += '<span class="elo-badge">' + home.elo + '</span>';
       if (finished && match.g1 != null) html += '<span class="score-badge">' + match.g1 + '</span>';
@@ -363,7 +396,9 @@
     html += '</div>';
     // Away
     html += '<div class="team-line' + (isAwayWinner ? ' winner' : '') + '">';
-    if (away) {
+    if (awayUnresolved) {
+      html += '<span class="name" style="color:var(--text-muted)">待定</span>';
+    } else if (away) {
       html += flagHtml(away, 'sm') + '<span class="name">' + (away.name || match.away) + '</span>';
       if (!finished) html += '<span class="elo-badge">' + away.elo + '</span>';
       if (finished && match.g2 != null) html += '<span class="score-badge">' + match.g2 + '</span>';
@@ -523,6 +558,37 @@
     container.innerHTML = html;
   }
 
+  // ===== 渲染8强队伍（16强胜者） =====
+  function renderQuarterTeams(bracketRoundData, teamsProb) {
+    var container = document.getElementById('ko-quarter-teams');
+    var r16 = bracketRoundData.round16 || [];
+    var realWinners = {}, predWinners = {};
+    r16.forEach(function(m) {
+      if (m.winner) {
+        if (m.finished && m.g1 != null) realWinners[m.winner] = true;
+        else predWinners[m.winner] = true;
+      }
+    });
+    var allSlugs = Object.keys(realWinners).concat(Object.keys(predWinners));
+    if (!allSlugs.length) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无8强数据</div>';
+      return;
+    }
+    var html = '';
+    allSlugs.forEach(function(slug) {
+      var isReal = realWinners[slug];
+      var t = teamsProb[slug] || {};
+      var info = { flagPath: t.flagPath, flag: t.flag, name: t.name || slug };
+      html += '<div class="qualified-team ' + (isReal ? 'real' : 'predicted') + '">' +
+        flagHtml(info, 'md') +
+        '<span>' + (t.name || slug) + '</span>' +
+        '<span class="rank-label">' + (t.quarter ? t.quarter.toFixed(1) + '%' : '') + '</span>' +
+        (isReal ? '<span class="badge-real">✅ 已晋级</span>' : '<span class="badge-pred">🔮 预测</span>') +
+        '</div>';
+    });
+    container.innerHTML = html;
+  }
+
   // ===== 渲染32强球队 =====
   function renderQualified(qualifiers) {
     var container = document.getElementById('ko-qualified');
@@ -593,14 +659,22 @@
 
       // Source banner
       var banner = document.getElementById('source-banner');
+      var bannerText = document.getElementById('source-banner-text');
+      var freshnessEl = document.getElementById('ko-freshness');
       if (knockoutData.source === 'real') {
-        banner.innerHTML = '✅ 淘汰赛对阵基于实时小组赛结果';
+        bannerText.textContent = '✅ 淘汰赛对阵基于实时小组赛结果';
         banner.className = 'success-banner';
       } else {
-        banner.innerHTML = '⚠️ 淘汰赛对阵基于蒙特卡洛模拟';
+        bannerText.textContent = '⚠️ 淘汰赛对阵基于蒙特卡洛模拟';
         banner.className = 'disclaimer-banner';
       }
-      banner.style.display = 'block';
+      // Show freshness timestamp from cache metadata
+      if (knockoutRes._cache && knockoutRes._cache.hitAt) {
+        freshnessEl.textContent = '最后更新: ' + new Date(knockoutRes._cache.hitAt).toLocaleString('zh-CN');
+      } else if (knockoutRes.generatedAt) {
+        freshnessEl.textContent = '最后更新: ' + new Date(knockoutRes.generatedAt).toLocaleString('zh-CN');
+      }
+      banner.style.display = 'flex';
 
       // Summary
       var totalTeams = knockoutData.totalQualified || Object.keys(teamsProb).length || 0;
@@ -608,9 +682,10 @@
 
       // Render panels
       renderBracketTree(roundData, teamsProb);
-      if (bracketRes && bracketRes.rounds) {
-        renderMatchList(bracketRes.rounds, teamsProb);
-        renderR16Teams(bracketRes.rounds, teamsProb);
+      if (roundData && roundData.round32) {
+        renderMatchList(roundData, teamsProb);
+        renderR16Teams(roundData, teamsProb);
+        renderQuarterTeams(roundData, teamsProb);
       } else {
         document.getElementById('ko-finished').innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无比赛数据</div>';
         document.getElementById('ko-upcoming').innerHTML = '';

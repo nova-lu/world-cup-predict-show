@@ -24,20 +24,20 @@ const round32Matches = [
 ];
 
 const round16Matches = [
-  { id: 'r16-1', label: 'R16·1', home: 'W73', away: 'W75', slot: 'W89' },
-  { id: 'r16-2', label: 'R16·2', home: 'W74', away: 'W77', slot: 'W90' },
-  { id: 'r16-3', label: 'R16·3', home: 'W76', away: 'W78', slot: 'W91' },
-  { id: 'r16-4', label: 'R16·4', home: 'W79', away: 'W80', slot: 'W92' },
-  { id: 'r16-5', label: 'R16·5', home: 'W81', away: 'W83', slot: 'W93' },
-  { id: 'r16-6', label: 'R16·6', home: 'W82', away: 'W84', slot: 'W94' },
-  { id: 'r16-7', label: 'R16·7', home: 'W85', away: 'W87', slot: 'W95' },
-  { id: 'r16-8', label: 'R16·8', home: 'W86', away: 'W88', slot: 'W96' },
+  { id: 'r16-1', label: 'R16·1', home: 'W78', away: 'W85', slot: 'W89' },
+  { id: 'r16-2', label: 'R16·2', home: 'W77', away: 'W84', slot: 'W90' },
+  { id: 'r16-3', label: 'R16·3', home: 'W75', away: 'W76', slot: 'W91' },
+  { id: 'r16-4', label: 'R16·4', home: 'W73', away: 'W82', slot: 'W92' },
+  { id: 'r16-5', label: 'R16·5', home: 'W79', away: 'W80', slot: 'W93' },
+  { id: 'r16-6', label: 'R16·6', home: 'W83', away: 'W86', slot: 'W94' },
+  { id: 'r16-7', label: 'R16·7', home: 'W74', away: 'W87', slot: 'W95' },
+  { id: 'r16-8', label: 'R16·8', home: 'W81', away: 'W88', slot: 'W96' },
 ];
 
 const quarterMatches = [
-  { id: 'qf-1', label: 'QF·1', home: 'W89', away: 'W90', slot: 'W97' },
-  { id: 'qf-2', label: 'QF·2', home: 'W91', away: 'W92', slot: 'W98' },
-  { id: 'qf-3', label: 'QF·3', home: 'W93', away: 'W94', slot: 'W99' },
+  { id: 'qf-1', label: 'QF·1', home: 'W90', away: 'W89', slot: 'W97' },
+  { id: 'qf-2', label: 'QF·2', home: 'W93', away: 'W94', slot: 'W98' },
+  { id: 'qf-3', label: 'QF·3', home: 'W91', away: 'W92', slot: 'W99' },
   { id: 'qf-4', label: 'QF·4', home: 'W95', away: 'W96', slot: 'W100' },
 ];
 
@@ -185,12 +185,12 @@ export default async function bracketRouter(req, res) {
         console.log('[Bracket] 使用真实 R32 对阵数据');
 
         // 将 16 场 R32 分配到 slot W73-W88
-        // 使用 bracket 结构树：W73+W75→W89, W74+W77→W90, W76+W78→W91,
-        // W79+W80→W92, W81+W83→W93, W82+W84→W94, W85+W87→W95, W86+W88→W96
+        // 使用 bracket 结构树（2026 官方）：W78+W85→W89, W77+W84→W90, W75+W76→W91,
+        // W73+W82→W92, W79+W80→W93, W83+W86→W94, W74+W87→W95, W81+W88→W96
         const slotPairs = [
-          ['W73', 'W75'], ['W74', 'W77'], ['W76', 'W78'],
-          ['W79', 'W80'], ['W81', 'W83'], ['W82', 'W84'],
-          ['W85', 'W87'], ['W86', 'W88'],
+          ['W78', 'W85'], ['W77', 'W84'], ['W75', 'W76'],
+          ['W73', 'W82'], ['W79', 'W80'], ['W83', 'W86'],
+          ['W74', 'W87'], ['W81', 'W88'],
         ];
 
         // 确定每个 R32 比赛在 bracket 树中的"邻居"（同一个 R16 对手）
