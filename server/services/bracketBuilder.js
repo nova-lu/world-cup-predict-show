@@ -39,20 +39,20 @@ const round32Slots = [
 ];
 
 const round16Slots = [
-  { id: 'r16-1', label: 'R16·1', home: 'W73', away: 'W75', slot: 'W89', stage: 'round16' },
-  { id: 'r16-2', label: 'R16·2', home: 'W74', away: 'W77', slot: 'W90', stage: 'round16' },
-  { id: 'r16-3', label: 'R16·3', home: 'W76', away: 'W78', slot: 'W91', stage: 'round16' },
-  { id: 'r16-4', label: 'R16·4', home: 'W79', away: 'W80', slot: 'W92', stage: 'round16' },
-  { id: 'r16-5', label: 'R16·5', home: 'W81', away: 'W83', slot: 'W93', stage: 'round16' },
-  { id: 'r16-6', label: 'R16·6', home: 'W82', away: 'W84', slot: 'W94', stage: 'round16' },
-  { id: 'r16-7', label: 'R16·7', home: 'W85', away: 'W87', slot: 'W95', stage: 'round16' },
-  { id: 'r16-8', label: 'R16·8', home: 'W86', away: 'W88', slot: 'W96', stage: 'round16' },
+  { id: 'r16-1', label: 'R16·1', home: 'W78', away: 'W85', slot: 'W89', stage: 'round16' },
+  { id: 'r16-2', label: 'R16·2', home: 'W77', away: 'W84', slot: 'W90', stage: 'round16' },
+  { id: 'r16-3', label: 'R16·3', home: 'W75', away: 'W76', slot: 'W91', stage: 'round16' },
+  { id: 'r16-4', label: 'R16·4', home: 'W73', away: 'W82', slot: 'W92', stage: 'round16' },
+  { id: 'r16-5', label: 'R16·5', home: 'W79', away: 'W80', slot: 'W93', stage: 'round16' },
+  { id: 'r16-6', label: 'R16·6', home: 'W83', away: 'W86', slot: 'W94', stage: 'round16' },
+  { id: 'r16-7', label: 'R16·7', home: 'W74', away: 'W87', slot: 'W95', stage: 'round16' },
+  { id: 'r16-8', label: 'R16·8', home: 'W81', away: 'W88', slot: 'W96', stage: 'round16' },
 ];
 
 const quarterSlots = [
-  { id: 'qf-1', label: 'QF·1', home: 'W89', away: 'W90', slot: 'W97', stage: 'quarter' },
-  { id: 'qf-2', label: 'QF·2', home: 'W91', away: 'W92', slot: 'W98', stage: 'quarter' },
-  { id: 'qf-3', label: 'QF·3', home: 'W93', away: 'W94', slot: 'W99', stage: 'quarter' },
+  { id: 'qf-1', label: 'QF·1', home: 'W90', away: 'W89', slot: 'W97', stage: 'quarter' },
+  { id: 'qf-2', label: 'QF·2', home: 'W93', away: 'W94', slot: 'W98', stage: 'quarter' },
+  { id: 'qf-3', label: 'QF·3', home: 'W91', away: 'W92', slot: 'W99', stage: 'quarter' },
   { id: 'qf-4', label: 'QF·4', home: 'W95', away: 'W96', slot: 'W100', stage: 'quarter' },
 ];
 
