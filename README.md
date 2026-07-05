@@ -155,6 +155,7 @@ node server/index.js
 ---
 
 - 相关页面内容请参看：[网站介绍](./docs/Introduction.md)
+- 相关视频说明介绍网站：[![Introduce Video](./docs/assets/simulator_page.png)](./docs/assets/世界杯数据助手.mp4)
 
 ## 部署
 
