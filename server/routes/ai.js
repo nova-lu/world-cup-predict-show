@@ -48,6 +48,26 @@ router.post('/analyze/:t1/:t2', async (req, res) => {
     aggregated = await aggregateMatchData(t1, t2);
     console.error('[AI route] aggregateMatchData done, elo:', !!aggregated.eloPrediction, 'ml:', aggregated.mlPrediction?.available, 'matchInfo:', !!aggregated.matchInfo);
     summary = summarizeData(aggregated);
+
+    // ===== 获取实时网络数据（Wikipedia 摘要） =====
+    // 在调用 LLM 前获取，确保球员名单/阵容是最新的
+    try {
+      const { fetchCurrentTeamData } = await import('../ai/web-data-fetcher.js');
+      const webData = await fetchCurrentTeamData(t1, t2);
+      // 将球队名注入 webData（buildWebDataSection 使用）
+      if (webData.home) {
+        const homeInfo = aggregated.matchInfo?.homeTeam;
+        webData.home.name = homeInfo?.name || t1;
+      }
+      if (webData.away) {
+        const awayInfo = aggregated.matchInfo?.awayTeam;
+        webData.away.name = awayInfo?.name || t2;
+      }
+      aggregated.webData = webData;
+      console.error('[AI route] web data fetched for', t1, t2, 'home:', !!webData.home, 'away:', !!webData.away);
+    } catch (webErr) {
+      console.warn('[AI route] web data fetch failed:', webErr.message);
+    }
     console.error('[AI route] summarizeData done, sources:', summary.sources);
     // 详细日志：淘汰赛预测
     console.log('[AI route] knockoutPrediction:', JSON.stringify(aggregated.knockoutPrediction));

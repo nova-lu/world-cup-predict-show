@@ -1,0 +1,25 @@
+<div class="inv-panel" id="portfolio-allocator">
+  <div class="inv-panel-header">
+    <h3>组合分配器</h3>
+    <span class="inv-panel-subtitle" id="inv-portfolio-count">已选 0 场比赛</span>
+  </div>
+  <div class="inv-panel-body">
+    <div id="inv-portfolio-list">
+      <div class="inv-empty-state">尚未选择比赛，点击比赛卡片的"加入组合"按钮添加</div>
+    </div>
+    <div class="inv-panel-section" id="inv-portfolio-budget-section" style="display:none">
+      <h4>风险预算分配</h4>
+      <div class="inv-budget-slider">
+        <label>总预算</label>
+        <input type="range" id="inv-budget-range" min="0" max="5000" step="100" value="2500">
+        <span id="inv-budget-value">2,500</span>
+      </div>
+      <div id="inv-budget-allocation" class="inv-budget-items"></div>
+    </div>
+    <div class="inv-panel-actions" id="inv-portfolio-actions" style="display:none">
+      <button class="inv-btn inv-btn-success" onclick="optimizePortfolio()">一键优化</button>
+      <button class="inv-btn inv-btn-primary" onclick="submitPortfolio()">批量投注</button>
+      <button class="inv-btn" onclick="clearPortfolio()">清空</button>
+    </div>
+  </div>
+</div>

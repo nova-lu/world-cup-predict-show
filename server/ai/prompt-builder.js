@@ -151,6 +151,29 @@ function buildGroupContextSection(d) {
 `;
 }
 
+/** 实时网络数据（Wikipedia 摘要，标注获取时间） */
+function buildWebDataSection(d) {
+  if (!d) return '';
+  const h = d.home;
+  const a = d.away;
+  if (!h && !a) return '';
+  let s = '# ⏱️ 实时网络数据 — 来自 Wikipedia（获取时间标注在后）\n';
+  s += '以下数据是当前从互联网实时获取的，可能比你训练数据中的信息更新。\n';
+  s += '**请务必使用以下数据替代你训练知识中的任何过时信息。**\n\n';
+  if (h && h.extract) {
+    s += `## ${h.name || '主队'} Wikipedia 摘要\n`;
+    s += `获取时间: ${h.fetchedAt || '实时'}\n`;
+    s += `${h.extract}\n\n`;
+  }
+  if (a && a.extract) {
+    s += `## ${a.name || '客队'} Wikipedia 摘要\n`;
+    s += `获取时间: ${a.fetchedAt || '实时'}\n`;
+    s += `${a.extract}\n\n`;
+  }
+  if (!h && !a) s += '（当前无实时网络数据）\n';
+  return s;
+}
+
 /**
  * 构造发送给 LLM 的完整 prompt
  * @param {object} data - aggregateMatchData 的返回结果
@@ -167,6 +190,15 @@ export function buildPrompt(data) {
 
   return `# 角色设定
 你是顶级的足球比赛数据分析师，拥有 20 年世界杯赛事分析经验。你的任务是综合利用以下所有数据源，对 2026 年世界杯比赛进行全局性的深度分析。输出严格遵循 JSON 格式。
+
+## ⚠️ 最重要的纪律（必须遵守）
+你的训练数据可能已经过时。以下规则高于一切：
+
+1. **优先使用以下提供的实时数据**。每一条来源都标注了获取时间。
+2. **严禁使用你训练数据中的球员名单/阵容信息**。例如法国队如果已经没有了格列兹曼球员等过时信息，你无论如何都不能提到。
+3. **只在以下数据中提到某球员时，你才能分析该球员**。如果当前阵容数据中不包含某球员名，该球员可能已经不在国家队，你绝不能自行提及他。
+4. 当你对某信息的时效性不确定时，明确注明"（数据限制）"并跳过该部分分析。
+5. **信息真实性的优先级**：实时数据 > 本 prompt 下方提供的非实时数据源 > 你训练知识中的任何内容。
 
 ## 分析原则
 1. **交叉验证**：对比各数据源的异同。当多个独立数据源（Elo/ML/赔率/预测市场）指向同一方向时，置信度更高。
@@ -186,6 +218,8 @@ export function buildPrompt(data) {
 - 球队: ${homeName} (主) vs ${awayName} (客)
 ${data.result ? `- 赛果: ${data.result.homeScore} - ${data.result.awayScore}` : ''}
 ${isKnockout ? '- 淘汰赛规则：常规时间平局→加时赛→点球大战' : '- 小组赛规则：胜3分平1分负0分'}
+
+${buildWebDataSection(data.webData)}
 
 ${buildEloSection(data.eloPrediction)}
 

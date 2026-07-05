@@ -186,7 +186,50 @@ router.get('/bracket', async (req, res) => {
           slot.awayInfo = awayInfo ? { ...awayInfo, elo: ratings[pair.away] || 1500 } : null;
         }
       });
-      console.log('[knockout] 淘汰赛数据兜底注入完成: 16个R32胜者 + 8场R16对阵');
+      // === 补齐已完赛的 R16 结果（仅当 bracketBuilder 未解析时） ===
+      // 不覆盖 bracketBuilder 已正确解析的数据
+      const r16Results = {
+        'W89': { g1: 0, g2: 3, winner: 'morocco', loser: 'canada' },
+        'W90': { g1: 0, g2: 1, winner: 'france', loser: 'paraguay' },
+      };
+      for (const m of r16) {
+        if (m.winner) continue; // 已有数据，不覆盖
+        const result = r16Results[m.slot];
+        if (result) {
+          m.g1 = result.g1;
+          m.g2 = result.g2;
+          m.winner = result.winner;
+          m.finished = true;
+          console.log('[knockout] R16 fallback: ' + m.slot + ' → ' + result.winner + ' (' + result.g1 + '-' + result.g2 + ')');
+        }
+      }
+      // === 补齐能确定的8强（QF）对阵 ===
+      // W97 = W89 vs W90 — 如果R16有结果，可以确定
+      // W98-W100 需要等其他R16赛果，保留为"待定"
+      const qfSlots = data.rounds.quarter || [];
+      const r16WinnerMap = {};
+      for (const m of r16) {
+        if (m.winner) r16WinnerMap[m.slot] = m.winner;
+      }
+      const qfResolve = {
+        'W97': ['W89', 'W90'],  // Canada vs France
+      };
+      for (const m of qfSlots) {
+        const sources = qfResolve[m.slot];
+        if (sources) {
+          const h = r16WinnerMap[sources[0]];
+          const a = r16WinnerMap[sources[1]];
+          if (h && a) {
+            m.home = h;
+            m.away = a;
+            m.resolved = true;
+            m.homeInfo = { ...getTeamInfo(h), elo: ratings[h] || 1500 };
+            m.awayInfo = { ...getTeamInfo(a), elo: ratings[a] || 1500 };
+            console.log('[knockout] QF fallback: ' + m.slot + ' → ' + h + ' vs ' + a);
+          }
+        }
+      }
+      console.log('[knockout] 淘汰赛数据兜底注入完成: R32胜者 + R16对阵/结果 + QF(已确定)');
     }
 
     res.json({

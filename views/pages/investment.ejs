@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head>
+<body>
+  <%- include('../partials/header') %>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>📊 投资决策中心</h1>
+      <p class="subtitle">凯利公式 + 风险平价组合管理</p>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ 数学模型仅供分析参考。过往表现不代表未来结果，请理性决策。
+    </div>
+
+    <%- include('../partials/investment-summary-bar') %>
+
+    <!-- Tab 导航 -->
+    <nav class="inv-tab-nav">
+      <button class="inv-tab-btn active" data-tab="invest" onclick="switchTab('invest')">投资面板</button>
+      <button class="inv-tab-btn" data-tab="positions" onclick="switchTab('positions')">持仓管理</button>
+      <button class="inv-tab-btn" data-tab="curve" onclick="switchTab('curve')">资金曲线</button>
+      <button class="inv-tab-btn" data-tab="backtest" onclick="switchTab('backtest')">回测</button>
+      <button class="inv-tab-btn" data-tab="projection" onclick="switchTab('projection')">📈 收益投影</button>
+      <button class="inv-tab-btn" data-tab="manage" onclick="switchTab('manage')">⚙️ 管理</button>
+    </nav>
+
+    <!-- Tab: 投资面板 -->
+    <div id="tab-invest" class="inv-tab-content active">
+      <div class="inv-layout">
+        <!-- 左栏: 淘汰赛树 -->
+        <div class="inv-col" id="ko-tree-col">
+          <div class="inv-card">
+            <div class="inv-card-title">淘汰赛树</div>
+            <div id="inv-ko-tree" class="inv-ko-tree-container">
+              <div class="inv-empty-state">加载中...</div>
+            </div>
+          </div>
+        </div>
+        <!-- 中栏: 比赛卡片列表 -->
+        <div class="inv-col" id="match-cards-col">
+          <div class="inv-card">
+            <div class="inv-card-title">可投注比赛</div>
+            <div id="inv-match-cards-list" class="inv-match-cards-list">
+              <div class="inv-empty-state" id="inv-cards-loading">加载比赛数据...</div>
+            </div>
+          </div>
+        </div>
+        <!-- 右栏: 决策面板 -->
+        <div class="inv-col" id="decision-col">
+          <%- include('../partials/investment-panel') %>
+          <div style="margin-top:12px">
+            <%- include('../partials/portfolio-allocator') %>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部图表行 -->
+      <div class="inv-chart-row">
+        <div class="inv-chart-container" id="chart-capital">
+          <div class="inv-chart-title">资金曲线</div>
+          <div id="chart-capital-echart" style="width:100%;height:280px"></div>
+        </div>
+        <div class="inv-chart-container" id="chart-probability">
+          <div class="inv-chart-title">概率分布</div>
+          <div id="chart-probability-echart" style="width:100%;height:280px"></div>
+        </div>
+        <div class="inv-chart-container" id="chart-path">
+          <div class="inv-chart-title">最优路径</div>
+          <div id="chart-path-echart" style="width:100%;height:280px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 持仓管理 -->
+    <div id="tab-positions" class="inv-tab-content" style="display:none">
+      <div class="inv-card">
+        <div class="inv-card-title">
+          <span>持仓明细</span>
+          <button class="inv-btn" onclick="refreshPositions()" style="margin-left:auto">刷新</button>
+        </div>
+        <%- include('../partials/position-table') %>
+      </div>
+    </div>
+
+    <!-- Tab: 资金曲线 -->
+    <div id="tab-curve" class="inv-tab-content" style="display:none">
+      <div class="inv-card">
+        <div class="inv-card-title">资金曲线历史</div>
+        <div id="chart-capital-full" style="width:100%;height:400px"></div>
+      </div>
+    </div>
+
+    <!-- Tab: 回测 -->
+    <div id="tab-backtest" class="inv-tab-content" style="display:none">
+      <div class="inv-card">
+        <div class="inv-card-title">回测</div>
+        <div class="inv-backtest-controls">
+          <button class="inv-btn inv-btn-primary" onclick="runBacktest()">开始回测</button>
+          <span id="inv-backtest-status" style="margin-left:12px;color:var(--text-muted)">点击按钮开始回测</span>
+        </div>
+        <div id="inv-backtest-results" class="inv-backtest-results" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Tab: 收益投影 -->
+    <div id="tab-projection" class="inv-tab-content" style="display:none">
+      <div class="inv-card">
+        <div class="inv-card-title">📈 剩余比赛收益投影</div>
+        <div class="inv-backtest-controls">
+          <button class="inv-btn inv-btn-primary" onclick="loadProjection()">🔄 重新计算</button>
+          <span id="inv-projection-status" style="margin-left:12px;color:var(--text-muted)">基于当前 Kelly 参数计算剩余比赛预期收益</span>
+        </div>
+        <div id="inv-projection-summary" style="margin:12px 0;padding:12px;background:var(--surface);border-radius:8px"></div>
+        <div id="inv-projection-table" style="max-height:500px;overflow-y:auto"></div>
+        <div id="inv-projection-chart" style="height:300px;margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Tab: 数据管理 -->
+    <div id="tab-manage" class="inv-tab-content" style="display:none">
+      <div class="inv-card">
+        <div class="inv-card-title">⚙️ 数据管理</div>
+        <div class="inv-manage-section">
+          <div class="inv-manage-section-title">📦 存储状态</div>
+          <div id="inv-storage-info" class="inv-storage-info">
+            加载中...
+          </div>
+        </div>
+
+        <div class="inv-manage-section">
+          <div class="inv-manage-section-title">💾 组合方案</div>
+          <p class="inv-hint-text">将当前选中的多场比赛保存为命名方案，后续可一键加载</p>
+          <div style="display:flex;gap:8px;margin:8px 0">
+            <input type="text" id="inv-group-name" placeholder="方案名称（如：1/8决赛 周六晚）" style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px">
+            <button class="inv-btn" onclick="savePortfolioGroup()">💾 保存方案</button>
+          </div>
+          <div id="inv-portfolio-groups-list">
+            <div class="inv-empty-state">暂无保存的方案</div>
+          </div>
+        </div>
+
+        <div class="inv-manage-section">
+          <div class="inv-manage-section-title">🔁 导入 / 导出</div>
+          <p class="inv-hint-text">导出完整状态为 JSON 文件备份，或从备份文件恢复</p>
+          <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap">
+            <button class="inv-btn" onclick="exportState()">📤 导出状态（下载 JSON）</button>
+            <button class="inv-btn" onclick="document.getElementById('inv-import-input').click()">📥 导入状态（上传 JSON）</button>
+            <input type="file" id="inv-import-input" accept=".json" style="display:none" onchange="importState(event)">
+          </div>
+        </div>
+
+        <div class="inv-manage-section" style="border-color:var(--win-away)">
+          <div class="inv-manage-section-title" style="color:var(--win-away)">⚠️ 危险操作</div>
+          <p class="inv-hint-text">重置将清除所有持仓记录、资金曲线和组合方案，资金恢复到 10,000 元。<strong>此操作不可撤销！</strong></p>
+          <div style="display:flex;gap:8px;margin:8px 0">
+            <button class="inv-btn" style="border-color:var(--win-away);color:var(--win-away)" onclick="resetBankroll()">💰 仅重置资金（保留持仓）</button>
+            <button class="inv-btn inv-btn-danger" onclick="resetAll()">🗑️ 重置所有数据</button>
+          </div>
+        </div>
+
+        <div class="inv-manage-section">
+          <div class="inv-manage-section-title">❓ 数据存储说明</div>
+          <div class="inv-help-text">
+            <p><strong>本地存储（浏览器 localStorage）</strong> — 所有投资数据存储在您的浏览器中，键名为 <code>investment_state</code>。包括：资金余额、持仓记录、资金曲线、λ 值、风险偏好、市场模式、组合选中的比赛。</p>
+            <p><strong>服务器内存</strong> — 当您点击"记录投注"时，投注记录也会发送到服务器（存在 RAM 中）。服务器重启后这些记录会丢失，但您的浏览器 localStorage 数据不受影响。</p>
+            <p><strong>建议</strong>：定期导出 JSON 备份。更换浏览器或清除缓存前请先导出。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <%- include('../partials/footer') %>
+
+  <script>
+    const SERVER_DATA = { page: 'investment' };
+  </script>
+  <script src="/js/investment.js"></script>
+  <script src="/js/investment-charts.js"></script>
+</body>
+</html>

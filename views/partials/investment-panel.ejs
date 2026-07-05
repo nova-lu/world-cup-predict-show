@@ -1,0 +1,67 @@
+<div class="inv-card" id="inv-panel-detail" style="display:none">
+  <div class="inv-card-title">
+    <span id="inv-panel-match-name">选择比赛</span>
+    <span class="inv-risk-badge" id="inv-risk-label">--</span>
+  </div>
+
+  <!-- CTA 大号推荐操作区 -->
+  <div id="inv-cta-area"></div>
+
+  <!-- 盈亏平衡提示 -->
+  <div class="inv-info-box" id="inv-breakeven-info" style="margin:8px 0">
+    点击左侧比赛查看分析
+  </div>
+
+  <!-- Kelly 明细表 -->
+  <div class="inv-section-title">📐 Kelly 计算明细</div>
+  <div id="inv-kelly-results"></div>
+
+  <!-- 预期收益情景计算 -->
+  <div class="inv-section-title" style="margin-top:8px">💰 预期收益试算</div>
+  <div id="inv-calc-details" class="inv-calc-grid">
+    <div class="inv-calc-placeholder">选择比赛后显示</div>
+  </div>
+
+  <!-- 参数控制 -->
+  <div class="inv-section-title" style="margin-top:8px">⚙️ 参数控制</div>
+
+  <div class="inv-param-row">
+    <span class="inv-param-label">λ 风险系数</span>
+    <input type="range" id="inv-lambda-slider" min="0.05" max="0.50" step="0.01" value="0.30" style="flex:1">
+    <span class="inv-param-value" id="inv-lambda-value">0.30</span>
+  </div>
+
+  <div class="inv-param-row">
+    <span class="inv-param-label">风险偏好</span>
+    <div class="inv-risk-profiles">
+      <button class="inv-btn inv-risk-btn" data-risk="conservative" onclick="setRiskProfile('conservative')">保守</button>
+      <button class="inv-btn inv-risk-btn active" data-risk="moderate" onclick="setRiskProfile('moderate')">稳健</button>
+      <button class="inv-btn inv-risk-btn" data-risk="aggressive" onclick="setRiskProfile('aggressive')">进取</button>
+    </div>
+  </div>
+
+  <div class="inv-param-row">
+    <span class="inv-param-label">Elo 评分</span>
+    <span id="inv-elo-display" class="inv-param-value">--</span>
+  </div>
+
+  <div class="inv-param-row">
+    <span class="inv-param-label">赔率来源</span>
+    <span id="inv-odds-source" class="inv-param-value inv-muted">--</span>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="inv-actions" style="margin-top:12px;display:flex;gap:8px">
+    <button class="inv-btn inv-btn-primary" id="inv-record-btn" disabled onclick="recordBet()">✅ 记录投注</button>
+    <button class="inv-btn" onclick="addToPortfolio()">📋 加入组合</button>
+    <button class="inv-btn" onclick="quickSelect()">⚡ 快速选择</button>
+  </div>
+</div>
+
+<div class="inv-card" id="inv-panel-empty">
+  <div class="inv-empty-state">
+    <div style="font-size:2rem;margin-bottom:8px">📋</div>
+    <div>点击左侧比赛查看投资分析</div>
+    <div class="inv-hint-text">系统将显示 Kelly 最佳仓位、预期收益和风险等级</div>
+  </div>
+</div>

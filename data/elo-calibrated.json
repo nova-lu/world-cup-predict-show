@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-07-04T13:34:19.819Z",
-  "matchesApplied": 3,
+  "generatedAt": "2026-07-05T14:44:25.934Z",
+  "matchesApplied": 2,
   "ratings": {
     "argentina": 1992,
-    "france": 2042.9,
+    "france": 2047.7,
     "spain": 2017.3,
     "brazil": 1974.6,
     "england": 2001.7,
@@ -15,7 +15,7 @@
     "colombia": 1907.9,
     "uruguay": 1800.9,
     "croatia": 1839.5,
-    "morocco": 1892.9,
+    "morocco": 1907.9,
     "switzerland": 1844,
     "usa": 1837.7,
     "mexico": 1888.2,
@@ -27,7 +27,7 @@
     "south-korea": 1732.8,
     "iran": 1744.2,
     "poland": 1731,
-    "canada": 1745.8,
+    "canada": 1730.8,
     "serbia": 1714,
     "wales": 1688,
     "ghana": 1665.9,
@@ -40,7 +40,7 @@
     "algeria": 1693.6,
     "scotland": 1661.3,
     "cameroon": 1633,
-    "paraguay": 1698.6,
+    "paraguay": 1693.8,
     "venezuela": 1625,
     "chile": 1616,
     "peru": 1612,
@@ -68,5 +68,5 @@
     "united-states": 1538.6,
     "cabo-verde": 1497.7
   },
-  "method": "batch-update-2026-07-04"
+  "method": "batch-update-2026-07-05"
 }

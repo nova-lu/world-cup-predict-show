@@ -1,0 +1,40 @@
+<div class="inv-card" data-match-id="<%= matchId %>" onclick="selectMatch('<%= matchId %>')">
+  <div class="inv-card-header">
+    <span class="inv-card-teams">
+      <span class="inv-card-team"><%= homeFlag %><%= homeName %></span>
+      <span class="inv-card-vs">vs</span>
+      <span class="inv-card-team"><%= awayFlag %><%= awayName %></span>
+    </span>
+    <span class="inv-card-stage"><%= stage %></span>
+    <span class="inv-card-time"><%= time %></span>
+  </div>
+  <div class="inv-card-odds" id="inv-card-odds-<%= matchId %>">
+    <div class="inv-option-row <%= recommended === 'home' ? 'recommended' : '' %>">
+      <span class="inv-option-name">主胜</span>
+      <span class="inv-option-prob"><%= homeProb %>%</span>
+      <span class="inv-option-odds"><%= homeOdds %></span>
+      <span class="inv-option-edge" id="edge-home-<%= matchId %>">--</span>
+      <span class="inv-option-kelly" id="kelly-home-<%= matchId %>">--</span>
+    </div>
+    <div class="inv-option-row <%= recommended === 'draw' ? 'recommended' : '' %>">
+      <span class="inv-option-name">平局</span>
+      <span class="inv-option-prob"><%= drawProb %>%</span>
+      <span class="inv-option-odds"><%= drawOdds %></span>
+      <span class="inv-option-edge" id="edge-draw-<%= matchId %>">--</span>
+      <span class="inv-option-kelly" id="kelly-draw-<%= matchId %>">--</span>
+    </div>
+    <div class="inv-option-row <%= recommended === 'away' ? 'recommended' : '' %>">
+      <span class="inv-option-name">客胜</span>
+      <span class="inv-option-prob"><%= awayProb %>%</span>
+      <span class="inv-option-odds"><%= awayOdds %></span>
+      <span class="inv-option-edge" id="edge-away-<%= matchId %>">--</span>
+      <span class="inv-option-kelly" id="kelly-away-<%= matchId %>">--</span>
+    </div>
+  </div>
+  <div class="inv-card-footer">
+    <span class="inv-badge-<%= riskLevel %>"><%= riskLabel %></span>
+    <% if (recommended) { %>
+    <span class="inv-badge-green">推荐</span>
+    <% } %>
+  </div>
+</div>
