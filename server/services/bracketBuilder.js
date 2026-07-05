@@ -13,7 +13,7 @@ import { mapBracketSlots } from './groupResolver.js';
 import { fetchAllMatches, fetchStandings } from './footballApi.js';
 import { resolveGroupStandings, rankThirdPlaces, getQualifiedTeams, resolveKnockoutQualifiers } from './groupResolver.js';
 import { analyzeThirdRank } from './thirdRankResolver.js';
-import { getTeamInfo, getRatings } from './dataService.js';
+import { getTeamInfo, getRatings, getMatches } from './dataService.js';
 
 // ====== 固定对阵模板 ======
 const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
@@ -82,13 +82,18 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
   // 2. 所有已完赛的淘汰赛  
   const finishedKnockout = (allMatches || [])
     .filter(m => m.status === 'FT' && m.stage && m.stage !== 'GROUP_STAGE')
-    .map(m => ({
-      t1: m.t1, t2: m.t2,
-      g1: m.g1, g2: m.g2,
-      winner: m.g1 > m.g2 ? m.t1 : m.t2,
-      loser: m.g1 > m.g2 ? m.t2 : m.t1,
-      stage: m.stage,
-    }));
+    .map(m => {
+      // 判断胜者：若有明确 store winner 字段优先（点球大战取胜），否则按常规时间比分
+      let winner, loser;
+      if (m.winner) {
+        winner = m.winner;
+        loser = winner === m.t1 ? m.t2 : m.t1;
+      } else {
+        winner = m.g1 != null && m.g2 != null ? (m.g1 > m.g2 ? m.t1 : m.t2) : null;
+        loser = winner ? (winner === m.t1 ? m.t2 : m.t1) : null;
+      }
+      return { t1: m.t1, t2: m.t2, g1: m.g1, g2: m.g2, winner, loser, stage: m.stage };
+    });
 
   // 3. 构建 slot → 结果 的索引
   const slotResults = {};
@@ -111,6 +116,33 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
         winner: fm.winner, loser: fm.loser,
         finished: true,
       };
+    }
+  }
+
+  // === R16 及后续轮次（QF/SF/Final）已完赛结果匹配 ===
+  // 这些轮次的 pair 只有 R32 获胜者确定后才能解析（W-slot → 真实队名）
+  // 因此需要在 R32 映射完成后，再以解析后的 team pair 匹配 R16+ 赛果
+  const subsequentRoundDefs = [round16Slots, quarterSlots, semiSlots, finalSlots];
+  for (const roundDefs of subsequentRoundDefs) {
+    const roundPairMap = {};
+    for (const m of roundDefs) {
+      const home = _resolveSlotWinner(m.home, slotResults);
+      const away = _resolveSlotWinner(m.away, slotResults);
+      if (home && away) {
+        roundPairMap[[home, away].sort().join(':')] = m.slot;
+      }
+    }
+    for (const fm of finishedKnockout) {
+      const pair = [fm.t1, fm.t2].sort().join(':');
+      const slotId = roundPairMap[pair];
+      if (slotId && !slotResults[slotId]?.finished) {
+        slotResults[slotId] = {
+          t1: fm.t1, t2: fm.t2,
+          g1: fm.g1, g2: fm.g2,
+          winner: fm.winner, loser: fm.loser,
+          finished: true,
+        };
+      }
     }
   }
 
@@ -206,10 +238,48 @@ function _resolveSlotWinner(slot, slotResults) {
  * 完整主入口
  */
 export async function getKnockoutBracket(forceRefresh = false) {
-  const [qualifiers, allMatches] = await Promise.all([
+  const [qualifiers, apiMatches] = await Promise.all([
     resolveKnockoutQualifiers(forceRefresh),
     fetchAllMatches(forceRefresh),
   ]);
+
+  // 本地 JSON 数据（wc2026-results.json）覆盖 API 数据
+  // 用户编辑 JSON 后会直接生效，不依赖外部 API 返回的数据
+  const localMatches = getMatches();
+  const allMatches = apiMatches.map(apiM => {
+    const localM = localMatches.find(m => m.t1 === apiM.t1 && m.t2 === apiM.t2 && m.date === apiM.date);
+    if (localM && localM.status === 'FT') {
+      return {
+        ...apiM,
+        g1: localM.g1, g2: localM.g2,
+        winner: localM.winner || (localM.g1 > localM.g2 ? localM.t1 : localM.t2),
+        status: 'FT',
+        stage: localM.stage || apiM.stage,
+        pens1: localM.pens1,
+        pens2: localM.pens2,
+      };
+    }
+    return apiM;
+  });
+
+  // 也把本地 JSON 中但 API 没有的比赛加进去
+  for (const localM of localMatches) {
+    if (localM.status === 'FT' && localM.stage && localM.stage !== 'GROUP_STAGE') {
+      const exists = allMatches.some(am => am.t1 === localM.t1 && am.t2 === localM.t2);
+      if (!exists) {
+        allMatches.push({
+          t1: localM.t1, t2: localM.t2,
+          g1: localM.g1, g2: localM.g2,
+          winner: localM.winner || (localM.g1 > localM.g2 ? localM.t1 : localM.t2),
+          status: 'FT',
+          stage: localM.stage,
+          date: localM.date,
+          pens1: localM.pens1, pens2: localM.pens2,
+        });
+      }
+    }
+  }
+
   return buildDeterministicBracket(qualifiers, allMatches);
 }
 

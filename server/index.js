@@ -10,6 +10,7 @@ import bracketRouter from './routes/bracket.js';
 import knockoutRouter from './routes/knockout.js'; // Phase 8.2
 import adminRouter from './routes/admin.js'; // Phase 11: 管理 API
 import aiRouter from './routes/ai.js'; // Phase 14: AI 分析 API
+import investmentRouter from './routes/investment.js'; // Phase 17: 投资分析 API
 import { parseForceParam } from './middleware/parseForce.js';
 import { checkDataFreshness } from '../scripts/check_data_freshness.mjs';
 import { getAllTeams, getRatings } from './services/dataService.js';
@@ -44,6 +45,9 @@ app.use('/api/knockout', knockoutRouter);
 
 // Phase 14: AI 分析 API
 app.use('/api/ai', aiRouter);
+
+// Phase 17: 投资分析 API
+app.use('/api/investment', investmentRouter);
 
 // ML 引擎状态
 app.get('/api/ml/status', async (req, res) => {
@@ -383,6 +387,14 @@ app.get('/blog/:slug', (req, res) => {
   });
 });
 
+// 投资决策中心
+app.get('/investment', (req, res) => {
+  res.render('pages/investment', {
+    title: '2026世界杯 · 投资决策中心',
+    page: 'investment',
+  });
+});
+
 // 世界杯最新资讯 API — 从新华网等源获取
 const NEWS_CACHE = { data: null, ts: 0, TTL: 1800000 }; // 30min TTL
 app.get('/api/blog/news', async (req, res) => {
@@ -575,4 +587,11 @@ app.listen(PORT, () => {
   console.log(`   GET /api/standings/advancement 晋级概率榜`);
   console.log(`   GET /api/teams                 球队列表`);
   console.log(`   GET /api/teams/:slug           球队详情`);
+  console.log(`   Investment API (Phase 17):`);
+  console.log(`   GET /api/investment/analysis/:matchId  比赛投资分析`);
+  console.log(`   POST /api/investment/portfolio-optimize 投资组合优化`);
+  console.log(`   POST /api/investment/record-bet         记录投注`);
+  console.log(`   GET /api/investment/positions           持仓查看`);
+  console.log(`   GET /api/investment/capital-curve       资本曲线`);
+  console.log(`   POST /api/investment/reset              重置`);
 });

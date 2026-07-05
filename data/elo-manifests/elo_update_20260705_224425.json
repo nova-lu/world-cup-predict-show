@@ -1,0 +1,65 @@
+{
+  "manifestId": "elo_update_20260705_224425",
+  "generatedAt": "2026-07-05T14:44:25.934Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-04",
+    "to": "2026-07-04"
+  },
+  "matchesApplied": 2,
+  "matchDetails": [
+    {
+      "date": "2026-07-04",
+      "home": "Canada",
+      "away": "Morocco",
+      "score": "0-3",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -15,
+      "deltaAway": 15,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-04",
+      "home": "Paraguay",
+      "away": "France",
+      "score": "0-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -4.8,
+      "deltaAway": 4.8,
+      "upsetSuppressed": true
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "canada",
+      "delta": -15
+    },
+    {
+      "team": "morocco",
+      "delta": 15
+    },
+    {
+      "team": "paraguay",
+      "delta": -4.8
+    },
+    {
+      "team": "france",
+      "delta": 4.8
+    }
+  ],
+  "ratingsBefore": {
+    "france": 2042.9,
+    "morocco": 1892.9,
+    "canada": 1745.8,
+    "paraguay": 1698.6
+  },
+  "ratingsAfter": {
+    "france": 2047.7,
+    "morocco": 1907.9,
+    "canada": 1730.8,
+    "paraguay": 1693.8
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}

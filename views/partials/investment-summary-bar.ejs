@@ -1,0 +1,47 @@
+<div class="inv-summary-bar">
+  <div class="inv-summary-row">
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">总资金</span>
+      <span class="inv-stat-value" id="inv-total-capital">10,000</span>
+    </div>
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">已投注</span>
+      <span class="inv-stat-value" id="inv-total-staked">0</span>
+    </div>
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">浮动盈亏</span>
+      <span class="inv-stat-value" id="inv-pl">0</span>
+    </div>
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">可用资金</span>
+      <span class="inv-stat-value" id="inv-available">10,000</span>
+    </div>
+  </div>
+  <div class="inv-summary-row">
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">总风险预算</span>
+      <span class="inv-stat-value inv-muted" id="inv-risk-budget">2,500</span>
+    </div>
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">已用风险</span>
+      <span class="inv-stat-value inv-muted" id="inv-risk-used">0</span>
+    </div>
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">剩余风险</span>
+      <span class="inv-stat-value inv-muted" id="inv-risk-left">2,500</span>
+    </div>
+    <div class="inv-stat-card">
+      <span class="inv-stat-label">回撤</span>
+      <span class="inv-stat-value" id="inv-drawdown-pct">0.0%</span>
+    </div>
+  </div>
+  <!-- 止损提示条 -->
+  <div id="inv-drawdown-alert" style="display:none"></div>
+  <div class="inv-mode-switch">
+    <button class="inv-mode-btn active" data-mode="lottery" onclick="switchMarketMode('lottery')">竞彩模式</button>
+    <button class="inv-mode-btn" data-mode="polymarket" onclick="switchMarketMode('polymarket')">Polymarket</button>
+    <span style="margin-left:auto;font-size:0.7rem;color:var(--text-muted)" id="inv-market-mode-label">竞彩 · 单注≤500</span>
+  </div>
+</div>
+<!-- 隐藏输入（供回测使用） -->
+<input type="hidden" id="inv-bt-lambda" value="0.30">
