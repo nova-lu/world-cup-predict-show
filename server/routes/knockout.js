@@ -121,7 +121,7 @@ router.get('/third-rank', async (req, res) => {
 router.get('/bracket', async (req, res) => {
   try {
     const { getKnockoutBracket } = await import('../services/bracketBuilder.js');
-    const { getTeamInfo, getRatings } = await import('../services/dataService.js');
+    const { getTeamInfo, getRatings, getMatches } = await import('../services/dataService.js');
     const data = await getKnockoutBracket(req.forceRefresh);
     const ratings = getRatings();
 
@@ -186,15 +186,38 @@ router.get('/bracket', async (req, res) => {
           slot.awayInfo = awayInfo ? { ...awayInfo, elo: ratings[pair.away] || 1500 } : null;
         }
       });
-      // === 补齐已完赛的 R16 结果（仅当 bracketBuilder 未解析时） ===
-      // 不覆盖 bracketBuilder 已正确解析的数据
-      const r16Results = {
-        'W89': { g1: 0, g2: 3, winner: 'morocco', loser: 'canada' },
-        'W90': { g1: 0, g2: 1, winner: 'france', loser: 'paraguay' },
-      };
+      // === 从最新比赛数据动态补齐已完赛 R16 结果（不再写死仅两场） ===
+      const localMatches = getMatches(req.forceRefresh) || [];
+      const finishedR16Matches = localMatches.filter(m => {
+        if (!(m.status === 'FT' || (m.g1 != null && m.g2 != null))) return false;
+        const stage = (m.stage || '').toUpperCase();
+        const round = (m.round || '').toLowerCase();
+        return stage === 'ROUND_16' || stage === 'LAST_16' || round === 'round of 16';
+      });
+
+      function pairKey(a, b) {
+        return [a, b].sort().join(':');
+      }
+
+      const r16ResultByPair = {};
+      for (const m of finishedR16Matches) {
+        if (!m.t1 || !m.t2) continue;
+        let winner = m.winner || null;
+        if (!winner && m.g1 != null && m.g2 != null) {
+          winner = m.g1 > m.g2 ? m.t1 : (m.g2 > m.g1 ? m.t2 : null);
+        }
+        r16ResultByPair[pairKey(m.t1, m.t2)] = {
+          g1: m.g1,
+          g2: m.g2,
+          winner,
+          loser: winner ? (winner === m.t1 ? m.t2 : m.t1) : null,
+        };
+      }
+
       for (const m of r16) {
         if (m.winner) continue; // 已有数据，不覆盖
-        const result = r16Results[m.slot];
+        if (!m.home || !m.away || m.home.startsWith('W') || m.away.startsWith('W')) continue;
+        const result = r16ResultByPair[pairKey(m.home, m.away)];
         if (result) {
           m.g1 = result.g1;
           m.g2 = result.g2;
@@ -212,7 +235,10 @@ router.get('/bracket', async (req, res) => {
         if (m.winner) r16WinnerMap[m.slot] = m.winner;
       }
       const qfResolve = {
-        'W97': ['W89', 'W90'],  // Canada vs France
+        'W97': ['W89', 'W90'],
+        'W98': ['W93', 'W94'],
+        'W99': ['W91', 'W92'],
+        'W100': ['W95', 'W96'],
       };
       for (const m of qfSlots) {
         const sources = qfResolve[m.slot];
