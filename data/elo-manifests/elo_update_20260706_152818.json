@@ -1,0 +1,65 @@
+{
+  "manifestId": "elo_update_20260706_152818",
+  "generatedAt": "2026-07-06T07:28:18.722Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-05",
+    "to": "2026-07-05"
+  },
+  "matchesApplied": 2,
+  "matchDetails": [
+    {
+      "date": "2026-07-05",
+      "home": "Brazil",
+      "away": "Norway",
+      "score": "1-2",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -25,
+      "deltaAway": 25,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-05",
+      "home": "Mexico",
+      "away": "England",
+      "score": "2-3",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -17.1,
+      "deltaAway": 17.1,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "brazil",
+      "delta": -25
+    },
+    {
+      "team": "norway",
+      "delta": 25
+    },
+    {
+      "team": "mexico",
+      "delta": -17.1
+    },
+    {
+      "team": "england",
+      "delta": 17.1
+    }
+  ],
+  "ratingsBefore": {
+    "brazil": 1974.6,
+    "england": 2001.7,
+    "mexico": 1888.2,
+    "norway": 1905.1
+  },
+  "ratingsAfter": {
+    "brazil": 1949.6,
+    "england": 2018.8,
+    "mexico": 1871.1,
+    "norway": 1930.1
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}
