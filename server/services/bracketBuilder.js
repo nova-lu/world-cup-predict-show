@@ -245,7 +245,7 @@ export async function getKnockoutBracket(forceRefresh = false) {
 
   // 本地 JSON 数据（wc2026-results.json）覆盖 API 数据
   // 用户编辑 JSON 后会直接生效，不依赖外部 API 返回的数据
-  const localMatches = getMatches();
+  const localMatches = getMatches(forceRefresh);
   const allMatches = apiMatches.map(apiM => {
     const localM = localMatches.find(m => m.t1 === apiM.t1 && m.t2 === apiM.t2 && m.date === apiM.date);
     if (localM && localM.status === 'FT') {

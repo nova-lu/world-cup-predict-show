@@ -189,8 +189,8 @@ export function getRatings() {
 }
 
 let _matches = null;
-export function getMatches() {
-  if (_matches) return _matches;
+export function getMatches(forceRefresh = false) {
+  if (!forceRefresh && _matches) return _matches;
   const data = loadJSON('wc2026-results.json');
   _matches = data?.matches || [];
   return _matches;
