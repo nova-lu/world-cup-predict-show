@@ -1275,8 +1275,8 @@
     "pens2": null,
     "status": "FT",
     "winner": null
-    },
-    {
+  },
+  {
     "date": "2026-07-04",
     "round": "Round of 16",
     "group": null,
@@ -1291,8 +1291,8 @@
     "status": "FT",
     "winner": "morocco",
     "stage": "ROUND_16"
-    },
-    {
+  },
+  {
     "date": "2026-07-04",
     "round": "Round of 16",
     "group": null,
@@ -1307,8 +1307,8 @@
     "status": "FT",
     "winner": "france",
     "stage": "ROUND_16"
-    },
-    {
+  },
+  {
     "date": "2026-07-05",
     "round": "Round of 16",
     "group": null,
@@ -1323,8 +1323,8 @@
     "status": "FT",
     "winner": "norway",
     "stage": "ROUND_16"
-    },
-    {
+  },
+  {
     "date": "2026-07-05",
     "round": "Round of 16",
     "group": null,
@@ -1339,6 +1339,38 @@
     "status": "FT",
     "winner": "england",
     "stage": "ROUND_16"
-    }
-    ]
-    }
+  },
+  {
+    "date": "2026-07-06",
+    "round": "Round of 16",
+    "group": null,
+    "team1": "Portugal",
+    "team2": "Spain",
+    "t1": "portugal",
+    "t2": "spain",
+    "g1": 0,
+    "g2": 1,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "spain",
+    "stage": "ROUND_16"
+  },
+  {
+    "date": "2026-07-06",
+    "round": "Round of 16",
+    "group": null,
+    "team1": "USA",
+    "team2": "Belgium",
+    "t1": "usa",
+    "t2": "belgium",
+    "g1": 1,
+    "g2": 4,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "belgium",
+    "stage": "ROUND_16"
+  }
+  ]
+}
