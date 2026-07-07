@@ -1,0 +1,65 @@
+{
+  "manifestId": "elo_update_20260707_220743",
+  "generatedAt": "2026-07-07T14:07:43.370Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-06",
+    "to": "2026-07-06"
+  },
+  "matchesApplied": 2,
+  "matchDetails": [
+    {
+      "date": "2026-07-06",
+      "home": "Portugal",
+      "away": "Spain",
+      "score": "0-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -20.7,
+      "deltaAway": 20.7,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-06",
+      "home": "USA",
+      "away": "Belgium",
+      "score": "1-4",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -21.4,
+      "deltaAway": 21.4,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "usa",
+      "delta": -21.4
+    },
+    {
+      "team": "belgium",
+      "delta": 21.4
+    },
+    {
+      "team": "portugal",
+      "delta": -20.7
+    },
+    {
+      "team": "spain",
+      "delta": 20.7
+    }
+  ],
+  "ratingsBefore": {
+    "spain": 2009.5,
+    "portugal": 1948.8,
+    "belgium": 1883,
+    "usa": 1832.6
+  },
+  "ratingsAfter": {
+    "spain": 2030.2,
+    "portugal": 1928.1,
+    "belgium": 1904.4,
+    "usa": 1811.2
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}

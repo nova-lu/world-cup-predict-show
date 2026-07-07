@@ -79,9 +79,18 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
   // 1. 解析小组席位 → 32 强对阵（使用已排序的第三名列表）
   const resolvedR32 = mapBracketSlots(round32Slots, qualifiers.groups, qualifiers.thirdPlaces);
 
-  // 2. 所有已完赛的淘汰赛  
+  // 2. 所有已完赛的淘汰赛
+  const FINISHED_STAGES = new Set(['ROUND_32', 'ROUND_16', 'ROUND_OF_32', 'LAST_32', 'LAST_16', 'QUARTER_FINAL', 'QUARTER', 'SEMI_FINAL', 'SEMI', 'FINAL']);
+  const KNOCKOUT_ROUNDS = ['round of 32', 'round of 16', 'quarter', 'semi', 'final'];
+
   const finishedKnockout = (allMatches || [])
-    .filter(m => m.status === 'FT' && m.stage && m.stage !== 'GROUP_STAGE')
+    .filter(m => {
+      if (m.status !== 'FT' && (m.g1 == null || m.g2 == null)) return false;
+      // 优先 stage 字段，兜底 round 字段
+      const stage = (m.stage || '').toUpperCase().replace(/\s+/g, '_');
+      const round = (m.round || '').toLowerCase();
+      return FINISHED_STAGES.has(stage) || KNOCKOUT_ROUNDS.some(r => round.includes(r));
+    })
     .map(m => {
       // 判断胜者：若有明确 store winner 字段优先（点球大战取胜），否则按常规时间比分
       let winner, loser;
@@ -183,8 +192,8 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
         home: homeTeam || m.home,
         away: awayTeam || m.away,
         winner: existing.winner || null,
-        g1: existing.g1 || null,
-        g2: existing.g2 || null,
+        g1: existing.g1 ?? null,
+        g2: existing.g2 ?? null,
         finished,
         resolved: !!(homeTeam && awayTeam),
         homeInfo,
@@ -263,8 +272,14 @@ export async function getKnockoutBracket(forceRefresh = false) {
   });
 
   // 也把本地 JSON 中但 API 没有的比赛加进去
+  const KO_STAGE_SET = new Set(['ROUND_32', 'ROUND_16', 'ROUND_OF_32', 'LAST_32', 'LAST_16', 'QUARTER_FINAL', 'QUARTER', 'SEMI_FINAL', 'SEMI', 'FINAL']);
+  const KO_ROUND_SET = ['round of 32', 'round of 16', 'quarter', 'semi', 'final'];
   for (const localM of localMatches) {
-    if (localM.status === 'FT' && localM.stage && localM.stage !== 'GROUP_STAGE') {
+    if (localM.status !== 'FT' && (localM.g1 == null || localM.g2 == null)) continue;
+    const stage = (localM.stage || '').toUpperCase().replace(/\s+/g, '_');
+    const round = (localM.round || '').toLowerCase();
+    const isKo = KO_STAGE_SET.has(stage) || KO_ROUND_SET.some(r => round.includes(r));
+    if (isKo) {
       const exists = allMatches.some(am => am.t1 === localM.t1 && am.t2 === localM.t2);
       if (!exists) {
         allMatches.push({

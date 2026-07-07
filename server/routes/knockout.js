@@ -207,6 +207,8 @@ router.get('/bracket', async (req, res) => {
           winner = m.g1 > m.g2 ? m.t1 : (m.g2 > m.g1 ? m.t2 : null);
         }
         r16ResultByPair[pairKey(m.t1, m.t2)] = {
+          t1: m.t1,
+          t2: m.t2,
           g1: m.g1,
           g2: m.g2,
           winner,
@@ -219,11 +221,17 @@ router.get('/bracket', async (req, res) => {
         if (!m.home || !m.away || m.home.startsWith('W') || m.away.startsWith('W')) continue;
         const result = r16ResultByPair[pairKey(m.home, m.away)];
         if (result) {
-          m.g1 = result.g1;
-          m.g2 = result.g2;
+          // 结果源 team order vs bracket home/away 可能不同，调整比分方向
+          if (result.t1 === m.home) {
+            m.g1 = result.g1;
+            m.g2 = result.g2;
+          } else {
+            m.g1 = result.g2;
+            m.g2 = result.g1;
+          }
           m.winner = result.winner;
           m.finished = true;
-          console.log('[knockout] R16 fallback: ' + m.slot + ' → ' + result.winner + ' (' + result.g1 + '-' + result.g2 + ')');
+          console.log('[knockout] R16 fallback: ' + m.slot + ' → ' + result.winner + ' (' + m.g1 + '-' + m.g2 + ')');
         }
       }
       // === 补齐能确定的8强（QF）对阵 ===
