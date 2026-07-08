@@ -964,6 +964,8 @@
       delete tc.dataset.loaded;
       tc.innerHTML = '<div class="lazy-placeholder"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div><p class="loading-text">切换引擎，重新加载...</p></div>';
     });
+    // 重置次级数据门闩，使 Elo 回切时重新加载淘汰赛预测
+    _secLoaded = false;
     // 重新加载结论 Tab 数据
     loadMatchData(false, engine);
     // 切换到结论 Tab

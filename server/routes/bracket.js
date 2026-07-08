@@ -320,6 +320,46 @@ export default async function bracketRouter(req, res) {
       message = `MCS纯模拟 · 无真实比赛数据 · ${mcSims}次模拟推算`;
     }
 
+    // R16 爆冷修正：瑞士点球胜哥伦比亚 → 替换 MC 模拟的哥伦比亚为瑞士
+    if (roundData) {
+      const r16 = roundData.round16 || [];
+      const qf = roundData.quarter || [];
+      let fixed = false;
+      for (const m of r16) {
+        if ((m.home === 'switzerland' || m.away === 'switzerland') &&
+            (m.home === 'colombia' || m.away === 'colombia') &&
+            m.winner === 'colombia') {
+          m.winner = 'switzerland';
+          m.g1 = 0; m.g2 = 0;
+          m.finished = true;
+          m.simulated = false;
+          fixed = true;
+        }
+      }
+      for (const m of qf) {
+        if (m.home === 'colombia') { m.home = 'switzerland'; m.homeInfo = null; fixed = true; }
+        if (m.away === 'colombia') { m.away = 'switzerland'; m.awayInfo = null; fixed = true; }
+      }
+      if (fixed) {
+        const { getTeamInfo, getRatings } = await import('../services/dataService.js');
+        const ratings = getRatings();
+        // 补全被清空的 teamInfo
+        for (const m of qf) {
+          if (m.home && !m.homeInfo && !m.home.startsWith('W')) {
+            const info = getTeamInfo(m.home);
+            m.homeInfo = info ? { ...info, elo: ratings[m.home] || 1500 } : null;
+          }
+          if (m.away && !m.awayInfo && !m.away.startsWith('W')) {
+            const info = getTeamInfo(m.away);
+            m.awayInfo = info ? { ...info, elo: ratings[m.away] || 1500 } : null;
+          }
+        }
+        source = 'corrected';
+        message = `MCS模拟 · R16爆冷修正(瑞士胜哥伦比亚) · ${mcSims}次模拟`;
+        console.log('[Bracket] R16爆冷修正: 哥伦比亚→瑞士 (瑞士点球胜)');
+      }
+    }
+
     res.json({
       groups: groupConfig,
       rounds: roundData,

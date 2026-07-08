@@ -1,0 +1,65 @@
+{
+  "manifestId": "elo_update_20260708_224324",
+  "generatedAt": "2026-07-08T14:43:24.106Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-07",
+    "to": "2026-07-07"
+  },
+  "matchesApplied": 2,
+  "matchDetails": [
+    {
+      "date": "2026-07-07",
+      "home": "Switzerland",
+      "away": "Colombia",
+      "score": "0-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 4.5,
+      "deltaAway": -4.5,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-07",
+      "home": "Argentina",
+      "away": "Egypt",
+      "score": "3-2",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 7.1,
+      "deltaAway": -7.1,
+      "upsetSuppressed": true
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "argentina",
+      "delta": 7.1
+    },
+    {
+      "team": "egypt",
+      "delta": -7.1
+    },
+    {
+      "team": "switzerland",
+      "delta": 4.5
+    },
+    {
+      "team": "colombia",
+      "delta": -4.5
+    }
+  ],
+  "ratingsBefore": {
+    "argentina": 1984.6,
+    "colombia": 1901.8,
+    "switzerland": 1838.8,
+    "egypt": 1718.5
+  },
+  "ratingsAfter": {
+    "argentina": 1991.7,
+    "colombia": 1897.3,
+    "switzerland": 1843.3,
+    "egypt": 1711.4
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}
