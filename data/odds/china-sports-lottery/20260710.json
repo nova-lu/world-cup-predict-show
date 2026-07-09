@@ -1,0 +1,194 @@
+[
+  {
+    "matchId": "周四097",
+    "homeTeam": "法国",
+    "awayTeam": "摩洛哥",
+    "date": "2026-07-10",
+    "kickoff": "04:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 1.42,
+        "draw": 3.75,
+        "away": 6.32
+      },
+      {
+        "pool": "HHAD",
+        "home": 2.58,
+        "draw": 3.05,
+        "away": 2.42,
+        "goalLine": -1
+      }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周四201",
+    "homeTeam": "伏伊伏丁",
+    "awayTeam": "费伦茨",
+    "date": "2026-07-10",
+    "kickoff": "02:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 3.15,
+        "draw": 2.98,
+        "away": 2.1
+      },
+      {
+        "pool": "HHAD",
+        "home": 1.57,
+        "draw": 3.57,
+        "away": 4.7,
+        "goalLine": 1
+      }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周四202",
+    "homeTeam": "索陆军",
+    "awayTeam": "德里城",
+    "date": "2026-07-10",
+    "kickoff": "02:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 1.12,
+        "draw": 6.25,
+        "away": 13
+      },
+      {
+        "pool": "HHAD",
+        "home": 1.53,
+        "draw": 3.87,
+        "away": 4.6,
+        "goalLine": -1
+      }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周四203",
+    "homeTeam": "斯海杜克",
+    "awayTeam": "日利纳",
+    "date": "2026-07-10",
+    "kickoff": "02:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 1.26,
+        "draw": 4.8,
+        "away": 7.85
+      },
+      {
+        "pool": "HHAD",
+        "home": 2.09,
+        "draw": 3.05,
+        "away": 3.1,
+        "goalLine": -1
+      }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周五098",
+    "homeTeam": "西班牙",
+    "awayTeam": "比利时",
+    "date": "2026-07-11",
+    "kickoff": "03:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 1.46,
+        "draw": 3.8,
+        "away": 5.5
+      },
+      {
+        "pool": "HHAD",
+        "home": 2.58,
+        "draw": 3.2,
+        "away": 2.33,
+        "goalLine": -1
+      }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周五201",
+    "homeTeam": "瓦萨",
+    "awayTeam": "塞伊奈",
+    "date": "2026-07-11",
+    "kickoff": "00:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 1.95,
+        "draw": 3.47,
+        "away": 3.05
+      },
+      {
+        "pool": "HHAD",
+        "home": 3.95,
+        "draw": 3.6,
+        "away": 1.67,
+        "goalLine": -1
+      }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周六099",
+    "homeTeam": "挪威",
+    "awayTeam": "英格兰",
+    "date": "2026-07-12",
+    "kickoff": "05:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 3.81,
+        "draw": 3.5,
+        "away": 1.72
+      },
+      {
+        "pool": "HHAD",
+        "home": 1.88,
+        "draw": 3.4,
+        "away": 3.3,
+        "goalLine": 1
+      }
+    ],
+    "returnRate": 0.89
+  },
+  {
+    "matchId": "周六100",
+    "homeTeam": "阿根廷",
+    "awayTeam": "瑞士",
+    "date": "2026-07-12",
+    "kickoff": "09:00",
+    "status": "open",
+    "pools": [
+      {
+        "pool": "HAD",
+        "home": 1.56,
+        "draw": 3.3,
+        "away": 5.4
+      },
+      {
+        "pool": "HHAD",
+        "home": 3,
+        "draw": 3.1,
+        "away": 2.11,
+        "goalLine": -1
+      }
+    ],
+    "returnRate": 0.89
+  }
+]
