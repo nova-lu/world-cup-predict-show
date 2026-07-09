@@ -3,6 +3,7 @@ import { predictMatch } from '../services/predictionService.js';
 import { getTeamInfo, getRatings } from '../services/dataService.js';
 import { loadLatest, getMatch, normalizeToUnified, slugToCnName } from '../ml/odds/sources/china_sports_lottery.js';
 import mlConfig from '../ml/config.js';
+import { get as cacheGet, set as cacheSet } from '../middleware/cache.js';
 // Polymarket 数据源（mode='polymarket' 时使用）
 let _pmModule = null;
 async function getPolymarket() {
@@ -55,7 +56,7 @@ async function getMLPredictor() {
   return mlPredictor;
 }
 
-// ---- 模型预测：优先集成 Ensemble，降级到纯 Elo ----
+// ---- 模型预测：优先匹配 match 页缓存的 Ensemble，降级到纯 Elo ----
 async function getModelProbabilities(t1, t2) {
   const eloResult = predictMatch(t1, t2);
   const prob = {
@@ -66,22 +67,43 @@ async function getModelProbabilities(t1, t2) {
   const expectedGoals = eloResult.expectedGoals;
   let source = 'elo';
 
+  // Phase 16: 优先使用 match 路由缓存的 ensemble 预测（确保数据一致性）
+  try {
+    const ensKey = `ens:pred:${t1}:${t2}`;
+    const cached = cacheGet(ensKey);
+    if (cached && cached.hit && cached.value && cached.value.probabilities) {
+      const ep = cached.value.probabilities;
+      prob.winHome = ep.homeWin ?? prob.winHome;
+      prob.draw = ep.draw ?? prob.draw;
+      prob.winAway = ep.awayWin ?? prob.winAway;
+      source = 'ensemble';
+      return { prob, expectedGoals, source };
+    }
+  } catch (e) {
+    // 静默降级
+  }
+
   try {
     const predictor = await getMLPredictor();
     if (predictor && typeof predictor.predictMatch === 'function') {
-      const mlPred = await predictor.predictMatch(t1, t2, '', { context: {} });
+      // 基本上下文（避免空 context 导致 ML 特征全零）
+      const mlContext = { isHome: 1, isHost: 0, isKnockout: 1, tournamentWeight: 1.0 };
+      const mlPred = await predictor.predictMatch(t1, t2, '', { context: mlContext });
       if (mlPred && mlPred.probabilities) {
         const ensemble = predictor.ensemblePrediction(eloResult, mlPred);
         if (ensemble && ensemble.probabilities) {
-          prob.winHome = ensemble.probabilities.winHome || prob.winHome;
-          prob.draw = ensemble.probabilities.draw || prob.draw;
-          prob.winAway = ensemble.probabilities.winAway || prob.winAway;
+          prob.winHome = ensemble.probabilities.homeWin ?? prob.winHome;
+          prob.draw = ensemble.probabilities.draw ?? prob.draw;
+          prob.winAway = ensemble.probabilities.awayWin ?? prob.winAway;
           source = 'ensemble';
+          // 写入共享缓存，后续调用（包括 match 页）保持一致
+          try { cacheSet(ensKey, ensemble); } catch {}
         } else {
-          prob.winHome = mlPred.probabilities.winHome || prob.winHome;
-          prob.draw = mlPred.probabilities.draw || prob.draw;
-          prob.winAway = mlPred.probabilities.winAway || prob.winAway;
+          prob.winHome = mlPred.probabilities.homeWin ?? prob.winHome;
+          prob.draw = mlPred.probabilities.draw ?? prob.draw;
+          prob.winAway = mlPred.probabilities.awayWin ?? prob.winAway;
           source = 'ml';
+          try { cacheSet(ensKey, mlPred); } catch {}
         }
       }
     }

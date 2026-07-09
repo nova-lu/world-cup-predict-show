@@ -4,6 +4,7 @@
 
 import { predictMatch } from '../services/predictionService.js';
 import { getTeamInfo } from '../services/dataService.js';
+import { get as cacheGet } from '../middleware/cache.js';
 
 let mlPredictor, predictionServiceEnsemble, oddsApi, chinaLottery, knockoutEngine;
 
@@ -184,10 +185,23 @@ export async function aggregateMatchData(t1, t2) {
     console.warn('[AI-aggregator] Elo 预测失败:', e.message);
   }
 
-  // ---- 2. ML ----
+  // ---- 2. ML —— 优先使用 match 路由缓存，未命中时用基本 context 计算 ----
   if (mlPredictor && typeof mlPredictor.predictMatch === 'function') {
     try {
-      const mlPred = await mlPredictor.predictMatch(t1, t2);
+      const isKnockout = matchInfo?.stage
+        ? (matchInfo.stage !== 'GROUP_STAGE' && matchInfo.stage !== 'group' ? 1 : 0)
+        : 0;
+      const mlContext = {
+        isHome: 1,
+        isHost: (t1 === 'usa' || t1 === 'mexico' || t1 === 'canada') ? 1 : 0,
+        isKnockout,
+        tournamentWeight: isKnockout ? 1.0 : 0.8,
+      };
+      const mlCacheKey = `ml:pred:${t1}:${t2}`;
+      const cached = cacheGet(mlCacheKey);
+      const mlPred = (cached && cached.hit && cached.value)
+        ? cached.value
+        : await mlPredictor.predictMatch(t1, t2, matchInfo?.date || '', { context: mlContext });
       if (mlPred) {
         result.mlPrediction = {
           available: true,
@@ -224,29 +238,43 @@ export async function aggregateMatchData(t1, t2) {
     result.mlPrediction = { available: false };
   }
 
-  // ---- 3. Ensemble ----
+  // ---- 3. Ensemble —— 优先使用 match 路由缓存 ----
   if (predictionServiceEnsemble && result.eloPrediction) {
     try {
-      const eloPred = predictMatch(t1, t2);
-      const mlPred = result.mlPrediction?.available
-        ? { probabilities: result.mlPrediction.probabilities, expectedGoals: result.mlPrediction.expectedGoals }
-        : null;
-
-      const ens = predictionServiceEnsemble.ensemblePrediction
-        ? predictionServiceEnsemble.ensemblePrediction(eloPred, mlPred)
-        : null;
-
-      if (ens) {
+      const ensCacheKey = `ens:pred:${t1}:${t2}`;
+      const cachedEns = cacheGet(ensCacheKey);
+      if (cachedEns && cachedEns.hit && cachedEns.value && cachedEns.value.probabilities) {
+        const ep = cachedEns.value.probabilities;
         result.ensemblePrediction = {
           available: true,
           probabilities: {
-            homeWin: +(ens.probabilities?.homeWin || ens.homeWin || 0).toFixed(3),
-            draw: +(ens.probabilities?.draw || ens.draw || 0).toFixed(3),
-            awayWin: +(ens.probabilities?.awayWin || ens.awayWin || 0).toFixed(3),
+            homeWin: +((ep.homeWin || 0).toFixed(3)),
+            draw: +((ep.draw || 0).toFixed(3)),
+            awayWin: +((ep.awayWin || 0).toFixed(3)),
           },
-          weights: ens.weights || null,
-          dynamicAdjusted: ens.dynamicAdjusted || false,
+          weights: cachedEns.value.weights || null,
+          dynamicAdjusted: cachedEns.value.dynamicAdjusted || false,
         };
+      } else {
+        const eloPred = predictMatch(t1, t2);
+        const mlPred = result.mlPrediction?.available
+          ? { probabilities: result.mlPrediction.probabilities, expectedGoals: result.mlPrediction.expectedGoals }
+          : null;
+        const ens = predictionServiceEnsemble.ensemblePrediction
+          ? predictionServiceEnsemble.ensemblePrediction(eloPred, mlPred)
+          : null;
+        if (ens) {
+          result.ensemblePrediction = {
+            available: true,
+            probabilities: {
+              homeWin: +(ens.probabilities?.homeWin || ens.homeWin || 0).toFixed(3),
+              draw: +(ens.probabilities?.draw || ens.draw || 0).toFixed(3),
+              awayWin: +(ens.probabilities?.awayWin || ens.awayWin || 0).toFixed(3),
+            },
+            weights: ens.weights || null,
+            dynamicAdjusted: ens.dynamicAdjusted || false,
+          };
+        }
       }
     } catch (e) {
       console.warn('[AI-aggregator] Ensemble 失败:', e.message);
