@@ -1,5 +1,5 @@
 {
- "updated": "2026-07-02T15:40:17.000Z",
+ "updated": "2026-07-10T01:40:17.000Z",
  "matches": [
   {
    "date": "2026-06-11",
@@ -1403,6 +1403,22 @@
     "status": "FT",
     "winner": "argentina",
     "stage": "ROUND_16"
+  },
+  {
+    "date": "2026-07-09",
+    "round": "Quarter-finals",
+    "group": null,
+    "team1": "France",
+    "team2": "Morocco",
+    "t1": "france",
+    "t2": "morocco",
+    "g1": 2,
+    "g2": 0,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "france",
+    "stage": "QUARTER_FINALS"
   }
   ]
 }

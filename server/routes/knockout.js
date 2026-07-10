@@ -190,9 +190,9 @@ router.get('/bracket', async (req, res) => {
       const localMatches = getMatches(req.forceRefresh) || [];
       const finishedR16Matches = localMatches.filter(m => {
         if (!(m.status === 'FT' || (m.g1 != null && m.g2 != null))) return false;
-        const stage = (m.stage || '').toUpperCase();
+        const stage = (m.stage || '').toUpperCase().replace(/\s+/g, '_');
         const round = (m.round || '').toLowerCase();
-        return stage === 'ROUND_16' || stage === 'LAST_16' || round === 'round of 16';
+        return stage === 'ROUND_16' || stage === 'ROUND_OF_16' || stage === 'LAST_16' || round.includes('round of 16');
       });
 
       function pairKey(a, b) {
@@ -262,6 +262,48 @@ router.get('/bracket', async (req, res) => {
             console.log('[knockout] QF fallback: ' + m.slot + ' → ' + h + ' vs ' + a);
           }
         }
+      }
+
+      // === 从最新比赛数据补齐已完赛 QF 结果（如 France 2-0 Morocco） ===
+      const finishedQfMatches = localMatches.filter(m => {
+        if (!(m.status === 'FT' || (m.g1 != null && m.g2 != null))) return false;
+        const stage = (m.stage || '').toUpperCase().replace(/\s+/g, '_');
+        const round = (m.round || '').toLowerCase();
+        return stage === 'QUARTER_FINAL' || stage === 'QUARTER_FINALS' || stage === 'QUARTER' || round.includes('quarter');
+      });
+
+      const qfResultByPair = {};
+      for (const m of finishedQfMatches) {
+        if (!m.t1 || !m.t2) continue;
+        let winner = m.winner || null;
+        if (!winner && m.g1 != null && m.g2 != null) {
+          winner = m.g1 > m.g2 ? m.t1 : (m.g2 > m.g1 ? m.t2 : null);
+        }
+        qfResultByPair[pairKey(m.t1, m.t2)] = {
+          t1: m.t1,
+          t2: m.t2,
+          g1: m.g1,
+          g2: m.g2,
+          winner,
+        };
+      }
+
+      for (const m of qfSlots) {
+        if (m.winner) continue;
+        if (!m.home || !m.away || m.home.startsWith('W') || m.away.startsWith('W')) continue;
+        const result = qfResultByPair[pairKey(m.home, m.away)];
+        if (!result) continue;
+
+        if (result.t1 === m.home) {
+          m.g1 = result.g1;
+          m.g2 = result.g2;
+        } else {
+          m.g1 = result.g2;
+          m.g2 = result.g1;
+        }
+        m.winner = result.winner;
+        m.finished = true;
+        console.log('[knockout] QF result fallback: ' + m.slot + ' → ' + result.winner + ' (' + m.g1 + '-' + m.g2 + ')');
       }
       console.log('[knockout] 淘汰赛数据兜底注入完成: R32胜者 + R16对阵/结果 + QF(已确定)');
     }
