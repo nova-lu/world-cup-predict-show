@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-07-08T14:43:24.106Z",
-  "matchesApplied": 2,
+  "generatedAt": "2026-07-10T03:18:27.229Z",
+  "matchesApplied": 1,
   "ratings": {
     "argentina": 1991.7,
-    "france": 2039.5,
+    "france": 2055.1,
     "spain": 2030.2,
     "brazil": 1942.9,
     "england": 2011,
@@ -15,7 +15,7 @@
     "colombia": 1897.3,
     "uruguay": 1796.4,
     "croatia": 1834.4,
-    "morocco": 1901.8,
+    "morocco": 1886.2,
     "switzerland": 1843.3,
     "usa": 1811.2,
     "mexico": 1865.5,
@@ -68,5 +68,5 @@
     "united-states": 1538,
     "cabo-verde": 1497.7
   },
-  "method": "batch-update-2026-07-08"
+  "method": "batch-update-2026-07-10"
 }

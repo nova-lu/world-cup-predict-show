@@ -1,0 +1,42 @@
+{
+  "manifestId": "elo_update_20260710_111827",
+  "generatedAt": "2026-07-10T03:18:27.230Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-09",
+    "to": "2026-07-09"
+  },
+  "matchesApplied": 1,
+  "matchDetails": [
+    {
+      "date": "2026-07-09",
+      "home": "France",
+      "away": "Morocco",
+      "score": "2-0",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 15.6,
+      "deltaAway": -15.6,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "france",
+      "delta": 15.6
+    },
+    {
+      "team": "morocco",
+      "delta": -15.6
+    }
+  ],
+  "ratingsBefore": {
+    "france": 2039.5,
+    "morocco": 1901.8
+  },
+  "ratingsAfter": {
+    "france": 2055.1,
+    "morocco": 1886.2
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}

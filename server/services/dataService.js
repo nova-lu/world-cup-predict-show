@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -189,10 +189,22 @@ export function getRatings() {
 }
 
 let _matches = null;
+let _matchesMtimeMs = 0;
 export function getMatches(forceRefresh = false) {
-  if (!forceRefresh && _matches) return _matches;
+  const filePath = path.join(DATA_DIR, 'wc2026-results.json');
+  let fileMtimeMs = 0;
+  try {
+    fileMtimeMs = statSync(filePath).mtimeMs;
+  } catch {
+    fileMtimeMs = 0;
+  }
+
+  // 文件未变更时复用内存缓存；文件变更后自动失效并重载
+  if (!forceRefresh && _matches && _matchesMtimeMs === fileMtimeMs) return _matches;
+
   const data = loadJSON('wc2026-results.json');
   _matches = data?.matches || [];
+  _matchesMtimeMs = fileMtimeMs;
   return _matches;
 }
 

@@ -80,7 +80,12 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
   const resolvedR32 = mapBracketSlots(round32Slots, qualifiers.groups, qualifiers.thirdPlaces);
 
   // 2. 所有已完赛的淘汰赛
-  const FINISHED_STAGES = new Set(['ROUND_32', 'ROUND_16', 'ROUND_OF_32', 'LAST_32', 'LAST_16', 'QUARTER_FINAL', 'QUARTER', 'SEMI_FINAL', 'SEMI', 'FINAL']);
+  const FINISHED_STAGES = new Set([
+    'ROUND_32', 'ROUND_16', 'ROUND_OF_32', 'ROUND_OF_16', 'LAST_32', 'LAST_16',
+    'QUARTER_FINAL', 'QUARTER_FINALS', 'QUARTER',
+    'SEMI_FINAL', 'SEMI_FINALS', 'SEMI',
+    'FINAL'
+  ]);
   const KNOCKOUT_ROUNDS = ['round of 32', 'round of 16', 'quarter', 'semi', 'final'];
 
   const finishedKnockout = (allMatches || [])
@@ -272,7 +277,12 @@ export async function getKnockoutBracket(forceRefresh = false) {
   });
 
   // 也把本地 JSON 中但 API 没有的比赛加进去
-  const KO_STAGE_SET = new Set(['ROUND_32', 'ROUND_16', 'ROUND_OF_32', 'LAST_32', 'LAST_16', 'QUARTER_FINAL', 'QUARTER', 'SEMI_FINAL', 'SEMI', 'FINAL']);
+  const KO_STAGE_SET = new Set([
+    'ROUND_32', 'ROUND_16', 'ROUND_OF_32', 'ROUND_OF_16', 'LAST_32', 'LAST_16',
+    'QUARTER_FINAL', 'QUARTER_FINALS', 'QUARTER',
+    'SEMI_FINAL', 'SEMI_FINALS', 'SEMI',
+    'FINAL'
+  ]);
   const KO_ROUND_SET = ['round of 32', 'round of 16', 'quarter', 'semi', 'final'];
   for (const localM of localMatches) {
     if (localM.status !== 'FT' && (localM.g1 == null || localM.g2 == null)) continue;
