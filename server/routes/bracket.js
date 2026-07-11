@@ -320,31 +320,209 @@ export default async function bracketRouter(req, res) {
       message = `MCS纯模拟 · 无真实比赛数据 · ${mcSims}次模拟推算`;
     }
 
-    // R16 爆冷修正：瑞士点球胜哥伦比亚 → 替换 MC 模拟的哥伦比亚为瑞士
+    // 完整真实淘汰赛结果应用
     if (roundData) {
+      const { getTeamInfo, getRatings, getMatches } = await import('../services/dataService.js');
+      const ratings = getRatings();
+      const localMatches = getMatches(req.forceRefresh) || [];
+      
+      // 提取所有已完成的淘汰赛
+      const finishedKnockoutMatches = localMatches.filter(m => {
+        if (!(m.status === 'FT' || (m.g1 != null && m.g2 != null))) return false;
+        const stage = (m.stage || '').toUpperCase().replace(/\s+/g, '_');
+        const round = (m.round || '').toLowerCase();
+        const isKo = ['ROUND_32', 'ROUND_16', 'QUARTER_FINAL', 'QUARTER_FINALS', 'QUARTER', 'SEMI_FINAL', 'SEMI_FINALS', 'SEMI', 'FINAL', 'LAST_32', 'LAST_16'].includes(stage) ||
+                     ['round of 32', 'round of 16', 'quarter', 'semi', 'final'].some(r => round.includes(r));
+        return isKo;
+      });
+      
+      function pairKey(a, b) {
+        return [a, b].sort().join(':');
+      }
+      
+      const resultByPair = {};
+      for (const m of finishedKnockoutMatches) {
+        if (!m.t1 || !m.t2) continue;
+        let winner = m.winner || null;
+        if (!winner && m.g1 != null && m.g2 != null) {
+          winner = m.g1 > m.g2 ? m.t1 : (m.g2 > m.g1 ? m.t2 : null);
+        }
+        resultByPair[pairKey(m.t1, m.t2)] = {
+          t1: m.t1, t2: m.t2,
+          g1: m.g1, g2: m.g2,
+          pens1: m.pens1, pens2: m.pens2,
+          winner,
+          loser: winner ? (winner === m.t1 ? m.t2 : m.t1) : null,
+          stage: m.stage,
+        };
+      }
+      
+      // 构建胜者追踪映射：slot → winner
+      const slotWinnerMap = {};
+      
+      // 先修正 R16 对阵和结果
       const r16 = roundData.round16 || [];
-      const qf = roundData.quarter || [];
-      let fixed = false;
-      for (const m of r16) {
-        if ((m.home === 'switzerland' || m.away === 'switzerland') &&
-            (m.home === 'colombia' || m.away === 'colombia') &&
-            m.winner === 'colombia') {
-          m.winner = 'switzerland';
-          m.g1 = 0; m.g2 = 0;
+      for (let i = 0; i < r16.length; i++) {
+        const m = r16[i];
+        if (!m.home || !m.away) continue;
+        
+        const key = pairKey(m.home, m.away);
+        const result = resultByPair[key];
+        
+        if (result) {
+          // 修正比分方向
+          if (result.t1 === m.home) {
+            m.g1 = result.g1;
+            m.g2 = result.g2;
+          } else {
+            m.g1 = result.g2;
+            m.g2 = result.g1;
+          }
+          
+          m.winner = result.winner;
           m.finished = true;
           m.simulated = false;
-          fixed = true;
+          
+          // 记录 slot 胜者
+          if (m.slot && m.winner) {
+            slotWinnerMap[m.slot] = m.winner;
+          }
         }
       }
+      
+      // 修正 QF 对阵和结果
+      const qf = roundData.quarter || [];
+      const qfSlotMapping = {
+        'W97': ['W89', 'W90'], // R16 winner 1 vs R16 winner 2
+        'W98': ['W93', 'W94'], // R16 winner 5 vs R16 winner 6
+        'W99': ['W91', 'W92'], // R16 winner 3 vs R16 winner 4
+        'W100': ['W95', 'W96'], // R16 winner 7 vs R16 winner 8
+      };
+      
+      // 先根据 R16 胜者修正 QF 对阵
       for (const m of qf) {
-        if (m.home === 'colombia') { m.home = 'switzerland'; m.homeInfo = null; fixed = true; }
-        if (m.away === 'colombia') { m.away = 'switzerland'; m.awayInfo = null; fixed = true; }
+        const sourceSlots = qfSlotMapping[m.slot];
+        if (sourceSlots) {
+          const homeFromSlot = slotWinnerMap[sourceSlots[0]];
+          const awayFromSlot = slotWinnerMap[sourceSlots[1]];
+          if (homeFromSlot) {
+            m.home = homeFromSlot;
+            m.homeInfo = null;
+          }
+          if (awayFromSlot) {
+            m.away = awayFromSlot;
+            m.awayInfo = null;
+          }
+        }
+        
+        // 然后应用 QF 结果
+        if (m.home && m.away) {
+          const key = pairKey(m.home, m.away);
+          const result = resultByPair[key];
+          if (result) {
+            if (result.t1 === m.home) {
+              m.g1 = result.g1;
+              m.g2 = result.g2;
+            } else {
+              m.g1 = result.g2;
+              m.g2 = result.g1;
+            }
+            m.winner = result.winner;
+            m.finished = true;
+            m.simulated = false;
+            
+            if (m.slot && m.winner) {
+              slotWinnerMap[m.slot] = m.winner;
+            }
+          }
+        }
       }
-      if (fixed) {
-        const { getTeamInfo, getRatings } = await import('../services/dataService.js');
-        const ratings = getRatings();
-        // 补全被清空的 teamInfo
-        for (const m of qf) {
+      
+      // 对无真实结果的 QF 比赛，用已修正球队重新计算胜者
+      const probKeys = ['round16', 'quarter', 'semi', 'final', 'champion'];
+      function rePickWinner(homeSlug, awaySlug, roundIdx) {
+        if (!homeSlug || !awaySlug) return homeSlug || awaySlug;
+        const key = probKeys[roundIdx] || 'champion';
+        const hp = teamProbData[homeSlug]?.[key] || 0;
+        const ap = teamProbData[awaySlug]?.[key] || 0;
+        return hp >= ap ? homeSlug : awaySlug;
+      }
+      for (const m of qf) {
+        if (m.winner && m.home && m.away && !m.finished) {
+          // 胜者不在当前球队中 → 必然需要重新计算
+          if (m.winner !== m.home && m.winner !== m.away) {
+            m.winner = rePickWinner(m.home, m.away, 2);
+            m.winnerProb = Math.max(teamProbData[m.winner]?.semi || 0, 0);
+          }
+          if (m.slot && m.winner) {
+            slotWinnerMap[m.slot] = m.winner;
+          }
+        }
+      }
+      
+      // 修正 SF 对阵（根据 QF 胜者）
+      const sf = roundData.semi || [];
+      const sfSlotMapping = {
+        'W101': ['W97', 'W98'],
+        'W102': ['W99', 'W100'],
+      };
+      
+      for (const m of sf) {
+        const sourceSlots = sfSlotMapping[m.slot];
+        if (sourceSlots) {
+          const homeFromSlot = slotWinnerMap[sourceSlots[0]];
+          const awayFromSlot = slotWinnerMap[sourceSlots[1]];
+          if (homeFromSlot) {
+            m.home = homeFromSlot;
+            m.homeInfo = null;
+          }
+          if (awayFromSlot) {
+            m.away = awayFromSlot;
+            m.awayInfo = null;
+          }
+        }
+      }
+      
+      // 对 SF 重新计算胜者（无真实结果时）
+      for (const m of sf) {
+        if (m.winner && m.home && m.away && !m.finished) {
+          const oldWinner = m.winner;
+          m.winner = rePickWinner(m.home, m.away, 3);
+          m.winnerProb = Math.max(teamProbData[m.winner]?.final || 0, 0);
+          if (m.slot && m.winner && m.winner !== oldWinner) {
+            slotWinnerMap[m.slot] = m.winner;
+          } else if (m.slot && m.winner) {
+            slotWinnerMap[m.slot] = m.winner;
+          }
+        }
+      }
+      
+      // 修正决赛对阵（根据 SF 胜者）
+      const final_ = roundData.final || [];
+      for (const m of final_) {
+        // final slots = W101 vs W102
+        const homeFromSlot = slotWinnerMap['W101'];
+        const awayFromSlot = slotWinnerMap['W102'];
+        if (homeFromSlot) {
+          m.home = homeFromSlot;
+          m.homeInfo = null;
+        }
+        if (awayFromSlot) {
+          m.away = awayFromSlot;
+          m.awayInfo = null;
+        }
+        if (m.home && m.away && !m.finished) {
+          m.winner = rePickWinner(m.home, m.away, 4);
+          m.winnerProb = Math.max(teamProbData[m.winner]?.champion || 0, 0);
+          if (m.slot && m.winner) {
+            slotWinnerMap[m.slot] = m.winner;
+          }
+        }
+      }
+      
+      // 补全所有 teamInfo
+      for (const stageMatches of [r16, qf, sf, final_]) {
+        for (const m of stageMatches) {
           if (m.home && !m.homeInfo && !m.home.startsWith('W')) {
             const info = getTeamInfo(m.home);
             m.homeInfo = info ? { ...info, elo: ratings[m.home] || 1500 } : null;
@@ -354,9 +532,12 @@ export default async function bracketRouter(req, res) {
             m.awayInfo = info ? { ...info, elo: ratings[m.away] || 1500 } : null;
           }
         }
+      }
+      
+      if (Object.keys(slotWinnerMap).length > 0) {
         source = 'corrected';
-        message = `MCS模拟 · R16爆冷修正(瑞士胜哥伦比亚) · ${mcSims}次模拟`;
-        console.log('[Bracket] R16爆冷修正: 哥伦比亚→瑞士 (瑞士点球胜)');
+        message = `MCS模拟 · 真实淘汰赛结果应用(R16/QF/SF已更新) · ${mcSims}次模拟`;
+        console.log('[Bracket] 淘汰赛结果修正完成:', Object.keys(slotWinnerMap).length, '场比赛结果已应用');
       }
     }
 
