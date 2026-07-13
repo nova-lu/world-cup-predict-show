@@ -1,0 +1,84 @@
+{
+  "manifestId": "elo_update_20260713_210010",
+  "generatedAt": "2026-07-13T13:00:10.280Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-10",
+    "to": "2026-07-11"
+  },
+  "matchesApplied": 3,
+  "matchDetails": [
+    {
+      "date": "2026-07-10",
+      "home": "Spain",
+      "away": "Belgium",
+      "score": "2-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 16.3,
+      "deltaAway": -16.3,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-11",
+      "home": "England",
+      "away": "Norway",
+      "score": "2-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 18.8,
+      "deltaAway": -18.8,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-11",
+      "home": "Argentina",
+      "away": "Switzerland",
+      "score": "3-1",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 14.9,
+      "deltaAway": -14.9,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "england",
+      "delta": 18.8
+    },
+    {
+      "team": "norway",
+      "delta": -18.8
+    },
+    {
+      "team": "spain",
+      "delta": 16.3
+    },
+    {
+      "team": "belgium",
+      "delta": -16.3
+    },
+    {
+      "team": "argentina",
+      "delta": 14.9
+    }
+  ],
+  "ratingsBefore": {
+    "argentina": 1991.7,
+    "spain": 2030.2,
+    "england": 2011,
+    "belgium": 1904.4,
+    "switzerland": 1843.3,
+    "norway": 1923.6
+  },
+  "ratingsAfter": {
+    "argentina": 2006.6,
+    "spain": 2046.5,
+    "england": 2029.8,
+    "belgium": 1888.1,
+    "switzerland": 1828.4,
+    "norway": 1904.8
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}

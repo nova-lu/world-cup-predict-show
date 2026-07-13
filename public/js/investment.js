@@ -580,13 +580,25 @@ function updateSummaryBar() {
 // ===== 数据加载 =====
 async function loadKnockoutMatches() {
   try {
-    var resp = await fetch('/api/knockout/bracket');
-    var data = await resp.json();
+    // 并行请求两个端点
+    var [bracketResp, knockoutResp] = await Promise.all([
+      fetch('/api/bracket').then(function(r) { return r.json(); }).catch(function() { return null; }),
+      fetch('/api/knockout/bracket').then(function(r) { return r.json(); }).catch(function() { return null; }),
+    ]);
+    // 合并数据：knockout/bracket 有 R32/R16/QF 的 homeInfo/awayInfo；bracket 解决 semi/final 的 W-slot
+    var knockoutRounds = (knockoutResp && knockoutResp.rounds) ? knockoutResp.rounds : {};
+    var bracketRounds = (bracketResp && bracketResp.rounds) ? bracketResp.rounds : {};
+    var rounds = {};
+    ['round32', 'round16', 'quarter'].forEach(function(stage) {
+      rounds[stage] = knockoutRounds[stage] || bracketRounds[stage] || [];
+    });
+    ['semi', 'final'].forEach(function(stage) {
+      // 优先 bracket（已解析 W-slot），fallback knockout
+      rounds[stage] = bracketRounds[stage] || knockoutRounds[stage] || [];
+    });
     state.matches = [];
     var allMatches = [];
-    // API 返回 rounds 而非 roundData
-    var rounds = data.rounds || data.roundData || {};
-    var stageNames = { round32: '32强', round16: '16强', quarter: '¼决赛', semi: '半决赛', final: '决赛' };
+    var stageNames = { round32: '32强', round16: '16强', quarter: '¼决赛', semi: '半决赛', final: '决赛', third: '季军赛' };
     ['round32', 'round16', 'quarter', 'semi', 'final'].forEach(function(stage) {
       if (rounds[stage]) {
         rounds[stage].forEach(function(m) {
@@ -752,14 +764,39 @@ function renderKoTree(rounds) {
     { key: 'round32', label: '32强' },
     { key: 'round16', label: '16强' },
     { key: 'quarter', label: '8强' },
-    { key: 'semi', label: '4强' },
+    { key: 'semi', label: '半决赛' },
+    { key: 'third', label: '季军赛' },
     { key: 'final', label: '决赛' }
   ];
   stages.forEach(function(s) {
     var matches = rounds[s.key] || [];
     html += '<div class="inv-ko-stage"><div class="inv-ko-stage-label">' + s.label + '</div>';
     html += '<div class="inv-ko-matches">';
-    matches.forEach(function(m) {
+
+    // 季军赛：从两场半决赛的败者构造（如果 rounds.third 不存在）
+    var stageMatches = matches;
+    if (s.key === 'third' && (!stageMatches || stageMatches.length === 0)) {
+      var semis = rounds.semi || [];
+      if (semis.length === 2) {
+        function loser(m) {
+          if (!m || !m.winner || !m.home || !m.away) return null;
+          if (m.home.startsWith('W') || m.away.startsWith('W')) return null;
+          return m.winner === m.home ? m.away : m.home;
+        }
+        var sf1 = semis[0], sf2 = semis[1];
+        var l1 = loser(sf1), l2 = loser(sf2);
+        if (l1 && l2) {
+          stageMatches = [{
+            home: l1,
+            away: l2,
+            homeInfo: sf1.awayInfo && sf1.winner !== sf1.away ? sf1.awayInfo : (sf1.homeInfo || null),
+            awayInfo: sf2.awayInfo && sf2.winner !== sf2.away ? sf2.awayInfo : (sf2.homeInfo || null),
+          }];
+        }
+      }
+    }
+
+    (stageMatches || []).forEach(function(m) {
       var homeName = m.homeInfo ? m.homeInfo.name : (m.home || 'TBD');
       var awayName = m.awayInfo ? m.awayInfo.name : (m.away || 'TBD');
       var isClickable = m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W');

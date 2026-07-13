@@ -25,7 +25,8 @@
           <button class="filter-btn" data-value="LAST_32">32强</button>
           <button class="filter-btn" data-value="LAST_16">16强</button>
           <button class="filter-btn" data-value="QUARTER_FINALS">8强</button>
-          <button class="filter-btn" data-value="SEMI_FINALS">4强</button>
+          <button class="filter-btn" data-value="SEMI_FINALS">半决赛</button>
+          <button class="filter-btn" data-value="THIRD_PLACE">季军赛</button>
           <button class="filter-btn" data-value="FINAL">决赛</button>
         </div>
       </div>
@@ -166,7 +167,7 @@
 
       const stageLabel = {
         'GROUP_STAGE': '小组赛', 'LAST_32': '32强', 'LAST_16': '16强',
-        'QUARTER_FINALS': '8强', 'SEMI_FINALS': '4强', 'FINAL': '决赛', 'THIRD_PLACE': '季军赛'
+        'QUARTER_FINALS': '8强', 'SEMI_FINALS': '半决赛', 'FINAL': '决赛', 'THIRD_PLACE': '季军赛'
       }[m.stage] || m.stage || '';
 
       card.innerHTML = `
