@@ -1,5 +1,5 @@
 {
- "updated": "2026-07-10T11:40:17.000Z",
+ "updated": "2026-07-13T00:00:00.000Z",
  "matches": [
   {
    "date": "2026-06-11",
@@ -1434,6 +1434,38 @@
     "pens2": null,
     "status": "FT",
     "winner": "spain",
+    "stage": "QUARTER_FINALS"
+  },
+  {
+    "date": "2026-07-11",
+    "round": "Quarter-finals",
+    "group": null,
+    "team1": "England",
+    "team2": "Norway",
+    "t1": "england",
+    "t2": "norway",
+    "g1": 2,
+    "g2": 1,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "england",
+    "stage": "QUARTER_FINALS"
+  },
+  {
+    "date": "2026-07-11",
+    "round": "Quarter-finals",
+    "group": null,
+    "team1": "Argentina",
+    "team2": "Switzerland",
+    "t1": "argentina",
+    "t2": "switzerland",
+    "g1": 3,
+    "g2": 1,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "argentina",
     "stage": "QUARTER_FINALS"
   }
   ]
