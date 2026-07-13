@@ -235,9 +235,169 @@
     .ko-panel { display: none; }
     .ko-panel.active { display: block; }
 
+    /* Semi-final & final match cards */
+    .big-match {
+      background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+    .big-match.final {
+      background: linear-gradient(135deg, rgba(250,204,21,0.08), rgba(250,204,21,0.01));
+      border-color: rgba(250,204,21,0.3);
+    }
+    .big-match.third {
+      background: linear-gradient(135deg, rgba(205,127,50,0.08), rgba(205,127,50,0.01));
+      border-color: rgba(205,127,50,0.25);
+    }
+    .big-match-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .big-match-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+    }
+    .big-match.final .big-match-label { color: #facc15; }
+    .big-match.third .big-match-label { color: #cd7f32; }
+    .big-match-status {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .big-match-status .live {
+      color: var(--accent-green, #22c55e);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .big-match-body {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .big-team {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .big-team.away { flex-direction: row-reverse; text-align: right; }
+    .big-team .name-block { display: flex; flex-direction: column; gap: 4px; }
+    .big-team.away .name-block { align-items: flex-end; }
+    .big-team .team-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .big-team .team-meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 6px;
+    }
+    .big-team.away .team-meta { justify-content: flex-end; }
+    .big-team .team-flag-lg img,
+    .big-team .team-flag-lg .flag-fallback {
+      width: 44px;
+      height: 30px;
+      font-size: 1.5rem;
+    }
+    .big-team .team-flag-lg {
+      width: 44px;
+      height: 30px;
+      flex-shrink: 0;
+    }
+    .big-team.winner .team-name { color: var(--accent-green, #22c55e); }
+    .big-score {
+      text-align: center;
+      min-width: 90px;
+    }
+    .big-score .score-line {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+    .big-score .vs-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 12px 0;
+    }
+    .big-score .pens {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .big-match-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .big-match-footer .prob {
+      display: flex;
+      gap: 12px;
+    }
+    .big-match-footer .prob b {
+      color: var(--text);
+    }
+    .big-match-footer .badge {
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 0.68rem;
+    }
+    .big-match-footer .badge.pred {
+      background: rgba(59,130,246,0.15);
+      color: #5b9ef4;
+    }
+    .big-match-footer .badge.real {
+      background: rgba(34,197,94,0.15);
+      color: #22c55e;
+    }
+
+    /* Semi-final & final layout grid */
+    .sf-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .final-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .path-pill {
+      display: inline-block;
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.05);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 4px;
+    }
+
     @media (max-width: 768px) {
       .ko-grid-2 { grid-template-columns: 1fr; }
       .qualified-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+      .sf-grid, .final-grid { grid-template-columns: 1fr; }
+      .big-match-body { grid-template-columns: 1fr; gap: 12px; }
+      .big-team.away { flex-direction: row; text-align: left; }
+      .big-team.away .name-block { align-items: flex-start; }
+      .big-team.away .team-meta { justify-content: flex-start; }
     }
   </style>
 </head>
@@ -264,7 +424,9 @@
         <div class="ko-tab" data-panel="qualified">✅ 32强队伍</div>
         <div class="ko-tab" data-panel="r16-teams">🔵 16强队伍</div>
         <div class="ko-tab" data-panel="quarter-teams">🏅 8强队伍</div>
-        <div class="ko-tab" data-panel="semi-teams">🔶 4强队伍</div>
+        <div class="ko-tab" data-panel="semi-teams">🔶 半决赛队伍</div>
+        <div class="ko-tab" data-panel="semi">⚔️ 半决赛</div>
+        <div class="ko-tab" data-panel="finals">🏆 季军赛 & 决赛</div>
         <div class="ko-tab" data-panel="third">📊 第三名竞争</div>
       </div>
 
@@ -333,6 +495,28 @@
             8强淘汰赛胜者（含已完赛的真实结果和未赛比赛的模拟预测）
           </p>
           <div class="qualified-grid" id="ko-semi-teams"></div>
+        </div>
+      </div>
+
+      <!-- Panel 3e: Semi-final matches -->
+      <div class="ko-panel" id="panel-semi">
+        <div class="ko-section">
+          <h2>⚔️ 半决赛对阵</h2>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px">
+            半决赛对决 · 胜者晋级决赛，负者进入季军赛
+          </p>
+          <div class="sf-grid" id="ko-semi-matches"></div>
+        </div>
+      </div>
+
+      <!-- Panel 3f: 3rd/4th place + Final -->
+      <div class="ko-panel" id="panel-finals">
+        <div class="ko-section">
+          <h2>🏆 季军赛 & 决赛</h2>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px">
+            半决赛两支败者争夺季军 · 半决赛两支胜者角逐冠军
+          </p>
+          <div class="final-grid" id="ko-finals-matches"></div>
         </div>
       </div>
 
@@ -428,7 +612,7 @@
     var html = '';
 
     // Column labels
-    var colLabels = ['32强', '16强', '8强', '4强', '决赛', '冠军'];
+    var colLabels = ['32强', '16强', '8强', '半决赛', '决赛', '冠军'];
     colLabels.forEach(function(label, ci) {
       html += '<div class="round-label" style="grid-column:' + (ci + 1) + '">' + label + '</div>';
     });
@@ -503,7 +687,7 @@
       return t;
     }
 
-    var stageNames = { round32: '32强', round16: '16强', quarter: '8强', semi: '4强', final: '决赛' };
+    var stageNames = { round32: '32强', round16: '16强', quarter: '8强', semi: '半决赛', final: '决赛' };
 
     function matchRow(m) {
       var stageName = stageNames[Object.keys(stageNames).find(function(k) { return (bracketRoundData[k] || []).indexOf(m) >= 0; })] || '';
@@ -601,7 +785,7 @@
     container.innerHTML = html;
   }
 
-  // ===== 渲染4强队伍（8强胜者） =====
+  // ===== 渲染半决赛队伍（8强胜者） =====
   function renderSemiTeams(bracketRoundData, teamsProb) {
     var container = document.getElementById('ko-semi-teams');
     var qf = bracketRoundData.quarter || [];
@@ -614,7 +798,7 @@
     });
     var allSlugs = Object.keys(realWinners).concat(Object.keys(predWinners));
     if (!allSlugs.length) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无4强数据</div>';
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无半决赛数据</div>';
       return;
     }
     var html = '';
@@ -629,6 +813,220 @@
         (isReal ? '<span class="badge-real">✅ 已晋级</span>' : '<span class="badge-pred">🔮 预测</span>') +
         '</div>';
     });
+    container.innerHTML = html;
+  }
+
+  // ===== 渲染半决赛对阵 =====
+  function renderSemiMatches(roundData, teamsProb) {
+    var container = document.getElementById('ko-semi-matches');
+    var semis = roundData.semi || [];
+    if (!semis.length) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无半决赛数据</div>';
+      return;
+    }
+    var html = '';
+    semis.forEach(function(m, idx) {
+      var home = m.homeInfo, away = m.awayInfo;
+      var finished = m.finished;
+      var winnerSlug = m.winner;
+      var homeW = winnerSlug && m.home === winnerSlug;
+      var awayW = winnerSlug && m.away === winnerSlug;
+      var homeProb = home ? (teamsProb[home?.name ? (Object.keys(teamsProb).find(function(k) { return teamsProb[k].name === home.name; })) : m.home]?.final || 0) : 0;
+      var awayProb = away ? (teamsProb[away?.name ? (Object.keys(teamsProb).find(function(k) { return teamsProb[k].name === away.name; })) : m.away]?.final || 0) : 0;
+      // 简化：从 teamsProb 中按 slug 查 final% (MC 决赛概率)
+      if (m.home) {
+        var t = teamsProb[m.home];
+        if (t) homeProb = t.final || 0;
+      }
+      if (m.away) {
+        var t2 = teamsProb[m.away];
+        if (t2) awayProb = t2.final || 0;
+      }
+      var statusHtml = '';
+      if (finished) {
+        statusHtml = '<span class="live">✅ 已完赛</span> · ' + (m.time || '');
+      } else if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
+        statusHtml = '<span class="live">⏰ ' + (m.time || '即将开赛') + '</span>';
+      } else {
+        statusHtml = '<span style="color:var(--text-muted)">🔮 待定</span>';
+      }
+      var scoreHtml = '';
+      if (finished && m.g1 != null && m.g2 != null) {
+        scoreHtml = '<div class="score-line">' + m.g1 + ' &nbsp;-&nbsp; ' + m.g2 + '</div>';
+        if (m.pens1 != null && m.pens2 != null) {
+          scoreHtml += '<div class="pens">点球 ' + m.pens1 + '-' + m.pens2 + '</div>';
+        }
+      } else {
+        scoreHtml = '<div class="vs-text">VS</div>';
+      }
+      var footerBadge = finished
+        ? '<span class="badge real">✅ 实际结果</span>'
+        : '<span class="badge pred">🔮 MC 预测</span>';
+      html += '<div class="big-match">' +
+        '<div class="big-match-header">' +
+          '<span class="big-match-label">⚔️ 半决赛 ' + (idx + 1) + ' · ' + (m.slot || '') + '</span>' +
+          '<span class="big-match-status">' + statusHtml + '</span>' +
+        '</div>' +
+        '<div class="big-match-body">' +
+          '<div class="big-team home' + (homeW ? ' winner' : '') + '">' +
+            '<span class="team-flag-lg">' + flagHtml(home, 'md') + '</span>' +
+            '<div class="name-block">' +
+              '<span class="team-name">' + (home?.name || (m.home && !m.home.startsWith('W') ? m.home : '待定')) + '</span>' +
+              '<span class="team-meta">' +
+                (home?.elo ? '<span class="path-pill">Elo ' + home.elo + '</span>' : '') +
+                (home?.group ? '<span class="path-pill">' + home.group + '组</span>' : '') +
+              '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="big-score">' + scoreHtml + '</div>' +
+          '<div class="big-team away' + (awayW ? ' winner' : '') + '">' +
+            '<span class="team-flag-lg">' + flagHtml(away, 'md') + '</span>' +
+            '<div class="name-block">' +
+              '<span class="team-name">' + (away?.name || (m.away && !m.away.startsWith('W') ? m.away : '待定')) + '</span>' +
+              '<span class="team-meta">' +
+                (away?.elo ? '<span class="path-pill">Elo ' + away.elo + '</span>' : '') +
+                (away?.group ? '<span class="path-pill">' + away.group + '组</span>' : '') +
+              '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="big-match-footer">' +
+          '<div class="prob">' +
+            '<span>' + (home?.name || (m.home && !m.home.startsWith('W') ? m.home : '待定')) + ' <b>' + (homeProb ? homeProb.toFixed(1) + '%' : '-') + '</b></span>' +
+            '<span>' + (away?.name || (m.away && !m.away.startsWith('W') ? m.away : '待定')) + ' <b>' + (awayProb ? awayProb.toFixed(1) + '%' : '-') + '</b></span>' +
+          '</div>' +
+          footerBadge +
+        '</div>' +
+      '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+  // ===== 渲染季军赛 & 决赛 =====
+  function renderFinalsMatches(roundData, teamsProb) {
+    var container = document.getElementById('ko-finals-matches');
+    var semis = roundData.semi || [];
+    var finalM = (roundData.final || [])[0] || null;
+    if (!finalM && !semis.length) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无决赛数据</div>';
+      return;
+    }
+
+    // === 构造季军赛对阵 ===
+    // 季军赛 = SF1 败者 vs SF2 败者
+    var thirdMatch = null;
+    if (semis.length === 2) {
+      var sf1 = semis[0], sf2 = semis[1];
+      function loser(m) {
+        if (!m || !m.winner || !m.home || !m.away) return null;
+        if (m.home.startsWith('W') || m.away.startsWith('W')) return null;
+        return m.winner === m.home ? m.away : m.home;
+      }
+      var sf1Loser = loser(sf1);
+      var sf2Loser = loser(sf2);
+      if (sf1Loser && sf2Loser) {
+        // 用冠军概率最高的为预测季军
+        var p1 = teamsProb[sf1Loser]?.champion || 0;
+        var p2 = teamsProb[sf2Loser]?.champion || 0;
+        // 用 final 概率反推季军胜者（次高者预测胜）
+        var f1 = teamsProb[sf1Loser]?.final || 0;
+        var f2 = teamsProb[sf2Loser]?.final || 0;
+        var predictedThird = f1 >= f2 ? sf1Loser : sf2Loser;
+        thirdMatch = {
+          home: sf1Loser,
+          away: sf2Loser,
+          homeInfo: { name: teamsProb[sf1Loser]?.name || sf1Loser, flag: teamsProb[sf1Loser]?.flag, flagPath: teamsProb[sf1Loser]?.flagPath, group: teamsProb[sf1Loser]?.group, elo: teamsProb[sf1Loser]?.elo || 1500 },
+          awayInfo: { name: teamsProb[sf2Loser]?.name || sf2Loser, flag: teamsProb[sf2Loser]?.flag, flagPath: teamsProb[sf2Loser]?.flagPath, group: teamsProb[sf2Loser]?.group, elo: teamsProb[sf2Loser]?.elo || 1500 },
+          winner: predictedThird,
+          finished: false,
+          slot: '3RD',
+          label: '季军赛',
+        };
+      }
+    }
+
+    function bigMatchCard(m, opts) {
+      opts = opts || {};
+      var klass = 'big-match';
+      if (opts.final) klass += ' final';
+      if (opts.third) klass += ' third';
+      var home = m.homeInfo, away = m.awayInfo;
+      var finished = m.finished;
+      var winnerSlug = m.winner;
+      var homeW = winnerSlug && m.home === winnerSlug;
+      var awayW = winnerSlug && m.away === winnerSlug;
+      var homeProb = m.home ? (teamsProb[m.home]?.champion || 0) : 0;
+      var awayProb = m.away ? (teamsProb[m.away]?.champion || 0) : 0;
+      var statusHtml = '';
+      if (finished) {
+        statusHtml = '<span class="live">✅ 已完赛</span>';
+      } else if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
+        statusHtml = '<span class="live">⏰ ' + (m.time || '即将开赛') + '</span>';
+      } else {
+        statusHtml = '<span style="color:var(--text-muted)">🔮 待定</span>';
+      }
+      var scoreHtml = '';
+      if (finished && m.g1 != null && m.g2 != null) {
+        scoreHtml = '<div class="score-line">' + m.g1 + ' &nbsp;-&nbsp; ' + m.g2 + '</div>';
+        if (m.pens1 != null && m.pens2 != null) {
+          scoreHtml += '<div class="pens">点球 ' + m.pens1 + '-' + m.pens2 + '</div>';
+        }
+      } else {
+        scoreHtml = '<div class="vs-text">VS</div>';
+      }
+      var footerBadge = finished
+        ? '<span class="badge real">✅ 实际结果</span>'
+        : '<span class="badge pred">🔮 MC 预测</span>';
+      var labelText = opts.final ? '🏆 总决赛' : (opts.third ? '🥉 季军赛' : (m.label || ''));
+      return '<div class="' + klass + '">' +
+        '<div class="big-match-header">' +
+          '<span class="big-match-label">' + labelText + (m.slot ? ' · ' + m.slot : '') + '</span>' +
+          '<span class="big-match-status">' + statusHtml + '</span>' +
+        '</div>' +
+        '<div class="big-match-body">' +
+          '<div class="big-team home' + (homeW ? ' winner' : '') + '">' +
+            '<span class="team-flag-lg">' + flagHtml(home, 'md') + '</span>' +
+            '<div class="name-block">' +
+              '<span class="team-name">' + (home?.name || (m.home && !m.home.startsWith('W') ? m.home : '待定')) + '</span>' +
+              '<span class="team-meta">' +
+                (home?.elo ? '<span class="path-pill">Elo ' + home.elo + '</span>' : '') +
+                (home?.group ? '<span class="path-pill">' + home.group + '组</span>' : '') +
+              '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="big-score">' + scoreHtml + '</div>' +
+          '<div class="big-team away' + (awayW ? ' winner' : '') + '">' +
+            '<span class="team-flag-lg">' + flagHtml(away, 'md') + '</span>' +
+            '<div class="name-block">' +
+              '<span class="team-name">' + (away?.name || (m.away && !m.away.startsWith('W') ? m.away : '待定')) + '</span>' +
+              '<span class="team-meta">' +
+                (away?.elo ? '<span class="path-pill">Elo ' + away.elo + '</span>' : '') +
+                (away?.group ? '<span class="path-pill">' + away.group + '组</span>' : '') +
+              '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="big-match-footer">' +
+          '<div class="prob">' +
+            '<span>' + (home?.name || (m.home && !m.home.startsWith('W') ? m.home : '待定')) + ' 冠军概率 <b>' + (homeProb ? homeProb.toFixed(1) + '%' : '-') + '</b></span>' +
+            '<span>' + (away?.name || (m.away && !m.away.startsWith('W') ? m.away : '待定')) + ' 冠军概率 <b>' + (awayProb ? awayProb.toFixed(1) + '%' : '-') + '</b></span>' +
+          '</div>' +
+          footerBadge +
+        '</div>' +
+      '</div>';
+    }
+
+    var html = '';
+    if (thirdMatch) {
+      html += bigMatchCard(thirdMatch, { third: true });
+    } else {
+      html += '<div class="big-match third"><div class="big-match-body"><div class="big-team" style="grid-column:1/-1;text-align:center;justify-content:center"><div class="name-block"><span class="team-name" style="color:var(--text-muted)">🥉 季军赛对阵待半决赛完赛后确定</span></div></div></div></div>';
+    }
+    if (finalM) {
+      html += bigMatchCard(finalM, { final: true });
+    } else {
+      html += '<div class="big-match final"><div class="big-match-body"><div class="big-team" style="grid-column:1/-1;text-align:center;justify-content:center"><div class="name-block"><span class="team-name" style="color:var(--text-muted)">🏆 决赛对阵待半决赛完赛后确定</span></div></div></div></div>';
+    }
     container.innerHTML = html;
   }
 
@@ -697,8 +1095,38 @@
       document.getElementById('ko-dashboard').style.display = 'flex';
 
       var knockoutData = knockoutRes;
-      var roundData = knockoutData.rounds || knockoutData;
-      var teamsProb = (bracketRes && bracketRes.teams) ? bracketRes.teams : knockoutData.teams || {};
+      // 基础数据：用 /api/knockout/bracket 的 rounds（含 homeInfo/awayInfo 的 R32/R16/QF）
+      var roundData = (knockoutData.rounds || {});
+      // 补全数据：用 /api/bracket 解决 semi/final 的 W-slot（带回 homeInfo/awayInfo）
+      if (bracketRes && bracketRes.rounds) {
+        Object.keys(bracketRes.rounds).forEach(function(stage) {
+          if (stage === 'semi' || stage === 'final') {
+            roundData[stage] = bracketRes.rounds[stage];
+          }
+        });
+      }
+      var teamsProb = (bracketRes && bracketRes.teams) ? bracketRes.teams : (knockoutData.teams || {});
+
+      // 最终兜底：若 roundData 中 semi/final 仍有 W-slot，从 bracketRes 补全
+      if (roundData && bracketRes && bracketRes.rounds) {
+        ['semi', 'final'].forEach(function(stage) {
+          if (roundData[stage] && bracketRes.rounds[stage]) {
+            roundData[stage].forEach(function(m, i) {
+              var brm = bracketRes.rounds[stage][i];
+              if (brm && (!m.home || m.home.startsWith('W')) && brm.home && !brm.home.startsWith('W')) {
+                m.home = brm.home;
+                m.away = brm.away;
+                m.homeInfo = brm.homeInfo || m.homeInfo;
+                m.awayInfo = brm.awayInfo || m.awayInfo;
+                m.winner = brm.winner;
+                m.finished = brm.finished;
+                m.g1 = brm.g1;
+                m.g2 = brm.g2;
+              }
+            });
+          }
+        });
+      }
 
       // Source banner
       var banner = document.getElementById('source-banner');
@@ -730,9 +1158,13 @@
         renderR16Teams(roundData, teamsProb);
         renderQuarterTeams(roundData, teamsProb);
         renderSemiTeams(roundData, teamsProb);
+        renderSemiMatches(roundData, teamsProb);
+        renderFinalsMatches(roundData, teamsProb);
       } else {
         document.getElementById('ko-finished').innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无比赛数据</div>';
         document.getElementById('ko-upcoming').innerHTML = '';
+        document.getElementById('ko-semi-matches').innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无半决赛数据</div>';
+        document.getElementById('ko-finals-matches').innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem;padding:8px">暂无决赛数据</div>';
       }
 
       // Qualified teams

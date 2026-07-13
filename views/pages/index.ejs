@@ -93,7 +93,7 @@
         koGrid.innerHTML = '';
         koMatches.forEach(function(m) {
           var isFinished = m.status === 'FT';
-          var stageLabels = {'LAST_32':'32强','LAST_16':'16强','QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛'};
+          var stageLabels = {'LAST_32':'32强','LAST_16':'16强','QUARTER_FINALS':'8强','SEMI_FINALS':'半决赛','FINAL':'决赛'};
           var stageLabel = stageLabels[m.stage] || m.stage || '';
           var pred = m.prediction;
           var card = document.createElement('div');
@@ -136,7 +136,7 @@
             ${(m.kickoffLabel || m.time) ? `<span class="match-time-badge">${m.kickoffLabel || m.time}</span>` : ''}
             <span class="match-stage-badge">${({
               'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强',
-              'QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛'
+              'QUARTER_FINALS':'8强','SEMI_FINALS':'半决赛','FINAL':'决赛'
             })[m.stage] || m.stage || ''}</span>
             <span class="match-status ${isFinished ? 'status-finished' : 'status-upcoming'}">
               ${isFinished ? '已结束' : '未开赛'}

@@ -95,7 +95,7 @@
           var pathHtml = '<div class="ko-path-rows">';
           pathRes.bracketPath.forEach(function(p) {
             var oppInfo = p.opponentInfo || {};
-            var stageLabels = {'R32':'32强','R16':'16强','QF':'8强','SF':'4强','FINAL':'决赛'};
+            var stageLabels = {'R32':'32强','R16':'16强','QF':'8强','SF':'半决赛','FINAL':'决赛'};
             var label = stageLabels[p.stage] || p.stage || '';
             pathHtml += '<div class="ko-path-row">' +
               '<span class="path-stage">' + label + '</span>' +

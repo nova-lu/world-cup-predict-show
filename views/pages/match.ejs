@@ -208,7 +208,7 @@
             <div class="progress-arrow">→</div>
             <div class="progress-step" id="p-qf">8强</div>
             <div class="progress-arrow">→</div>
-            <div class="progress-step" id="p-sf">4强</div>
+            <div class="progress-step" id="p-sf">半决赛</div>
             <div class="progress-arrow">→</div>
             <div class="progress-step" id="p-final">决赛</div>
           </div>
@@ -358,7 +358,7 @@
       if (matchInfo && matchInfo.match) {
         var match = matchInfo.match;
         document.getElementById('match-info-bar').style.display = 'block';
-        var stageLabels = { 'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强','QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛','THIRD_PLACE':'季军赛' };
+        var stageLabels = { 'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强','QUARTER_FINALS':'8强','SEMI_FINALS':'半决赛','FINAL':'决赛','THIRD_PLACE':'季军赛' };
         document.getElementById('mi-stage').textContent = stageLabels[match.stage] || match.stage || '-';
         document.getElementById('mi-group').textContent = match.group ? match.group + '组' : '-';
         document.getElementById('mi-matchday').textContent = match.matchday ? '第' + match.matchday + '轮' : (match.stage && match.stage !== 'GROUP_STAGE' ? stageLabels[match.stage] || '' : '-');
@@ -503,7 +503,7 @@
         document.getElementById('match-info-bar').style.display = 'block';
         const stageLabels = {
           'GROUP_STAGE':'小组赛','LAST_32':'32强','LAST_16':'16强',
-          'QUARTER_FINALS':'8强','SEMI_FINALS':'4强','FINAL':'决赛','THIRD_PLACE':'季军赛'
+          'QUARTER_FINALS':'8强','SEMI_FINALS':'半决赛','FINAL':'决赛','THIRD_PLACE':'季军赛'
         };
         document.getElementById('mi-stage').textContent = stageLabels[match.stage] || match.stage || '-';
         document.getElementById('mi-group').textContent = match.group ? match.group + '组' : '-';

@@ -223,7 +223,7 @@ function renderOptimalPath(containerId, bracketData) {
     { key: 'round32', label: '32强' },
     { key: 'round16', label: '16强' },
     { key: 'quarter', label: '8强' },
-    { key: 'semi', label: '4强' },
+    { key: 'semi', label: '半决赛' },
     { key: 'final', label: '决赛' }
   ];
 
