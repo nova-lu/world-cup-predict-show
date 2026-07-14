@@ -376,10 +376,17 @@ export async function aggregateMatchData(t1, t2) {
     const { getFinishedMatches } = await import('../services/dataService.js');
     const allMatches = getFinishedMatches() || [];
 
-    const homeMatches = allMatches.filter(m =>
+    // 按日期 + 时间倒序排序（最近的在前）——确保最新一场完赛必包含在内
+    const sortedAll = allMatches.slice().sort((a, b) => {
+      const ad = (a.date || '') + (a.time || '');
+      const bd = (b.date || '') + (b.time || '');
+      return bd.localeCompare(ad);
+    });
+
+    const homeMatches = sortedAll.filter(m =>
       m.t1 === t1 || m.t2 === t1
     ).slice(0, 5);
-    const awayMatches = allMatches.filter(m =>
+    const awayMatches = sortedAll.filter(m =>
       m.t1 === t2 || m.t2 === t2
     ).slice(0, 5);
 
@@ -387,7 +394,11 @@ export async function aggregateMatchData(t1, t2) {
       home: {
         count: homeMatches.length,
         last5: homeMatches.map(m => ({
+          date: m.date || '',
+          stage: m.stage || '',
+          round: m.round || '',
           opponent: m.t1 === t1 ? m.t2 : m.t1,
+          venue: m.t1 === t1 ? 'H' : 'A',
           result: m.g1 != null && m.g2 != null
             ? (m.t1 === t1 ? `${m.g1}-${m.g2}` : `${m.g2}-${m.g1}`)
             : '-',
@@ -403,7 +414,11 @@ export async function aggregateMatchData(t1, t2) {
       away: {
         count: awayMatches.length,
         last5: awayMatches.map(m => ({
+          date: m.date || '',
+          stage: m.stage || '',
+          round: m.round || '',
           opponent: m.t1 === t2 ? m.t2 : m.t1,
+          venue: m.t1 === t2 ? 'H' : 'A',
           result: m.g1 != null && m.g2 != null
             ? (m.t1 === t2 ? `${m.g1}-${m.g2}` : `${m.g2}-${m.g1}`)
             : '-',
@@ -416,9 +431,12 @@ export async function aggregateMatchData(t1, t2) {
           return score > 0 ? 'W' : score < 0 ? 'L' : 'D';
         }).join(''),
       },
+      dataTimestamp: new Date().toISOString(),
+      dataSource: 'wc2026-results.json (按日期倒序，最新一场完赛自动包含)',
     };
   } catch (e) {
     console.warn('[AI-aggregator] 近期状态失败:', e.message);
+    result.recentForm = null;
   }
 
   // ---- 8. 淘汰赛加时/点球 ----
