@@ -112,25 +112,36 @@ function buildFormSection(d) {
   const a = d.away || {};
   const homeCount = h.count || 0;
   const awayCount = a.count || 0;
-  let s = '# 数据源 7 - 近期状态\n';
+  let s = '# 数据源 7 - 近期状态（按日期倒序）\n';
+  if (d.dataTimestamp) s += `数据生成时间: ${d.dataTimestamp} (UTC)\n`;
+  if (d.dataSource) s += `数据来源: ${d.dataSource}\n`;
+  s += '\n';
   s += `主队近况: ${h.form || 'N/A'}\n`;
   if (h.last5 && h.last5.length) {
-    s += `主队近${homeCount}场:\n`;
+    s += `主队近${homeCount}场（最新→最旧）:\n`;
     h.last5.forEach(m => {
-      s += `  vs ${m.opponent}: ${m.result} (进${m.gf}失${m.ga})\n`;
+      const dateStr = m.date || '';
+      const stageStr = m.stage || m.round || '';
+      const venueStr = m.venue === 'H' ? '主场' : '客场';
+      s += `  [${dateStr}] [${stageStr}] vs ${m.opponent} (${venueStr}): ${m.result} (进${m.gf}失${m.ga})\n`;
     });
   } else {
     s += '主队近期无完赛记录。\n';
   }
+  s += '\n';
   s += `客队近况: ${a.form || 'N/A'}\n`;
   if (a.last5 && a.last5.length) {
-    s += `客队近${awayCount}场:\n`;
+    s += `客队近${awayCount}场（最新→最旧）:\n`;
     a.last5.forEach(m => {
-      s += `  vs ${m.opponent}: ${m.result} (进${m.gf}失${m.ga})\n`;
+      const dateStr = m.date || '';
+      const stageStr = m.stage || m.round || '';
+      const venueStr = m.venue === 'H' ? '主场' : '客场';
+      s += `  [${dateStr}] [${stageStr}] vs ${m.opponent} (${venueStr}): ${m.result} (进${m.gf}失${m.ga})\n`;
     });
   } else {
     s += '客队近期无完赛记录。\n';
   }
+  s += '\n⚠️ 重要：以上是按日期倒序排序的最近比赛（最新一场在第一行）。请基于最新一场的状态进行评估，避免使用过时信息。\n';
   return s;
 }
 
