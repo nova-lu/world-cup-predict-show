@@ -40,7 +40,7 @@ function now() {
  * @returns {{ value: any, meta: object|null, hit: boolean }}
  */
 export function get(key, options = {}) {
-  const { force = false, ttlMs = DEFAULT_TTL } = options;
+  const { force = false, ttlMs = DEFAULT_TTL, skipL2 = false } = options;
 
   if (force) {
     return { value: null, meta: null, hit: false };
@@ -49,13 +49,60 @@ export function get(key, options = {}) {
   // L1 内存查询
   const l1 = L1.get(key);
   if (l1) {
-    const age = Date.now() - new Date(l1.meta.createdAt).getTime();
-    if (age < ttlMs) {
-      l1.meta.updatedAt = now();
-      return { value: l1.value, meta: l1.meta, hit: true };
+    // 实时性保护：若 L2 文件比 L1 更新（外部进程或 fetcher 写了新数据），失效 L1
+    if (!skipL2) {
+      try {
+        const fp = filePath(key);
+        const stat = fs.statSync(fp);
+        const l1CreatedMs = new Date(l1.meta.createdAt).getTime();
+        // L2 文件 mtime 比 L1 写入时间晚 2 秒以上（容忍 clock skew）→ 失效 L1
+        if (stat.mtimeMs > l1CreatedMs + 2000) {
+          L1.delete(key);
+          // 重新走 fallthrough 加载 L2
+        } else {
+          const age = Date.now() - l1CreatedMs;
+          if (age < ttlMs) {
+            l1.meta.updatedAt = now();
+            return { value: l1.value, meta: l1.meta, hit: true };
+          }
+          // L1 过期，删除
+          L1.delete(key);
+        }
+      } catch (e) {
+        // L2 文件不存在或 stat 失败，回退到原 L1 逻辑
+        const age = Date.now() - new Date(l1.meta.createdAt).getTime();
+        if (age < ttlMs) {
+          l1.meta.updatedAt = now();
+          return { value: l1.value, meta: l1.meta, hit: true };
+        }
+        L1.delete(key);
+      }
+    } else {
+      const age = Date.now() - new Date(l1.meta.createdAt).getTime();
+      if (age < ttlMs) {
+        l1.meta.updatedAt = now();
+        return { value: l1.value, meta: l1.meta, hit: true };
+      }
+      L1.delete(key);
     }
-    // L1 过期，删除
-    L1.delete(key);
+  }
+
+  // L1 没有或已失效 → 尝试从 L2 文件加载
+  if (!skipL2) {
+    try {
+      const fp = filePath(key);
+      const raw = fs.readFileSync(fp, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.value && parsed.meta) {
+        const age = Date.now() - new Date(parsed.meta.createdAt).getTime();
+        if (age < (parsed.meta.ttlMs || ttlMs)) {
+          L1.set(key, { value: parsed.value, meta: parsed.meta });
+          return { value: parsed.value, meta: parsed.meta, hit: true };
+        }
+      }
+    } catch (_) {
+      // L2 不存在或解析失败，继续返回未命中
+    }
   }
 
   return { value: null, meta: null, hit: false };

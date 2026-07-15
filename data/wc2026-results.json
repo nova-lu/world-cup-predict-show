@@ -1467,6 +1467,22 @@
     "status": "FT",
     "winner": "argentina",
     "stage": "QUARTER_FINALS"
+  },
+  {
+    "date": "2026-07-15",
+    "round": "Semi-finals",
+    "group": null,
+    "team1": "France",
+    "team2": "Spain",
+    "t1": "france",
+    "t2": "spain",
+    "g1": 0,
+    "g2": 2,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "spain",
+    "stage": "SEMI_FINALS"
   }
   ]
 }

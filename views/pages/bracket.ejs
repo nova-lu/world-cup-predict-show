@@ -275,9 +275,10 @@
   // ===== 渲染夺冠概率侧栏 =====
   function renderSidebar(teams) {
     const sidebar = document.getElementById('bracket-sidebar');
+    const elim = window._eliminated || {};
     const entries = Object.entries(teams)
       .map(([slug, t]) => ({ slug, ...t }))
-      .filter(t => (t.champion || 0) > 0)
+      .filter(t => (t.champion || 0) > 0 && !elim[t.slug])
       .sort((a, b) => (b.champion || 0) - (a.champion || 0))
       .slice(0, 10);
 
@@ -458,9 +459,10 @@
     }
 
     // Column 6: Champion node
+    const elim = window._eliminated || {};
     const champEntries = Object.entries(mcTeams)
       .map(([slug, t]) => ({ slug, ...t }))
-      .filter(t => (t.champion || 0) > 0)
+      .filter(t => (t.champion || 0) > 0 && !elim[t.slug])
       .sort((a, b) => (b.champion || 0) - (a.champion || 0));
     const champ = champEntries[0] || null;
     html += '<div class="champion-node" style="grid-row:2/span 16;grid-column:6">';
@@ -512,6 +514,27 @@
 
       const mcTeams = bracketRes.teams || {};
       window._mcTeams = mcTeams; // 供 matchCard 使用
+
+      // === 加载真实淘汰赛结果，找出已被淘汰的球队 ===
+      var eliminated = {};
+      try {
+        var koRes = await cachedFetch('/api/knockout/bracket', { force }).catch(() => null);
+        if (koRes && koRes.rounds) {
+          ['round32', 'round16', 'quarter', 'semi', 'final'].forEach(function(stage) {
+            (koRes.rounds[stage] || []).forEach(function(m) {
+              if (m.finished && m.winner && m.loser) {
+                eliminated[m.loser] = true;
+              } else if (m.finished && m.winner && m.home && m.away && m.g1 != null && m.g2 != null) {
+                var loser = m.winner === m.home ? m.away : m.home;
+                eliminated[loser] = true;
+              }
+            });
+          });
+        }
+      } catch (koErr) {
+        console.warn('[bracket] knockout/bracket fetch failed:', koErr.message);
+      }
+      window._eliminated = eliminated; // 供 render 函数使用
 
       // Source indicator
       const banner = document.getElementById('source-banner');
