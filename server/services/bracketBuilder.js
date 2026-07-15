@@ -223,6 +223,58 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
     champion = finalRound.winner;
   }
 
+  // 6. 实时数据兜底：直接从 allMatches 找出 SF/Final 实际球队
+  // 当 W-slot 解析失败时（bracket 结构与实际数据不匹配），从 schedule 中直接取
+  const stageToApi = { semi: ['SEMI_FINALS', 'SEMI_FINAL', 'SEMI'], final: ['FINAL'], third: ['THIRD_PLACE', 'THIRD'] };
+  for (const stageKey of Object.keys(stageToApi)) {
+    const stageRounds = rounds[stageKey] || [];
+    if (!stageRounds.length) continue;
+    for (let i = 0; i < stageRounds.length; i++) {
+      const m = stageRounds[i];
+      if (m.home && !m.home.startsWith('W') && m.away && !m.away.startsWith('W')) continue;
+      const candidates = (allMatches || []).filter(am => stageToApi[stageKey].includes(am.stage));
+      if (candidates[i]) {
+        const sm = candidates[i];
+        if (sm.t1 && sm.t2) {
+          m.home = sm.t1;
+          m.away = sm.t2;
+          if (sm.g1 != null && sm.g2 != null) {
+            m.g1 = sm.g1;
+            m.g2 = sm.g2;
+            if (sm.status === 'FT') {
+              m.finished = true;
+              m.winner = sm.g1 > sm.g2 ? sm.t1 : sm.t2;
+            }
+          }
+          if (sm.time) m.time = sm.time;
+          m.homeInfo = { ...getTeamInfo(sm.t1), elo: ratings[sm.t1] || 1500 };
+          m.awayInfo = { ...getTeamInfo(sm.t2), elo: ratings[sm.t2] || 1500 };
+          m.resolved = true;
+        }
+      }
+    }
+  }
+
+  // 7. 补充：用半决赛胜者解析决赛对阵
+  // stageToApi 兜底（step 6）已填充半决赛球队，但决赛仍需从半决赛胜者推算
+  const finalMatch = rounds.final && rounds.final[0];
+  const semiMatches = rounds.semi || [];
+  if (finalMatch && (!finalMatch.resolved || finalMatch.home === 'W101' || finalMatch.home === 'W102')) {
+    if (semiMatches.length >= 1 && semiMatches[0].winner && !semiMatches[0].winner.startsWith('W')) {
+      finalMatch.home = semiMatches[0].winner;
+      finalMatch.homeInfo = { ...(getTeamInfo(semiMatches[0].winner) || {}), elo: ratings[semiMatches[0].winner] || 1500 };
+    }
+    if (semiMatches.length >= 2 && semiMatches[1].winner && !semiMatches[1].winner.startsWith('W')) {
+      finalMatch.away = semiMatches[1].winner;
+      finalMatch.awayInfo = { ...(getTeamInfo(semiMatches[1].winner) || {}), elo: ratings[semiMatches[1].winner] || 1500 };
+    }
+    finalMatch.resolved = !!(finalMatch.home && finalMatch.away &&
+      !finalMatch.home.startsWith('W') && !finalMatch.away.startsWith('W'));
+    if (finalMatch.resolved) {
+      console.log('[bracketBuilder] Final resolved from semi winners: ' + finalMatch.home + ' vs ' + finalMatch.away);
+    }
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     groups: groupConfig,

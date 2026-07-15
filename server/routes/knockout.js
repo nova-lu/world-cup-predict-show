@@ -14,6 +14,14 @@ import { get as cacheGet, set as cacheSet } from '../middleware/cache.js';
 
 const router = Router();
 
+// 强制禁用浏览器/中间代理缓存 - 确保实时数据
+router.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 // ===== 已确定出线球队 =====
 router.get('/qualifiers', async (req, res) => {
   try {

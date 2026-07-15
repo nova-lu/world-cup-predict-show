@@ -412,7 +412,8 @@
     <div id="source-banner" class="success-banner" style="display:none">
       <span id="source-banner-text"></span>
       <span id="ko-freshness" style="margin-left:12px;font-size:0.78rem;color:var(--text-muted)"></span>
-      <button onclick="loadKnockoutData(true)" style="margin-left:12px;font-size:0.72rem;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:4px;padding:2px 10px;cursor:pointer">🔄 刷新</button>
+      <span id="ko-auto-refresh" style="margin-left:12px;font-size:0.72rem;color:var(--text-muted)"></span>
+      <button id="ko-refresh-btn" onclick="loadKnockoutData(true)" style="margin-left:12px;font-size:0.72rem;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:4px;padding:2px 10px;cursor:pointer">🔄 手动刷新</button>
     </div>
     <div id="loading-spinner" class="loading">🏆 加载淘汰赛数据...</div>
 
@@ -643,19 +644,56 @@
       });
     });
 
-    // Champion node
-    var champEntries = Object.entries(mcTeams)
-      .map(function(e) { return { slug: e[0], flag: e[1].flag, flagPath: e[1].flagPath, name: e[1].name, champion: e[1].champion || 0 }; })
-      .filter(function(t) { return t.champion > 0; })
-      .sort(function(a, b) { return b.champion - a.champion; });
-    var champ = champEntries[0] || null;
+    // === 找出已淘汰的球队 ===
+    // 在已完赛的淘汰赛中，败者已被淘汰
+    var eliminated = {};
+    ['round32', 'round16', 'quarter', 'semi', 'final'].forEach(function(stage) {
+      (roundData[stage] || []).forEach(function(m) {
+        if (m.finished && m.winner && m.loser) {
+          eliminated[m.loser] = true;
+        } else if (m.finished && m.winner) {
+          // 无 loser 字段时根据比分推断
+          if (m.home && m.away && m.g1 != null && m.g2 != null) {
+            var loser = m.winner === m.home ? m.away : m.home;
+            eliminated[loser] = true;
+          }
+        }
+      });
+    });
+
+    // === 冠军节点 ===
+    // 优先使用实际裁定的决赛冠军（决赛已赛且有胜者）
+    var actualChamp = null;
+    var finalM = (roundData.final || [])[0];
+    if (finalM && finalM.finished && finalM.winner && !finalM.winner.startsWith('W')) {
+      actualChamp = finalM.winner;
+    }
+
+    var champ = null;
+    if (actualChamp) {
+      // 决赛已完赛，用实际冠军
+      var t = mcTeams[actualChamp];
+      champ = { slug: actualChamp, flag: t?.flag, flagPath: t?.flagPath, name: t?.name || actualChamp, champion: 100 };
+    } else {
+      // 从 MC 概率中排除已淘汰球队，取剩余中概率最高的
+      var champEntries = Object.entries(mcTeams)
+        .filter(function(e) { return !eliminated[e[0]]; })
+        .map(function(e) { return { slug: e[0], flag: e[1].flag, flagPath: e[1].flagPath, name: e[1].name, champion: e[1].champion || 0 }; })
+        .filter(function(t) { return t.champion > 0; })
+        .sort(function(a, b) { return b.champion - a.champion; });
+      champ = champEntries[0] || null;
+    }
 
     html += '<div class="champion-node" style="grid-row:2/span 16;grid-column:6">';
     html += '<div class="trophy">\uD83C\uDFC6</div>';
     if (champ) {
       html += flagHtml({ flagPath: champ.flagPath, flag: champ.flag, name: champ.name }, 'md');
       html += '<div class="champ-name">' + (champ.name || '?') + '</div>';
-      html += '<div class="champ-prob">' + (champ.champion || 0).toFixed(1) + '%</div>';
+      if (actualChamp) {
+        html += '<div class="champ-prob" style="color:#facc15">🏆 冠军</div>';
+      } else {
+        html += '<div class="champ-prob">' + (champ.champion || 0).toFixed(1) + '%</div>';
+      }
     } else {
       html += '<div class="champ-name">待定</div>';
     }
@@ -924,19 +962,28 @@
       }
       var sf1Loser = loser(sf1);
       var sf2Loser = loser(sf2);
-      if (sf1Loser && sf2Loser) {
-        // 用冠军概率最高的为预测季军
-        var p1 = teamsProb[sf1Loser]?.champion || 0;
-        var p2 = teamsProb[sf2Loser]?.champion || 0;
-        // 用 final 概率反推季军胜者（次高者预测胜）
-        var f1 = teamsProb[sf1Loser]?.final || 0;
-        var f2 = teamsProb[sf2Loser]?.final || 0;
-        var predictedThird = f1 >= f2 ? sf1Loser : sf2Loser;
+      // 只要有一方败者已确定即可展示（另一方显示"待定"）
+      if (sf1Loser || sf2Loser) {
+        var homeTeam = sf1Loser || null;
+        var awayTeam = sf2Loser || null;
+        var homeInfo = homeTeam ? { name: teamsProb[homeTeam]?.name || homeTeam, flag: teamsProb[homeTeam]?.flag, flagPath: teamsProb[homeTeam]?.flagPath, group: teamsProb[homeTeam]?.group, elo: teamsProb[homeTeam]?.elo || 1500 } : null;
+        var awayInfo = awayTeam ? { name: teamsProb[awayTeam]?.name || awayTeam, flag: teamsProb[awayTeam]?.flag, flagPath: teamsProb[awayTeam]?.flagPath, group: teamsProb[awayTeam]?.group, elo: teamsProb[awayTeam]?.elo || 1500 } : null;
+        var predictedThird = null;
+        if (sf1Loser && sf2Loser) {
+          // 双方都确定时，用 final 概率预测季军胜者
+          var f1 = teamsProb[sf1Loser]?.final || 0;
+          var f2 = teamsProb[sf2Loser]?.final || 0;
+          predictedThird = f1 >= f2 ? sf1Loser : sf2Loser;
+        } else if (sf1Loser) {
+          predictedThird = sf1Loser;
+        } else {
+          predictedThird = sf2Loser;
+        }
         thirdMatch = {
-          home: sf1Loser,
-          away: sf2Loser,
-          homeInfo: { name: teamsProb[sf1Loser]?.name || sf1Loser, flag: teamsProb[sf1Loser]?.flag, flagPath: teamsProb[sf1Loser]?.flagPath, group: teamsProb[sf1Loser]?.group, elo: teamsProb[sf1Loser]?.elo || 1500 },
-          awayInfo: { name: teamsProb[sf2Loser]?.name || sf2Loser, flag: teamsProb[sf2Loser]?.flag, flagPath: teamsProb[sf2Loser]?.flagPath, group: teamsProb[sf2Loser]?.group, elo: teamsProb[sf2Loser]?.elo || 1500 },
+          home: sf1Loser || '待定',
+          away: sf2Loser || '待定',
+          homeInfo: homeInfo || { name: '待定', flag: '\u26bd', flagPath: null, group: '', elo: 1500 },
+          awayInfo: awayInfo || { name: '待定', flag: '\u26bd', flagPath: null, group: '', elo: 1500 },
           winner: predictedThird,
           finished: false,
           slot: '3RD',
@@ -960,7 +1007,7 @@
       var statusHtml = '';
       if (finished) {
         statusHtml = '<span class="live">✅ 已完赛</span>';
-      } else if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
+      } else if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W') && m.home !== '待定' && m.away !== '待定') {
         statusHtml = '<span class="live">⏰ ' + (m.time || '即将开赛') + '</span>';
       } else {
         statusHtml = '<span style="color:var(--text-muted)">🔮 待定</span>';
@@ -1097,35 +1144,75 @@
       var knockoutData = knockoutRes;
       // 基础数据：用 /api/knockout/bracket 的 rounds（含 homeInfo/awayInfo 的 R32/R16/QF）
       var roundData = (knockoutData.rounds || {});
-      // 补全数据：用 /api/bracket 解决 semi/final 的 W-slot（带回 homeInfo/awayInfo）
-      if (bracketRes && bracketRes.rounds) {
-        Object.keys(bracketRes.rounds).forEach(function(stage) {
-          if (stage === 'semi' || stage === 'final') {
-            roundData[stage] = bracketRes.rounds[stage];
-          }
-        });
-      }
       var teamsProb = (bracketRes && bracketRes.teams) ? bracketRes.teams : (knockoutData.teams || {});
 
-      // 最终兜底：若 roundData 中 semi/final 仍有 W-slot，从 bracketRes 补全
+      // 智能合并 SF/Final 数据：优先用 /api/knockout/bracket 的已解析数据
+      // 只在 W-slot 未解析时，才用 /api/bracket 补全
       if (roundData && bracketRes && bracketRes.rounds) {
         ['semi', 'final'].forEach(function(stage) {
           if (roundData[stage] && bracketRes.rounds[stage]) {
             roundData[stage].forEach(function(m, i) {
               var brm = bracketRes.rounds[stage][i];
-              if (brm && (!m.home || m.home.startsWith('W')) && brm.home && !brm.home.startsWith('W')) {
-                m.home = brm.home;
-                m.away = brm.away;
-                m.homeInfo = brm.homeInfo || m.homeInfo;
-                m.awayInfo = brm.awayInfo || m.awayInfo;
-                m.winner = brm.winner;
-                m.finished = brm.finished;
-                m.g1 = brm.g1;
-                m.g2 = brm.g2;
+              if (brm) {
+                // 只在 knockoutData 的 home/away 是 W-slot（未解析）时，才用 bracketRes 补全
+                var homeUnresolved = !m.home || m.home.startsWith('W');
+                var awayUnresolved = !m.away || m.away.startsWith('W');
+                if (homeUnresolved && brm.home && !brm.home.startsWith('W')) {
+                  m.home = brm.home;
+                  m.homeInfo = brm.homeInfo || m.homeInfo;
+                }
+                if (awayUnresolved && brm.away && !brm.away.startsWith('W')) {
+                  m.away = brm.away;
+                  m.awayInfo = brm.awayInfo || m.awayInfo;
+                }
+                // 已完赛数据：以 /api/knockout/bracket 为准（它有真实比分）
+                if (m.finished && m.g1 != null && m.g2 != null) {
+                  // 保留 knockoutData 的真实数据，不被 bracketRes 覆盖
+                } else if (brm.finished && brm.g1 != null && brm.g2 != null) {
+                  m.winner = brm.winner;
+                  m.finished = brm.finished;
+                  m.g1 = brm.g1;
+                  m.g2 = brm.g2;
+                }
               }
             });
           }
         });
+      }
+
+      // ===== 实时数据补丁：直接从赛程 API 获取 SF/Final 真实球队 =====
+      // 即使 bracket 解析失败，也能用 schedule API 拿到最新对局
+      try {
+        var scheduleRes = await cachedFetch('/api/matches/schedule', { force: force }).catch(function() { return null; });
+        if (scheduleRes && scheduleRes.matches) {
+          var byStage = { SEMI_FINALS: 'semi', FINAL: 'final', THIRD_PLACE: 'third' };
+          Object.keys(byStage).forEach(function(apiStage) {
+            var stageKey = byStage[apiStage];
+            var stageMatches = (scheduleRes.matches || []).filter(function(m) { return m.stage === apiStage; });
+            if (stageMatches.length && roundData[stageKey]) {
+              stageMatches.forEach(function(sm, idx) {
+                var bm = roundData[stageKey][idx];
+                if (!bm) return;
+                // 如果还缺球队，从 schedule 补全
+                if ((!bm.home || bm.home.startsWith('W') || !bm.away || bm.away.startsWith('W')) && sm.t1 && sm.t2) {
+                  bm.home = sm.t1;
+                  bm.away = sm.t2;
+                  if (sm.team1Info) bm.homeInfo = { ...sm.team1Info, elo: 1500 };
+                  if (sm.team2Info) bm.awayInfo = { ...sm.team2Info, elo: 1500 };
+                  if (sm.status === 'FT' && sm.g1 != null && sm.g2 != null) {
+                    bm.g1 = sm.g1;
+                    bm.g2 = sm.g2;
+                    bm.finished = true;
+                    bm.winner = sm.g1 > sm.g2 ? sm.t1 : sm.t2;
+                  }
+                  if (sm.time) bm.time = sm.time;
+                }
+              });
+            }
+          });
+        }
+      } catch (schedErr) {
+        console.warn('[knockout] schedule API merge failed:', schedErr.message);
       }
 
       // Source banner
@@ -1139,13 +1226,54 @@
         bannerText.textContent = '⚠️ 淘汰赛对阵基于蒙特卡洛模拟';
         banner.className = 'disclaimer-banner';
       }
-      // Show freshness timestamp from cache metadata
-      if (knockoutRes._cache && knockoutRes._cache.hitAt) {
-        freshnessEl.textContent = '最后更新: ' + new Date(knockoutRes._cache.hitAt).toLocaleString('zh-CN');
+      // 显示数据新鲜度（包含服务端的实际生成时间）
+      var generatedAt = null;
+      if (knockoutRes._cache && knockoutRes._cache.createdAt) {
+        generatedAt = knockoutRes._cache.createdAt;
+      } else if (knockoutRes._cache && knockoutRes._cache.hitAt) {
+        generatedAt = knockoutRes._cache.hitAt;
       } else if (knockoutRes.generatedAt) {
-        freshnessEl.textContent = '最后更新: ' + new Date(knockoutRes.generatedAt).toLocaleString('zh-CN');
+        generatedAt = knockoutRes.generatedAt;
+      }
+      if (generatedAt) {
+        var dt = new Date(generatedAt);
+        var localStr = dt.toLocaleString('zh-CN', { hour12: false });
+        var secondsAgo = Math.floor((Date.now() - dt.getTime()) / 1000);
+        var ageStr = '';
+        if (secondsAgo < 600) ageStr = secondsAgo + ' 秒前';
+        else if (secondsAgo < 3600) ageStr = Math.floor(secondsAgo / 60) + ' 分钟前';
+        else ageStr = Math.floor(secondsAgo / 3600) + ' 小时前';
+        freshnessEl.innerHTML = '🕐 数据生成: ' + localStr + ' <b style="color:var(--accent)">(' + ageStr + ')</b>';
+      }
+      // 显示 force 状态
+      if (force) {
+        freshnessEl.innerHTML += ' <span style="color:var(--accent)">[已强制刷新]</span>';
       }
       banner.style.display = 'flex';
+
+      // 新数据检测：对比上一次的 finished 比赛数
+      if (window._prevFinishedCount === undefined) {
+        window._prevFinishedCount = 0;
+      }
+      var currentFinishedCount = 0;
+      ['round32', 'round16', 'quarter', 'semi', 'final'].forEach(function(stage) {
+        (roundData[stage] || []).forEach(function(m) {
+          if (m.finished && m.g1 != null && m.g2 != null) currentFinishedCount++;
+        });
+      });
+      if (window._prevFinishedCount > 0 && currentFinishedCount > window._prevFinishedCount) {
+        var diff = currentFinishedCount - window._prevFinishedCount;
+        var note = document.createElement('div');
+        note.className = 'success-banner';
+        note.style.cssText = 'margin-bottom:8px;animation: pulse 1s 3';
+        note.innerHTML = '🔔 检测到 ' + diff + ' 场新增完赛！已自动应用最新结果。';
+        var dashboard = document.getElementById('ko-dashboard');
+        if (dashboard && dashboard.parentNode) {
+          dashboard.parentNode.insertBefore(note, dashboard);
+          setTimeout(function() { note.remove(); }, 8000);
+        }
+      }
+      window._prevFinishedCount = currentFinishedCount;
 
       // Summary
       var totalTeams = knockoutData.totalQualified || Object.keys(teamsProb).length || 0;
@@ -1203,6 +1331,53 @@
 
   window.cacheUI.onRefresh('knockout', function() { loadKnockoutData(true); });
   loadKnockoutData(false);
+
+  // ===== 自动定时刷新（确保数据实时性）=====
+  // 60 秒自动拉取一次；点击手动刷新按钮时重置计时
+  var autoRefreshSeconds = 60;
+  var autoRefreshTimer = null;
+  var autoRefreshRemaining = autoRefreshSeconds;
+  var autoRefreshEl = document.getElementById('ko-auto-refresh');
+
+  function updateAutoRefreshLabel() {
+    if (!autoRefreshEl) return;
+    if (autoRefreshRemaining <= 0) {
+      autoRefreshEl.textContent = '⏱️ 即将刷新...';
+      return;
+    }
+    autoRefreshEl.textContent = '⏱️ ' + autoRefreshRemaining + 's 后自动刷新';
+  }
+
+  function scheduleAutoRefresh() {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshRemaining = autoRefreshSeconds;
+    autoRefreshTimer = setInterval(function() {
+      autoRefreshRemaining--;
+      updateAutoRefreshLabel();
+      if (autoRefreshRemaining <= 0) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+        // 自动刷新（带 force 标记，绕过服务端缓存）
+        loadKnockoutData(true).then(function() {
+          autoRefreshRemaining = autoRefreshSeconds;
+          updateAutoRefreshLabel();
+          scheduleAutoRefresh();
+        });
+      }
+    }, 1000);
+    updateAutoRefreshLabel();
+  }
+  scheduleAutoRefresh();
+
+  // 页面可见性变化时立即刷新（用户切回标签页时）
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && autoRefreshTimer === null) {
+      loadKnockoutData(true).then(function() {
+        autoRefreshRemaining = autoRefreshSeconds;
+        scheduleAutoRefresh();
+      });
+    }
+  });
   </script>
 </body>
 </html>

@@ -152,6 +152,11 @@ function simulateFullBracket(resolvedR32, teamProb, realResults = {}) {
 
 // ===== 主路由 =====
 export default async function bracketRouter(req, res) {
+  // 强制禁用浏览器/中间代理缓存 - 确保实时数据
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+
   try {
     let roundData, teamProbData, mcSims;
     let source = 'simulated';
@@ -483,17 +488,31 @@ export default async function bracketRouter(req, res) {
         }
       }
       
-      // 对 SF 重新计算胜者（无真实结果时）
+      // === 对 SF 应用真实结果 ===
       for (const m of sf) {
-        if (m.winner && m.home && m.away && !m.finished) {
-          const oldWinner = m.winner;
+        if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
+          const key = pairKey(m.home, m.away);
+          const result = resultByPair[key];
+          if (result) {
+            if (result.t1 === m.home) { m.g1 = result.g1; m.g2 = result.g2; }
+            else { m.g1 = result.g2; m.g2 = result.g1; }
+            m.winner = result.winner;
+            m.loser = result.loser || (result.winner ? (result.winner === m.home ? m.away : m.home) : null);
+            m.finished = true;
+            m.simulated = false;
+            m.winnerProb = Math.max(teamProbData[m.winner]?.final || 0, 0);
+            if (m.slot) slotWinnerMap[m.slot] = m.winner;
+            console.log('[Bracket] SF real result applied:', m.slot, m.winner, m.g1 + '-' + m.g2);
+          }
+        }
+      }
+      
+      // 对无真实结果的 SF 重新计算胜者
+      for (const m of sf) {
+        if (!m.finished && m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
           m.winner = rePickWinner(m.home, m.away, 3);
           m.winnerProb = Math.max(teamProbData[m.winner]?.final || 0, 0);
-          if (m.slot && m.winner && m.winner !== oldWinner) {
-            slotWinnerMap[m.slot] = m.winner;
-          } else if (m.slot && m.winner) {
-            slotWinnerMap[m.slot] = m.winner;
-          }
+          if (m.slot) slotWinnerMap[m.slot] = m.winner;
         }
       }
       
@@ -511,12 +530,32 @@ export default async function bracketRouter(req, res) {
           m.away = awayFromSlot;
           m.awayInfo = null;
         }
-        if (m.home && m.away && !m.finished) {
+      }
+      
+      // === 对 Final 应用真实结果 ===
+      for (const m of final_) {
+        if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
+          const key = pairKey(m.home, m.away);
+          const result = resultByPair[key];
+          if (result) {
+            if (result.t1 === m.home) { m.g1 = result.g1; m.g2 = result.g2; }
+            else { m.g1 = result.g2; m.g2 = result.g1; }
+            m.winner = result.winner;
+            m.finished = true;
+            m.simulated = false;
+            m.winnerProb = 100;
+            if (m.slot) slotWinnerMap[m.slot] = m.winner;
+            console.log('[Bracket] Final real result applied:', m.winner, m.g1 + '-' + m.g2);
+          }
+        }
+      }
+      
+      // 对无真实结果的 Final 重新计算胜者
+      for (const m of final_) {
+        if (!m.finished && m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
           m.winner = rePickWinner(m.home, m.away, 4);
           m.winnerProb = Math.max(teamProbData[m.winner]?.champion || 0, 0);
-          if (m.slot && m.winner) {
-            slotWinnerMap[m.slot] = m.winner;
-          }
+          if (m.slot) slotWinnerMap[m.slot] = m.winner;
         }
       }
       
