@@ -1483,6 +1483,22 @@
     "status": "FT",
     "winner": "spain",
     "stage": "SEMI_FINALS"
+  },
+  {
+    "date": "2026-07-16",
+    "round": "Semi-finals",
+    "group": null,
+    "team1": "England",
+    "team2": "Argentina",
+    "t1": "england",
+    "t2": "argentina",
+    "g1": 1,
+    "g2": 2,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "argentina",
+    "stage": "SEMI_FINALS"
   }
   ]
 }
