@@ -1,0 +1,65 @@
+{
+  "manifestId": "elo_update_20260716_230218",
+  "generatedAt": "2026-07-16T15:02:18.454Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-15",
+    "to": "2026-07-16"
+  },
+  "matchesApplied": 2,
+  "matchDetails": [
+    {
+      "date": "2026-07-15",
+      "home": "France",
+      "away": "Spain",
+      "score": "0-2",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -25,
+      "deltaAway": 25,
+      "upsetSuppressed": false
+    },
+    {
+      "date": "2026-07-16",
+      "home": "England",
+      "away": "Argentina",
+      "score": "1-2",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": -25,
+      "deltaAway": 25,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "france",
+      "delta": -25
+    },
+    {
+      "team": "spain",
+      "delta": 25
+    },
+    {
+      "team": "england",
+      "delta": -25
+    },
+    {
+      "team": "argentina",
+      "delta": 25
+    }
+  ],
+  "ratingsBefore": {
+    "argentina": 2006.6,
+    "france": 2055.1,
+    "spain": 2046.5,
+    "england": 2029.8
+  },
+  "ratingsAfter": {
+    "argentina": 2031.6,
+    "france": 2030.1,
+    "spain": 2071.5,
+    "england": 2004.8
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}
