@@ -778,19 +778,30 @@ function renderKoTree(rounds) {
     if (s.key === 'third' && (!stageMatches || stageMatches.length === 0)) {
       var semis = rounds.semi || [];
       if (semis.length === 2) {
-        function loser(m) {
+        // 兼容 m.winner 三种格式：球队 slug（如 "argentina"）、API-Football 字面量（"HOME_TEAM"/"AWAY_TEAM"/"DRAW"）
+        function resolveLoser(m) {
           if (!m || !m.winner || !m.home || !m.away) return null;
           if (m.home.startsWith('W') || m.away.startsWith('W')) return null;
-          return m.winner === m.home ? m.away : m.home;
+          if (m.winner === 'HOME_TEAM' || m.winner === m.home) return m.away;
+          if (m.winner === 'AWAY_TEAM' || m.winner === m.away) return m.home;
+          if (m.winner === 'DRAW') return null; // 加时/点球不应平局
+          return null;
+        }
+        // 根据败者 slug 取对应的 teamInfo，避免 winner 字面量导致的反向错配
+        function pickInfo(m, slug) {
+          if (!slug) return null;
+          if (slug === m.home) return m.homeInfo || null;
+          if (slug === m.away) return m.awayInfo || null;
+          return null;
         }
         var sf1 = semis[0], sf2 = semis[1];
-        var l1 = loser(sf1), l2 = loser(sf2);
+        var l1 = resolveLoser(sf1), l2 = resolveLoser(sf2);
         if (l1 && l2) {
           stageMatches = [{
             home: l1,
             away: l2,
-            homeInfo: sf1.awayInfo && sf1.winner !== sf1.away ? sf1.awayInfo : (sf1.homeInfo || null),
-            awayInfo: sf2.awayInfo && sf2.winner !== sf2.away ? sf2.awayInfo : (sf2.homeInfo || null),
+            homeInfo: pickInfo(sf1, l1),
+            awayInfo: pickInfo(sf2, l2),
           }];
         }
       }
