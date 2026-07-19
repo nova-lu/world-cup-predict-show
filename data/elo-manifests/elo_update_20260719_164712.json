@@ -1,0 +1,42 @@
+{
+  "manifestId": "elo_update_20260719_164712",
+  "generatedAt": "2026-07-19T08:47:12.576Z",
+  "sourceFile": "histroy-match-data/results.csv",
+  "matchRange": {
+    "from": "2026-07-18",
+    "to": "2026-07-18"
+  },
+  "matchesApplied": 1,
+  "matchDetails": [
+    {
+      "date": "2026-07-18",
+      "home": "England",
+      "away": "France",
+      "score": "6-4",
+      "tournament": "FIFA World Cup",
+      "kFactor": 50,
+      "deltaHome": 25,
+      "deltaAway": -25,
+      "upsetSuppressed": false
+    }
+  ],
+  "topMovers": [
+    {
+      "team": "england",
+      "delta": 25
+    },
+    {
+      "team": "france",
+      "delta": -25
+    }
+  ],
+  "ratingsBefore": {
+    "france": 2022.1,
+    "england": 1997.2
+  },
+  "ratingsAfter": {
+    "france": 1997.1,
+    "england": 2022.2
+  },
+  "generatedBy": "update_elo_from_results.mjs v1"
+}

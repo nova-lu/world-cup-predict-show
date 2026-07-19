@@ -134,7 +134,7 @@ router.get('/bracket', async (req, res) => {
     const ratings = getRatings();
 
     // 富化每场比赛的球队信息 + Elo
-    for (const stageKey of ['round32', 'round16', 'quarter', 'semi', 'final']) {
+    for (const stageKey of ['round32', 'round16', 'quarter', 'semi', 'final', 'third']) {
       const matches = data.rounds[stageKey] || [];
       for (const m of matches) {
         if (m.home && !m.home.startsWith('W') && !/^\d/.test(m.home)) {
