@@ -1499,6 +1499,22 @@
     "status": "FT",
     "winner": "argentina",
     "stage": "SEMI_FINALS"
+  },
+  {
+    "date": "2026-07-18",
+    "round": "Third-place play-off",
+    "group": null,
+    "team1": "England",
+    "team2": "France",
+    "t1": "england",
+    "t2": "france",
+    "g1": 6,
+    "g2": 4,
+    "pens1": null,
+    "pens2": null,
+    "status": "FT",
+    "winner": "england",
+    "stage": "THIRD_PLACE"
   }
   ]
 }

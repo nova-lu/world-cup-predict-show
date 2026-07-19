@@ -705,7 +705,7 @@
   // ===== 渲染比赛列表（使用真实比赛数据） =====
   function renderMatchList(bracketRoundData, teamsProb) {
     var finished = [], upcoming = [];
-    ['round32', 'round16', 'quarter', 'semi', 'final'].forEach(function(stage) {
+    ['round32', 'round16', 'quarter', 'semi', 'final', 'third'].forEach(function(stage) {
       (bracketRoundData[stage] || []).forEach(function(m) {
         if (m.finished && m.g1 != null) finished.push(m);
         else if (m.home && m.away && !m.home.startsWith('W') && !m.away.startsWith('W')) {
@@ -951,9 +951,25 @@
     }
 
     // === 构造季军赛对阵 ===
-    // 季军赛 = SF1 败者 vs SF2 败者
+    // 优先使用服务端实际数据（roundData.third），否则从半决赛败者推算
     var thirdMatch = null;
-    if (semis.length === 2) {
+    var serverThird = (roundData.third || [])[0];
+    if (serverThird && serverThird.home && serverThird.away && !serverThird.home.startsWith('W')) {
+      // 服务端已有完整季军赛数据（含实际结果）
+      var tHome = teamsProb[serverThird.home] || {};
+      var tAway = teamsProb[serverThird.away] || {};
+      thirdMatch = {
+        home: serverThird.home,
+        away: serverThird.away,
+        homeInfo: serverThird.homeInfo || { name: tHome.name || serverThird.home, flag: tHome.flag, flagPath: tHome.flagPath, group: tHome.group, elo: tHome.elo || 1500 },
+        awayInfo: serverThird.awayInfo || { name: tAway.name || serverThird.away, flag: tAway.flag, flagPath: tAway.flagPath, group: tAway.group, elo: tAway.elo || 1500 },
+        winner: serverThird.winner,
+        g1: serverThird.g1, g2: serverThird.g2,
+        finished: serverThird.finished || false,
+        slot: '3RD',
+        label: '季军赛',
+      };
+    } else if (semis.length === 2) {
       var sf1 = semis[0], sf2 = semis[1];
       function loser(m) {
         if (!m || !m.winner || !m.home || !m.away) return null;

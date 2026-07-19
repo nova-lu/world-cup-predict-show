@@ -255,10 +255,52 @@ export function buildDeterministicBracket(qualifiers, allMatches) {
     }
   }
 
-  // 7. 补充：用半决赛胜者解析决赛对阵
+  // 7. 构造季军赛对阵
+  // 季军赛 = SF1 败者 vs SF2 败者，优先使用 allMatches 中的实际完赛数据
+  const thirdMatch = { id: 'third', label: '3RD', home: null, away: null, slot: '3RD', stage: 'third' };
+  const semiMatches = rounds.semi || [];
+  if (semiMatches.length === 2) {
+    // 从半决赛结果获得败者
+    function getLoser(m) {
+      if (!m || !m.winner || m.winner.startsWith('W')) return null;
+      if (!m.home || !m.away) return null;
+      return m.winner === m.home ? m.away : m.home;
+    }
+    const sf1Loser = getLoser(semiMatches[0]);
+    const sf2Loser = getLoser(semiMatches[1]);
+
+    // 优先从 allMatches 取实际完赛的季军赛数据
+    const thirdCandidates = (allMatches || []).filter(am => {
+      const s = (am.stage || '').toUpperCase().replace(/\s+/g, '_');
+      return s === 'THIRD_PLACE' || s === 'THIRD';
+    });
+    if (thirdCandidates.length > 0) {
+      const tp = thirdCandidates[0];
+      thirdMatch.home = tp.t1;
+      thirdMatch.away = tp.t2;
+      thirdMatch.g1 = tp.g1;
+      thirdMatch.g2 = tp.g2;
+      thirdMatch.finished = true;
+      thirdMatch.winner = tp.winner || (tp.g1 > tp.g2 ? tp.t1 : tp.t2);
+      thirdMatch.resolved = true;
+      thirdMatch.homeInfo = { ...getTeamInfo(tp.t1), elo: ratings[tp.t1] || 1500 };
+      thirdMatch.awayInfo = { ...getTeamInfo(tp.t2), elo: ratings[tp.t2] || 1500 };
+      console.log('[bracketBuilder] Third-place match resolved from data: ' + tp.t1 + ' ' + tp.g1 + '-' + tp.g2 + ' ' + tp.t2);
+    } else if (sf1Loser || sf2Loser) {
+      // 季军赛尚未进行，但可显示确定的对阵
+      thirdMatch.home = sf1Loser || null;
+      thirdMatch.away = sf2Loser || null;
+      thirdMatch.finished = false;
+      thirdMatch.resolved = !!(sf1Loser && sf2Loser);
+      if (sf1Loser) thirdMatch.homeInfo = { ...getTeamInfo(sf1Loser), elo: ratings[sf1Loser] || 1500 };
+      if (sf2Loser) thirdMatch.awayInfo = { ...getTeamInfo(sf2Loser), elo: ratings[sf2Loser] || 1500 };
+    }
+  }
+  rounds.third = thirdMatch.resolved ? [thirdMatch] : [];
+
+  // 8. 补充：用半决赛胜者解析决赛对阵
   // stageToApi 兜底（step 6）已填充半决赛球队，但决赛仍需从半决赛胜者推算
   const finalMatch = rounds.final && rounds.final[0];
-  const semiMatches = rounds.semi || [];
   if (finalMatch && (!finalMatch.resolved || finalMatch.home === 'W101' || finalMatch.home === 'W102')) {
     if (semiMatches.length >= 1 && semiMatches[0].winner && !semiMatches[0].winner.startsWith('W')) {
       finalMatch.home = semiMatches[0].winner;
